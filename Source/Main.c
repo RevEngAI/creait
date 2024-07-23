@@ -1,8 +1,17 @@
 /* reai */
 #include <Reai/Api/Api.h>
 #include <Reai/Common.h>
-#include <sys/stat.h>
+
+/* libc */
+#include <errno.h>
+#include <string.h>
 #include <threads.h>
+
+/* linux kernel */
+#include <sys/stat.h>
+
+/* toml parsing */
+#include <toml.h>
 
 Size get_file_size (CString file_path) {
     RETURN_VALUE_IF (!file_path, 0, ERR_INVALID_ARGUMENTS);
@@ -66,8 +75,34 @@ Int64 upload_and_create_analysis (Reai *reai, ReaiResponse *response, CString fi
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
 
-    Reai *reai =
-        reai_create(/* TODO: read revengai config from homedir and pass in host and api key here*/);
+    FILE *fp;
+    char  errbuf[200];
+
+    // 1. Read and parse toml file
+    fp = fopen ("sample.toml", "r");
+    RETURN_VALUE_IF (!fp, EXIT_FAILURE, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
+
+    toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
+    fclose (fp);
+    RETURN_VALUE_IF (!reai_conf, EXIT_FAILURE, "Failed to parse toml config file.\n");
+
+    toml_datum_t toml_api_key = toml_string_in (reai_conf, "apikey");
+    RETURN_VALUE_IF (
+        !toml_api_key.ok,
+        EXIT_FAILURE,
+        "Cannot find 'apikey' (required) in RevEngAI config.\n"
+    );
+
+    toml_datum_t toml_host = toml_string_in (reai_conf, "host");
+    RETURN_VALUE_IF (
+        !toml_host.ok,
+        EXIT_FAILURE,
+        "Cannot find 'host' (required) in RevEngAI config.\n"
+    );
+
+    Reai *reai = reai_create (toml_host.u.s, toml_api_key.u.s);
+    FREE (toml_host.u.s);
+    FREE (toml_api_key.u.s);
 
     ReaiResponse response;
     reai_response_init (&response);
@@ -161,6 +196,7 @@ int main (int argc, char **argv) {
     reai_analysis_info_vec_destroy (analysis_infos);
     reai_response_deinit (&response);
     reai_destroy (reai);
+    toml_free (reai_conf);
 
     return EXIT_SUCCESS;
 }

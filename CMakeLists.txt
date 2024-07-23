@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.12)
+include(FetchContent)
 
 project(LibReaiAPI LANGUAGES C VERSION 0)
 
@@ -40,6 +41,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # dependencies
 add_subdirectory(Deps/cJSON)
+add_subdirectory(Deps/tomlc99)
 
 # Add library source
 add_subdirectory(Source)
