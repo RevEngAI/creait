@@ -1,0 +1,99 @@
+#include <Reai/Config.h>
+
+/* tomlc99 */
+#include <toml.h>
+
+/* libc  */
+#include <errno.h>
+#include <stdlib.h>
+#include <string.h>
+
+/**
+ * @b Get default path where .reait.toml is supposed to be present.
+ *
+ * @param buf Buffer to get full path into
+ * @param buf_cap Buffer capacity
+ *
+ * @return @c buf on success
+ * @return @c Null otherwise.
+ * */
+PRIVATE Char *reai_config_get_default_path (Char *buf, Size buf_cap) {
+    RETURN_VALUE_IF (!buf || !buf_cap, Null, ERR_INVALID_ARGUMENTS);
+    snprintf (buf, buf_cap, "%s/%s", getenv ("HOME"), ".reait.toml");
+    return buf;
+}
+
+/**
+ * @b Load TOML config from given path.
+ *
+ * @param path If @c Null then default path is used.
+ *
+ * @return ReaiConfig
+ * */
+PUBLIC ReaiConfig *reai_config_load (CString path) {
+    Char tmpbuf[128];
+    if (!path) {
+        path = reai_config_get_default_path (tmpbuf, sizeof (tmpbuf));
+    }
+
+    ReaiConfig *cfg = NEW (ReaiConfig);
+
+    FILE *fp;
+    char  errbuf[200];
+
+    fp = fopen ("/home/misra/.reait.toml", "r");
+    RETURN_VALUE_IF (!fp, Null, ERR_FILE_OPEN_FAILED " : %s\n", strerror (errno));
+
+    toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
+    fclose (fp);
+    RETURN_VALUE_IF (!reai_conf, Null, "Failed to parse toml config file.\n");
+
+    toml_datum_t apikey = toml_string_in (reai_conf, "apikey");
+    GOTO_HANDLER_IF (
+        !apikey.ok,
+        LOAD_FAILED,
+        "Cannot find 'apikey' (required) in RevEngAI config.\n"
+    );
+    cfg->apikey = apikey.u.s;
+
+    toml_datum_t host = toml_string_in (reai_conf, "host");
+    GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.\n");
+    cfg->host = host.u.s;
+
+    toml_datum_t model = toml_string_in (reai_conf, "model");
+    if (model.ok) {
+        cfg->model = model.u.s;
+    }
+
+    return cfg;
+
+LOAD_FAILED:
+    reai_config_destroy (cfg);
+    return Null;
+}
+
+/**
+ * @b Destroy given TOML config object.
+ *
+ * @param cfg
+ * @return ReaiConfig
+ * */
+PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
+    RETURN_IF (!cfg, ERR_INVALID_ARGUMENTS);
+
+    if (cfg->apikey) {
+        memset ((Char *)cfg->apikey, 0, strlen (cfg->apikey));
+        FREE (cfg->apikey);
+    }
+    if (cfg->host) {
+        memset ((Char *)cfg->host, 0, strlen (cfg->host));
+        FREE (cfg->host);
+    }
+    if (cfg->model) {
+        memset ((Char *)cfg->model, 0, strlen (cfg->model));
+        FREE (cfg->model);
+    }
+
+    memset (cfg, 0, sizeof (ReaiConfig));
+    FREE (cfg);
+}
