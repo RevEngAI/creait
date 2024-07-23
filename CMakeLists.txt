@@ -42,6 +42,7 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # dependencies
 add_subdirectory(Deps/cJSON)
 add_subdirectory(Deps/tomlc99)
+find_package (SQLite3 REQUIRED)
 
 # Add library source
 add_subdirectory(Source)

@@ -82,9 +82,6 @@ Reai* reai_create (CString host, CString api_key) {
     GOTO_HANDLER_IF (!reai->headers, INIT_FAILED, "Failed to prepare auth header\n");
     curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
 
-    curl_easy_setopt (reai->curl, CURLOPT_SERVER_RESPONSE_TIMEOUT, 10);
-    curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1);
-
     return reai;
 
 INIT_FAILED:
@@ -148,7 +145,10 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
     } while (0)
 
-#define SET_METHOD(method) curl_easy_setopt (reai->curl, CURLOPT_CUSTOMREQUEST, method)
+#define SET_METHOD(method)                                                                         \
+    do {                                                                                           \
+        curl_easy_setopt (reai->curl, CURLOPT_CUSTOMREQUEST, method);                              \
+    } while (0)
 
 #define MAKE_REQUEST(expected_retcode, expected_response)                                          \
     do {                                                                                           \
@@ -179,7 +179,6 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* convert request to json string */                                                       \
         CString json = reai_request_get_json_str (request);                                        \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON\n");            \
-        PRINT_ERR ("generated json : %s\n", json);                                                 \
                                                                                                    \
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \

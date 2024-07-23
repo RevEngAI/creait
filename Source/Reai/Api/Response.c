@@ -432,25 +432,19 @@ HIDDEN Size
     RETURN_VALUE_IF (!ptr || !response, 0, ERR_INVALID_ARGUMENTS);
 
     /* compute and resize buffer to required size */
-    Size realsize = size * nmemb;
+    Size received_size = size * nmemb;
 
     /* resize only if required */
-    Char* data = response->raw.data;
-    if (realsize >= response->raw.capacity) {
-        data = REALLOCATE (response->raw.data, Char, realsize + 1);
-        RETURN_VALUE_IF (!data, 0, ERR_OUT_OF_MEMORY);
-
-        response->raw.data     = data;
-        response->raw.capacity = realsize + 1;
-    }
-
-    response->raw.length = realsize;
+    Char* data = REALLOCATE (response->raw.data, Char, response->raw.length + received_size + 1);
+    RETURN_VALUE_IF (!data, 0, ERR_OUT_OF_MEMORY);
+    response->raw.data = data;
 
     /* copy over retrieved data to given buffer */
-    memcpy (data, ptr, realsize);
-    data[realsize] = '\0';
+    memcpy (data + response->raw.length, ptr, received_size);
+    response->raw.length       += received_size;
+    data[response->raw.length]  = 0;
 
-    return realsize;
+    return received_size;
 }
 
 /**************************************************************************************************/

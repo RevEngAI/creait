@@ -14,6 +14,8 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Util/AnalysisInfo.h"
+
 static CString reai_model_to_name[] = {
     [REAI_MODEL_X86_WINDOWS] = "binnet-0.3-x86-windows",
     [REAI_MODEL_X86_LINUX]   = "binnet-0.3-x86-linux",
@@ -40,7 +42,7 @@ static CString reai_file_opt_to_str[] = {
  * @param[in] request
  *
  * @return @c CString containing request data in json format.
- * @return @c Null otherwise.
+ * @return @c Null if json is empty or on failure.
  * */
 HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
     RETURN_VALUE_IF (!request, Null, ERR_INVALID_ARGUMENTS);
@@ -228,8 +230,13 @@ HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
                     "Invalid analysis status\n"
                 );
 
-                static const CString status_strings[] =
-                    {"Queued", "Processing", "Complete", "Error", "All"};
+                static const CString status_strings[] = {
+                    [REAI_ANALYSIS_STATUS_QUEUED]     = "Queued",
+                    [REAI_ANALYSIS_STATUS_PROCESSING] = "Processing",
+                    [REAI_ANALYSIS_STATUS_COMPLETE]   = "Complete",
+                    [REAI_ANALYSIS_STATUS_ERROR]      = "Error",
+                    [REAI_ANALYSIS_STATUS_ALL]        = "All"
+                };
                 JSON_ADD_STRING (json, "status", status_strings[request->recent_analysis.status]);
             }
 
