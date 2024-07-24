@@ -14,6 +14,8 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Util/AnalysisInfo.h"
+
 PRIVATE Bool    json_response_get_bool (cJSON* json, CString name);
 PRIVATE Uint64* json_response_get_num (cJSON* json, CString name, Uint64* num);
 PRIVATE CString json_response_get_string (cJSON* json, CString name);
@@ -23,8 +25,7 @@ PRIVATE Char*   json_response_get_string_array_as_comma_separated_list (
       Char*   buf,
       Size*   buf_cap
   );
-PRIVATE ReaiResponse*      response_reset (ReaiResponse* response);
-PRIVATE ReaiAnalysisStatus reai_analysis_status_from_cstr (CString str);
+HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response);
 
 /**************************************************************************************************/
 /***************************************** PUBLIC METHODS *****************************************/
@@ -48,25 +49,21 @@ PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
 #define RESPONSE_RAW_BUF_INITIAL_CAP 4000
 
     /* allocate a significantly large memory block for getting raw responses */
-    if (!response->raw.data) {
-        response->raw.data = ALLOCATE (Char, RESPONSE_RAW_BUF_INITIAL_CAP);
-        RETURN_VALUE_IF (!response->raw.data, Null, ERR_OUT_OF_MEMORY);
-        response->raw.capacity = RESPONSE_RAW_BUF_INITIAL_CAP;
-    }
+    response->raw.data = ALLOCATE (Char, RESPONSE_RAW_BUF_INITIAL_CAP);
+    RETURN_VALUE_IF (!response->raw.data, Null, ERR_OUT_OF_MEMORY);
+    response->raw.capacity = RESPONSE_RAW_BUF_INITIAL_CAP;
 
     /* NOTE: Again, keep this a large value. */
 #define RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP 512
 
-    if (!response->validation_error.locations) {
-        /* allocate large string where locations array will be converted to a comma separated list */
-        response->validation_error.locations =
-            ALLOCATE (Char, RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP);
+    /* allocate large string where locations array will be converted to a comma separated list */
+    response->validation_error.locations =
+        ALLOCATE (Char, RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP);
 
-        RETURN_VALUE_IF (!response->validation_error.locations, Null, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!response->validation_error.locations, Null, ERR_OUT_OF_MEMORY);
 
-        response->validation_error.locations_capacity =
-            RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP;
-    }
+    response->validation_error.locations_capacity =
+        RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP;
 
     return response;
 }
@@ -82,7 +79,7 @@ PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
 PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
     RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
 
-    response_reset (response);
+    reai_response_reset (response);
 
     if (response->raw.data) {
         memset (response->raw.data, 0, response->raw.capacity);
@@ -125,8 +122,6 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type) {
     RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
 
-    /* reset response for new data */
-    response_reset (response);
     CString analysis_status = Null;
 
     /* convert from string to json */
@@ -149,6 +144,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         var = num;                                                                                 \
     }
 
+    /* retrieved string must be freed after use */
 #define GET_JSON_STRING(json, name, var)                                                           \
     {                                                                                              \
         CString str = Null;                                                                        \
@@ -162,6 +158,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         var = str;                                                                                 \
     }
 
+    /* retrieved string must be freed after use */
 #define GET_JSON_STRING_ARR(json, name, buf, bufszptr)                                             \
     {                                                                                              \
         Char* tmp = Null;                                                                          \
@@ -179,6 +176,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         buf = tmp;                                                                                 \
     }
 
+    /* retrieved string must be freed after use */
 #define GET_JSON_STRING_ON_SUCCESS(json, name, var, success)                                       \
     if (success) {                                                                                 \
         GET_JSON_STRING (json, name, var);                                                         \
@@ -202,7 +200,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
             GET_JSON_BOOL (json, "success", response->auth_check.success);
 
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
+            CString msg_keyname = response->auth_check.success ? "msg" : "error";
             GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
 
             break;
@@ -283,19 +281,6 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
-        case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
-            response->type = REAI_RESPONSE_TYPE_RECENT_ANALYSIS;
-
-            GET_JSON_BOOL (json, "success", response->recent_analysis.success);
-
-            if (response->recent_analysis.success) {
-                cJSON* analysis = cJSON_GetObjectItem (json, "analysis");
-                GOTO_HANDLER_IF (
-                    !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
-                    INIT_FAILED,
-                    "Expected array or object for analysis.\n"
-                );
-
 #define GET_ANALYSIS_INFO(ainfo)                                                                   \
     do {                                                                                           \
         GET_JSON_NUM (analysis, "binary_id", ainfo.binary_id);                                     \
@@ -313,6 +298,19 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         );                                                                                         \
         ainfo.status = estatus;                                                                    \
     } while (0)
+
+        case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
+            response->type = REAI_RESPONSE_TYPE_RECENT_ANALYSIS;
+
+            GET_JSON_BOOL (json, "success", response->recent_analysis.success);
+
+            if (response->recent_analysis.success) {
+                cJSON* analysis = cJSON_GetObjectItem (json, "analysis");
+                GOTO_HANDLER_IF (
+                    !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
+                    INIT_FAILED,
+                    "Expected array or object for analysis.\n"
+                );
 
                 /* create array to store analysis info records */
                 GOTO_HANDLER_IF (
@@ -344,9 +342,24 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                         );
                     }
                 }
+            }
+
+            break;
+        }
 
 #undef GET_ANALYSIS_INFO
-            }
+
+        case REAI_RESPONSE_TYPE_ANALYSIS_STATUS : {
+            response->type = REAI_RESPONSE_TYPE_ANALYSIS_STATUS;
+
+            GET_JSON_BOOL (json, "success", response->analysis_status.success);
+            GET_JSON_STRING_ON_SUCCESS (
+                json,
+                "status",
+                analysis_status,
+                response->analysis_status.success
+            );
+            response->analysis_status.status = reai_analysis_status_from_cstr (analysis_status);
 
             break;
         }
@@ -434,15 +447,21 @@ HIDDEN Size
     /* compute and resize buffer to required size */
     Size received_size = size * nmemb;
 
+    Size newlen = response->raw.length + received_size;
+
     /* resize only if required */
-    Char* data = REALLOCATE (response->raw.data, Char, response->raw.length + received_size + 1);
-    RETURN_VALUE_IF (!data, 0, ERR_OUT_OF_MEMORY);
-    response->raw.data = data;
+    if (newlen >= response->raw.capacity) {
+        Char* data = REALLOCATE (response->raw.data, Char, newlen + 1);
+        RETURN_VALUE_IF (!data, 0, ERR_OUT_OF_MEMORY);
+
+        response->raw.data                         = data;
+        response->raw.capacity                     = newlen;
+        response->raw.data[response->raw.capacity] = 0;
+    }
 
     /* copy over retrieved data to given buffer */
-    memcpy (data + response->raw.length, ptr, received_size);
-    response->raw.length       += received_size;
-    data[response->raw.length]  = 0;
+    memcpy (response->raw.data + response->raw.length, ptr, received_size);
+    response->raw.length = newlen;
 
     return received_size;
 }
@@ -638,8 +657,11 @@ PARSE_FAILED:
  * @return @c response on success.
  * @return @c Null otherwise.
  * */
-PRIVATE ReaiResponse* response_reset (ReaiResponse* response) {
+HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
     RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
+
+    memset (response->raw.data, 0, response->raw.length);
+    response->raw.length = 0;
 
     switch (response->type) {
         case REAI_RESPONSE_TYPE_AUTH_CHECK :
@@ -684,23 +706,4 @@ PRIVATE ReaiResponse* response_reset (ReaiResponse* response) {
     }
 
     return Null;
-}
-
-PRIVATE ReaiAnalysisStatus reai_analysis_status_from_cstr (CString str) {
-    RETURN_VALUE_IF (!str, REAI_ANALYSIS_STATUS_INVALID, ERR_INVALID_ARGUMENTS);
-
-    if (strcmp (str, "Queued") == 0) {
-        return REAI_ANALYSIS_STATUS_QUEUED;
-    } else if (strcmp (str, "Processing") == 0) {
-        return REAI_ANALYSIS_STATUS_PROCESSING;
-    } else if (strcmp (str, "Complete") == 0) {
-        return REAI_ANALYSIS_STATUS_COMPLETE;
-    } else if (strcmp (str, "Error") == 0) {
-        return REAI_ANALYSIS_STATUS_ERROR;
-    } else if (strcmp (str, "All") == 0) {
-        return REAI_ANALYSIS_STATUS_ALL;
-    } else {
-        // Default case, handle unknown strings
-        return REAI_ANALYSIS_STATUS_INVALID; // or some other error handling approach
-    }
 }

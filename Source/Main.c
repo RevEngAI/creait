@@ -10,8 +10,10 @@
 #include <threads.h>
 #include <time.h>
 
+/* linux */
+#include <unistd.h>
+
 #include "Reai/Api/Request.h"
-#include "Reai/Util/AnalysisInfo.h"
 
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
@@ -34,7 +36,8 @@ int main (int argc, char **argv) {
 
     ReaiRequest request = {0};
 
-    request.type = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
+    request.type                  = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
+    request.recent_analysis.count = 20;
     reai_request (reai, &request, &response);
     RETURN_VALUE_IF (
         response.type != REAI_RESPONSE_TYPE_RECENT_ANALYSIS,
@@ -49,7 +52,17 @@ int main (int argc, char **argv) {
 
     for (Size s = 0; s < recent_analyses->count; s++) {
         ReaiAnalysisInfo *info = recent_analyses->items + s;
-        PRINT_ERR ("%llu:%s\n", info->binary_id, info->binary_name);
+
+        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;
+        request.analysis_status.binary_id = info->binary_id;
+        reai_request (reai, &request, &response);
+
+        PRINT_ERR (
+            "%llu:%s:%s\n",
+            info->binary_id,
+            info->binary_name,
+            reai_analysis_status_to_cstr (response.analysis_status.status)
+        );
     }
 
     reai_analysis_info_vec_destroy (recent_analyses);

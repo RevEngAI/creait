@@ -230,14 +230,11 @@ HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
                     "Invalid analysis status\n"
                 );
 
-                static const CString status_strings[] = {
-                    [REAI_ANALYSIS_STATUS_QUEUED]     = "Queued",
-                    [REAI_ANALYSIS_STATUS_PROCESSING] = "Processing",
-                    [REAI_ANALYSIS_STATUS_COMPLETE]   = "Complete",
-                    [REAI_ANALYSIS_STATUS_ERROR]      = "Error",
-                    [REAI_ANALYSIS_STATUS_ALL]        = "All"
-                };
-                JSON_ADD_STRING (json, "status", status_strings[request->recent_analysis.status]);
+                JSON_ADD_STRING (
+                    json,
+                    "status",
+                    reai_analysis_status_to_cstr (request->recent_analysis.status)
+                );
             }
 
             if (request->recent_analysis.scope) {

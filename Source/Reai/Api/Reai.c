@@ -16,6 +16,9 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Api/Request.h"
+#include "Reai/Api/Response.h"
+
 struct Reai {
     CURL*              curl;
     struct curl_slist* headers;
@@ -25,14 +28,13 @@ struct Reai {
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
-extern ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
-extern CString       reai_request_get_json_str (ReaiRequest* request);
+HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
+HIDDEN CString       reai_request_get_json_str (ReaiRequest* request);
+HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* request);
+PRIVATE Reai*        reai_init_conn (Reai* reai);
+PRIVATE Reai*        reai_deinit_conn (Reai* reai);
 
 #define ENDPOINT_URL_STR_SIZE 100
-
-/**************************************************************************************************/
-/***************************************** PUBLIC METHODS *****************************************/
-/**************************************************************************************************/
 
 /**
  * @b Create a new @c Reai object to handle connection with RevEngAI servers.
@@ -51,42 +53,67 @@ Reai* reai_create (CString host, CString api_key) {
 
     GOTO_HANDLER_IF (
         !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)),
-        INIT_FAILED,
-        "Failed to initialize connection handler\n"
+        CREATE_FAILED,
+        ERR_OUT_OF_MEMORY
     );
+
+    GOTO_HANDLER_IF (!reai_init_conn (reai), CREATE_FAILED, "Failed to create connection.\n");
+
+    return reai;
+
+CREATE_FAILED:
+    reai_destroy (reai);
+    return Null;
+}
+
+/**
+ * Initialize the curl handle as if it was created recently.
+ * */
+PRIVATE Reai* reai_init_conn (Reai* reai) {
+    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
 
     /* initialize curl isntance and set url */
     reai->curl = curl_easy_init();
-    GOTO_HANDLER_IF (!reai->curl, INIT_FAILED, "Failed to easy init curl\n");
-    curl_easy_setopt (reai->curl, CURLOPT_URL, host);
+    RETURN_VALUE_IF (!reai->curl, Null, "Failed to easy init curl\n");
 
     /* callback method is defined in Response.c and is HIDDEN */
     curl_easy_setopt (reai->curl, CURLOPT_WRITEFUNCTION, reai_response_write_callback);
 
-    /*
-     * curl_easy_setopt (reai->curl, CURLOPT_WRITEDATA, &response->raw);
-     * Call this this method is made again and again for each new request as new (or same)
-     * response objects are passed.
-     * */
-
     /* enable automatic following of HTTP redirects because some API calls cause redirection */
-    curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt (reai->curl, CURLOPT_USERAGENT, "creait");
+    curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
+    curl_easy_setopt (reai->curl, CURLOPT_SERVER_RESPONSE_TIMEOUT, 5);
+    curl_easy_setopt (reai->curl, CURLOPT_TIMEOUT, 5);
+    curl_easy_setopt (reai->curl, CURLOPT_CONNECTTIMEOUT, 5);
+    /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
-    /* if headers don't exist then add */
-    /* generate auth header entry */
-    Char tmpstr[80];
-    snprintf (tmpstr, sizeof (tmpstr), "Authorization: %s", reai->api_key);
+    Char auth_hdr_str[80];
+    snprintf (auth_hdr_str, sizeof (auth_hdr_str), "Authorization: %s", reai->api_key);
+    reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
 
-    /* add auth header */
-    reai->headers = curl_slist_append (reai->headers, tmpstr);
-    GOTO_HANDLER_IF (!reai->headers, INIT_FAILED, "Failed to prepare auth header\n");
+    /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
+    RETURN_VALUE_IF (!reai->headers, Null, "Failed to prepare initial headers\n");
+
+    /* set headers */
     curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
 
     return reai;
+}
 
-INIT_FAILED:
-    reai_destroy (reai);
-    return Null;
+PRIVATE Reai* reai_deinit_conn (Reai* reai) {
+    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+
+    if (reai->headers) {
+        curl_slist_free_all (reai->headers);
+        reai->headers = Null;
+    }
+    if (reai->curl) {
+        curl_easy_cleanup (reai->curl);
+        reai->curl = Null;
+    }
+
+    return reai;
 }
 
 /**
@@ -97,22 +124,18 @@ INIT_FAILED:
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
 
-    if (reai->headers) {
-        curl_slist_free_all (reai->headers);
-    }
-    if (reai->curl) {
-        curl_easy_cleanup (reai->curl);
-    }
+    reai_deinit_conn (reai);
 
     if (reai->host) {
         FREE (reai->host);
+        reai->host = Null;
     }
 
     if (reai->api_key) {
         FREE (reai->api_key);
+        reai->api_key = Null;
     }
 
-    memset (reai, 0, sizeof (Reai));
     FREE (reai);
 }
 
@@ -128,6 +151,13 @@ void reai_destroy (Reai* reai) {
  * */
 ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* response) {
     RETURN_VALUE_IF (!reai || !request || !response, Null, ERR_INVALID_ARGUMENTS);
+
+    // BUG: Not able to properly reuse the curl handle.
+    // HACK: Fixed this for now by recreating it one every connection
+
+    reai_deinit_conn (reai);
+    reai_init_conn (reai);
+    reai_response_reset (response);
 
     /* curl will now write raw data to this response */
     curl_easy_setopt (reai->curl, CURLOPT_WRITEDATA, response);
@@ -172,9 +202,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 #define MAKE_JSON_REQUEST(expected_retcode, expected_response)                                     \
     do {                                                                                           \
         /* add json header info */                                                                 \
-        struct curl_slist* json_header =                                                           \
-            curl_slist_append (reai->headers, "Content-Type: application/json")->next;             \
-        GOTO_HANDLER_IF (!json_header, REQUEST_FAILED, "Failed to set header information\n");      \
+        curl_slist_append (reai->headers, "Content-Type: application/json");                       \
                                                                                                    \
         /* convert request to json string */                                                       \
         CString json = reai_request_get_json_str (request);                                        \
@@ -187,11 +215,6 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                                                                                                    \
         /* unset json data */                                                                      \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, Null);                                   \
-                                                                                                   \
-        /* unset json header */                                                                    \
-        curl_slist_free_all (json_header);                                                         \
-        reai->headers->next = Null;                                                                \
-        FREE (json);                                                                               \
     } while (0)
 
 #define MAKE_UPLOAD_REQUEST(expected_retcode, expected_response)                                   \
@@ -278,7 +301,16 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+            /* GET : api.local/v1/analyse/status/{binary_id} */
+        case REAI_REQUEST_TYPE_ANALYSIS_STATUS : {
+            SET_ENDPOINT ("%s/analyse/status/%llu", reai->host, request->analysis_status.binary_id);
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_ANALYSIS_STATUS);
+            break;
+        }
+
         default :
+            PRINT_ERR ("Invalid request.\n");
             break;
     }
 
@@ -289,9 +321,6 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 #undef SET_ENDPOINT
 
 DEFAULT_RETURN:
-    /* remove any references to stack pointer */
-    curl_easy_setopt (reai->curl, CURLOPT_URL, Null);
-
     if (mime) {
         curl_mime_free (mime);
     }
@@ -302,7 +331,3 @@ REQUEST_FAILED:
     response = Null;
     goto DEFAULT_RETURN;
 };
-
-/**************************************************************************************************/
-/**************************************** PRIVATE METHODS *****************************************/
-/**************************************************************************************************/

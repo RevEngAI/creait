@@ -39,13 +39,15 @@ typedef enum ReaiBinaryScope {
  * with.
  * */
 typedef enum ReaiRequestType {
-    REAI_REQUEST_TYPE_HEALTH_CHECK = 0,
+    REAI_REQUEST_TYPE_INVALID = 0,
+    REAI_REQUEST_TYPE_HEALTH_CHECK,
     REAI_REQUEST_TYPE_AUTH_CHECK,
     REAI_REQUEST_TYPE_UPLOAD_FILE,
     REAI_REQUEST_TYPE_CREATE_ANALYSIS,
     REAI_REQUEST_TYPE_DELETE_ANALYSIS,
     REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
     REAI_REQUEST_TYPE_RECENT_ANALYSIS,
+    REAI_REQUEST_TYPE_ANALYSIS_STATUS,
     REAI_REQUEST_TYPE_MAX /**< Total number of request types */
 } ReaiRequestType;
 
@@ -100,7 +102,7 @@ typedef struct ReaiRequest {
 
         struct {
             Uint64 binary_id;
-        } delete_analysis, basic_function_info;
+        } delete_analysis, basic_function_info, analysis_status;
 
         struct {
             ReaiAnalysisStatus status;

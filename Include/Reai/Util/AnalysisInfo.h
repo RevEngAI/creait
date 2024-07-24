@@ -26,6 +26,9 @@ typedef enum ReaiAnalysisStatus {
     REAI_ANALYSIS_STATUS_MAX
 } ReaiAnalysisStatus;
 
+CString            reai_analysis_status_to_cstr (ReaiAnalysisStatus status);
+ReaiAnalysisStatus reai_analysis_status_from_cstr (CString status);
+
 /**
  * @b Contains parsed JSON response for GET `/analyse/recent` endpoint,
  * representing analysis status for associated binary id.

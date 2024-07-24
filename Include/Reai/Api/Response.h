@@ -8,6 +8,7 @@
 #ifndef REAI_API_RESPONSE_H
 #define REAI_API_RESPONSE_H
 
+#include <Reai/Api/Request.h>
 #include <Reai/Util/AnalysisInfo.h>
 #include <Reai/Util/FnInfo.h>
 
@@ -17,15 +18,16 @@ C_SOURCE_BEGIN
 typedef struct ReaiResponseBuf ReaiResponseBuf;
 
 typedef enum ReaiResponseType {
-    REAI_RESPONSE_TYPE_UNKNOWN_ERR = 0,
-    REAI_RESPONSE_TYPE_VALIDATION_ERR,
-    REAI_RESPONSE_TYPE_UPLOAD_FILE,
-    REAI_RESPONSE_TYPE_AUTH_CHECK,
-    REAI_RESPONSE_TYPE_HEALTH_CHECK,
-    REAI_RESPONSE_TYPE_CREATE_ANALYSIS,
-    REAI_RESPONSE_TYPE_DELETE_ANALYSIS,
-    REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO,
-    REAI_RESPONSE_TYPE_RECENT_ANALYSIS,
+    REAI_RESPONSE_TYPE_UNKNOWN_ERR         = 0,
+    REAI_RESPONSE_TYPE_VALIDATION_ERR      = -1,
+    REAI_RESPONSE_TYPE_UPLOAD_FILE         = REAI_REQUEST_TYPE_UPLOAD_FILE,
+    REAI_RESPONSE_TYPE_AUTH_CHECK          = REAI_REQUEST_TYPE_AUTH_CHECK,
+    REAI_RESPONSE_TYPE_HEALTH_CHECK        = REAI_REQUEST_TYPE_HEALTH_CHECK,
+    REAI_RESPONSE_TYPE_CREATE_ANALYSIS     = REAI_REQUEST_TYPE_CREATE_ANALYSIS,
+    REAI_RESPONSE_TYPE_DELETE_ANALYSIS     = REAI_REQUEST_TYPE_DELETE_ANALYSIS,
+    REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO = REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
+    REAI_RESPONSE_TYPE_RECENT_ANALYSIS     = REAI_REQUEST_TYPE_RECENT_ANALYSIS,
+    REAI_RESPONSE_TYPE_ANALYSIS_STATUS     = REAI_REQUEST_TYPE_ANALYSIS_STATUS,
     REAI_RESPONSE_TYPE_MAX /* enum value less than this is valid */
 } ReaiResponseType;
 
@@ -103,11 +105,16 @@ typedef struct ReaiResponse {
             Bool                 success;
             ReaiAnalysisInfoVec* analysis_infos;
         } recent_analysis;
+
+        struct {
+            Bool               success;
+            ReaiAnalysisStatus status;
+        } analysis_status;
     };
 } ReaiResponse;
 
-PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response);
-PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response);
+ReaiResponse* reai_response_init (ReaiResponse* response);
+ReaiResponse* reai_response_deinit (ReaiResponse* response);
 
 C_SOURCE_END
 
