@@ -8,11 +8,10 @@
 #ifndef REAI_API_REQUEST_H
 #define REAI_API_REQUEST_H
 
+#include <Reai/AnalysisInfo.h>
 #include <Reai/Common.h>
+#include <Reai/FnInfo.h>
 #include <Reai/Types.h>
-#include <Reai/Util/FnInfo.h>
-
-#include "Reai/Util/AnalysisInfo.h"
 
 C_SOURCE_BEGIN
 
@@ -40,14 +39,27 @@ typedef enum ReaiBinaryScope {
  * */
 typedef enum ReaiRequestType {
     REAI_REQUEST_TYPE_INVALID = 0,
+
+    /* health api */
     REAI_REQUEST_TYPE_HEALTH_CHECK,
+
+    /* authentication api */
     REAI_REQUEST_TYPE_AUTH_CHECK,
+
+    /* utility api */
     REAI_REQUEST_TYPE_UPLOAD_FILE,
+    /* REAI_REQUEST_TYPE_GET_CONFIG, */
+    REAI_REQUEST_TYPE_SEARCH,
+    /* REAI_REQUEST_TYPE_GET_MODELS, */
+
+    /* analysis api */
     REAI_REQUEST_TYPE_CREATE_ANALYSIS,
     REAI_REQUEST_TYPE_DELETE_ANALYSIS,
     REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
     REAI_REQUEST_TYPE_RECENT_ANALYSIS,
     REAI_REQUEST_TYPE_ANALYSIS_STATUS,
+
+
     REAI_REQUEST_TYPE_MAX /**< Total number of request types */
 } ReaiRequestType;
 
@@ -109,6 +121,13 @@ typedef struct ReaiRequest {
             ReaiBinaryScope    scope;
             Size               count;
         } recent_analysis;
+
+        struct {
+            CString sha_256_hash;
+            CString binary_name;
+            CString collection_name;
+            CString state;
+        } search;
     };
 } ReaiRequest;
 

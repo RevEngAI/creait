@@ -5,8 +5,8 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#ifndef REAI_UTIL_FN_INFO_H
-#define REAI_UTIL_FN_INFO_H
+#ifndef REAI_FN_INFO_H
+#define REAI_FN_INFO_H
 
 #include <Reai/Common.h>
 #include <Reai/Types.h>
@@ -111,4 +111,4 @@ REAI_MAKE_VEC (
 
 C_SOURCE_END
 
-#endif // REAI_UTIL_FN_INFO_H
+#endif // REAI_FN_INFO_H

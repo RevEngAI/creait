@@ -24,6 +24,18 @@
 #    define REAI_VEC_INITIAL_ITEM_CAPACITY 32
 #endif
 
+#define REAI_VEC_FOREACH(vec, iter, body)                                                          \
+    do {                                                                                           \
+        if (!vec) {                                                                                \
+            break;                                                                                 \
+        }                                                                                          \
+                                                                                                   \
+        typeof (vec->items) iter = Null;                                                           \
+        for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
+            iter = vec->items + ___idx;                                                            \
+            { body; };                                                                             \
+        }                                                                                          \
+    } while (0)
 
 /**
  * @b Use to define new vector type.

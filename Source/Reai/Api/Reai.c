@@ -16,9 +16,6 @@
 /* libc */
 #include <memory.h>
 
-#include "Reai/Api/Request.h"
-#include "Reai/Api/Response.h"
-
 struct Reai {
     CURL*              curl;
     struct curl_slist* headers;
@@ -29,10 +26,10 @@ struct Reai {
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
-HIDDEN CString       reai_request_get_json_str (ReaiRequest* request);
+HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* request);
-PRIVATE Reai*        reai_init_conn (Reai* reai);
-PRIVATE Reai*        reai_deinit_conn (Reai* reai);
+Reai*                reai_init_conn (Reai* reai);
+Reai*                reai_deinit_conn (Reai* reai);
 
 #define ENDPOINT_URL_STR_SIZE 100
 
@@ -69,23 +66,21 @@ CREATE_FAILED:
 /**
  * Initialize the curl handle as if it was created recently.
  * */
-PRIVATE Reai* reai_init_conn (Reai* reai) {
+Reai* reai_init_conn (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
 
     /* initialize curl isntance and set url */
     reai->curl = curl_easy_init();
     RETURN_VALUE_IF (!reai->curl, Null, "Failed to easy init curl\n");
 
-    /* callback method is defined in Response.c and is HIDDEN */
     curl_easy_setopt (reai->curl, CURLOPT_WRITEFUNCTION, reai_response_write_callback);
-
-    /* enable automatic following of HTTP redirects because some API calls cause redirection */
     curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt (reai->curl, CURLOPT_USERAGENT, "creait");
     curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
     curl_easy_setopt (reai->curl, CURLOPT_SERVER_RESPONSE_TIMEOUT, 5);
     curl_easy_setopt (reai->curl, CURLOPT_TIMEOUT, 5);
     curl_easy_setopt (reai->curl, CURLOPT_CONNECTTIMEOUT, 5);
+
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
     Char auth_hdr_str[80];
@@ -101,7 +96,7 @@ PRIVATE Reai* reai_init_conn (Reai* reai) {
     return reai;
 }
 
-PRIVATE Reai* reai_deinit_conn (Reai* reai) {
+Reai* reai_deinit_conn (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
 
     if (reai->headers) {
@@ -205,7 +200,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         curl_slist_append (reai->headers, "Content-Type: application/json");                       \
                                                                                                    \
         /* convert request to json string */                                                       \
-        CString json = reai_request_get_json_str (request);                                        \
+        CString json = reai_request_to_json_cstr (request);                                        \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON\n");            \
                                                                                                    \
         /* set json data */                                                                        \
@@ -306,6 +301,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             SET_ENDPOINT ("%s/analyse/status/%llu", reai->host, request->analysis_status.binary_id);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_ANALYSIS_STATUS);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_SEARCH : {
+            SET_ENDPOINT ("%s/search", reai->host);
+            SET_METHOD ("GET");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_SEARCH);
             break;
         }
 

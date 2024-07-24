@@ -14,17 +14,10 @@
 /* libc */
 #include <memory.h>
 
-#include "Reai/Util/AnalysisInfo.h"
-
-PRIVATE Bool    json_response_get_bool (cJSON* json, CString name);
-PRIVATE Uint64* json_response_get_num (cJSON* json, CString name, Uint64* num);
-PRIVATE CString json_response_get_string (cJSON* json, CString name);
-PRIVATE Char*   json_response_get_string_array_as_comma_separated_list (
-      cJSON*  json,
-      CString name,
-      Char*   buf,
-      Size*   buf_cap
-  );
+PRIVATE Bool         json_response_get_bool (cJSON* json, CString name);
+PRIVATE Uint64*      json_response_get_num (cJSON* json, CString name, Uint64* num);
+PRIVATE CString      json_response_get_string (cJSON* json, CString name);
+PRIVATE CStrVec*     json_response_get_string_arr (cJSON* json, CString name);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response);
 
 /**************************************************************************************************/
@@ -53,18 +46,6 @@ PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
     RETURN_VALUE_IF (!response->raw.data, Null, ERR_OUT_OF_MEMORY);
     response->raw.capacity = RESPONSE_RAW_BUF_INITIAL_CAP;
 
-    /* NOTE: Again, keep this a large value. */
-#define RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP 512
-
-    /* allocate large string where locations array will be converted to a comma separated list */
-    response->validation_error.locations =
-        ALLOCATE (Char, RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP);
-
-    RETURN_VALUE_IF (!response->validation_error.locations, Null, ERR_OUT_OF_MEMORY);
-
-    response->validation_error.locations_capacity =
-        RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP;
-
     return response;
 }
 
@@ -87,13 +68,8 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
     }
 
     if (response->validation_error.locations) {
-        memset (
-            response->validation_error.locations,
-            0,
-            response->validation_error.locations_capacity
-        );
-
-        FREE (response->validation_error.locations);
+        reai_cstr_vec_destroy (response->validation_error.locations);
+        response->validation_error.locations = Null;
     }
 
     memset (response, 0, sizeof (ReaiResponse));
@@ -101,9 +77,112 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
     return response;
 }
 
-/**************************************************************************************************/
-/***************************************** HIDDEN METHODS *****************************************/
-/**************************************************************************************************/
+#define GET_JSON_BOOL(json, name, var) var = json_response_get_bool (json, name);
+
+#define GET_JSON_NUM(json, name, var)                                                              \
+    {                                                                                              \
+        Uint64 num = 0;                                                                            \
+        GOTO_HANDLER_IF (                                                                          \
+            !(json_response_get_num (json, name, &num)),                                           \
+            INIT_FAILED,                                                                           \
+            "Failed to get number '%s' from response.\n",                                          \
+            name                                                                                   \
+        );                                                                                         \
+                                                                                                   \
+        var = num;                                                                                 \
+    }
+
+/* retrieved string must be freed after use */
+#define GET_JSON_STRING(json, name, var)                                                           \
+    {                                                                                              \
+        CString str = Null;                                                                        \
+        GOTO_HANDLER_IF (                                                                          \
+            !(str = json_response_get_string (json, name)),                                        \
+            INIT_FAILED,                                                                           \
+            "Failed to get string '%s' from response.\n",                                          \
+            name                                                                                   \
+        );                                                                                         \
+                                                                                                   \
+        var = str;                                                                                 \
+    }
+
+/* retrieved string must be freed after use */
+#define GET_JSON_STRING_ARR(json, name, arr)                                                       \
+    {                                                                                              \
+        GOTO_HANDLER_IF (                                                                          \
+            !(arr = json_response_get_string_arr (json, name)),                                    \
+            INIT_FAILED,                                                                           \
+            "Failed to get '%s' string array in response\n",                                       \
+            name                                                                                   \
+        );                                                                                         \
+    }
+
+/* retrieved string must be freed after use */
+#define GET_JSON_STRING_ON_SUCCESS(json, name, var, success)                                       \
+    if (success) {                                                                                 \
+        GET_JSON_STRING (json, name, var);                                                         \
+    } else {                                                                                       \
+        var = Null;                                                                                \
+    }
+
+#define GET_JSON_NUM_ON_SUCCESS(json, name, var, success)                                          \
+    if (success) {                                                                                 \
+        GET_JSON_NUM (json, name, var);                                                            \
+    } else {                                                                                       \
+        var = 0;                                                                                   \
+    }
+
+#define GET_JSON_ANALYSIS_INFO(json, ainfo)                                                        \
+    do {                                                                                           \
+        GET_JSON_NUM (json, "binary_id", ainfo.binary_id);                                         \
+        GET_JSON_STRING (json, "binary_name", ainfo.binary_name);                                  \
+        GET_JSON_STRING (json, "creation", ainfo.creation);                                        \
+        GET_JSON_NUM (json, "model_id", ainfo.model_id);                                           \
+        GET_JSON_STRING (json, "model_name", ainfo.model_name);                                    \
+        GET_JSON_STRING (json, "sha_256_hash", ainfo.sha_256_hash);                                \
+                                                                                                   \
+        CString            status  = Null;                                                         \
+        ReaiAnalysisStatus estatus = 0;                                                            \
+        GET_JSON_STRING (json, "status", status);                                                  \
+        if (!(estatus = reai_analysis_status_from_cstr (status))) {                                \
+            PRINT_ERR ("Failed to convert analysis status to enum\n");                             \
+            if (status) {                                                                          \
+                FREE (status);                                                                     \
+            }                                                                                      \
+            goto INIT_FAILED;                                                                      \
+        }                                                                                          \
+        if (status) {                                                                              \
+            FREE (status);                                                                         \
+        }                                                                                          \
+        ainfo.status = estatus;                                                                    \
+    } while (0)
+
+#define GET_JSON_QUERY_RESULT(json, qres)                                                          \
+    do {                                                                                           \
+        GET_JSON_NUM (json, "binary_id", qres.binary_id);                                          \
+        GET_JSON_STRING (json, "binary_name", qres.binary_name);                                   \
+        GET_JSON_STRING_ARR (json, "collections", qres.collections);                               \
+        GET_JSON_STRING (json, "creation", qres.creation);                                         \
+        GET_JSON_NUM (json, "model_id", qres.model_id);                                            \
+        GET_JSON_STRING (json, "model_name", qres.model_name);                                     \
+        GET_JSON_STRING (json, "sha_256_hash", qres.sha_256_hash);                                 \
+        GET_JSON_STRING_ARR (json, "tags", qres.tags);                                             \
+                                                                                                   \
+        CString            status  = Null;                                                         \
+        ReaiAnalysisStatus estatus = 0;                                                            \
+        GET_JSON_STRING (json, "status", status);                                                  \
+        if (!(qres.status = reai_analysis_status_from_cstr (status))) {                            \
+            PRINT_ERR ("Failed to convert analysis status to enum\n");                             \
+            if (status) {                                                                          \
+                FREE (status);                                                                     \
+            }                                                                                      \
+            goto INIT_FAILED;                                                                      \
+        }                                                                                          \
+        if (status) {                                                                              \
+            FREE (status);                                                                         \
+        }                                                                                          \
+        qres.status = estatus;                                                                     \
+    } while (0)
 
 /**
  * @b Initialize given ReaiResponse structure for given response type by
@@ -122,74 +201,9 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type) {
     RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
 
-    CString analysis_status = Null;
-
     /* convert from string to json */
     cJSON* json = cJSON_ParseWithLength (response->raw.data, response->raw.length);
     GOTO_HANDLER_IF (!json, INIT_FAILED, "Failed to parse given response as JSON data\n");
-
-
-#define GET_JSON_BOOL(json, name, var) var = json_response_get_bool (json, name);
-
-#define GET_JSON_NUM(json, name, var)                                                              \
-    {                                                                                              \
-        Uint64 num = 0;                                                                            \
-        GOTO_HANDLER_IF (                                                                          \
-            !(json_response_get_num (json, name, &num)),                                           \
-            INIT_FAILED,                                                                           \
-            "Failed to get number '%s' from response.\n",                                          \
-            name                                                                                   \
-        );                                                                                         \
-                                                                                                   \
-        var = num;                                                                                 \
-    }
-
-    /* retrieved string must be freed after use */
-#define GET_JSON_STRING(json, name, var)                                                           \
-    {                                                                                              \
-        CString str = Null;                                                                        \
-        GOTO_HANDLER_IF (                                                                          \
-            !(str = json_response_get_string (json, name)),                                        \
-            INIT_FAILED,                                                                           \
-            "Failed to get string '%s' from response.\n",                                          \
-            name                                                                                   \
-        );                                                                                         \
-                                                                                                   \
-        var = str;                                                                                 \
-    }
-
-    /* retrieved string must be freed after use */
-#define GET_JSON_STRING_ARR(json, name, buf, bufszptr)                                             \
-    {                                                                                              \
-        Char* tmp = Null;                                                                          \
-        GOTO_HANDLER_IF (                                                                          \
-            !(tmp = json_response_get_string_array_as_comma_separated_list (                       \
-                  detail_obj,                                                                      \
-                  name,                                                                            \
-                  buf,                                                                             \
-                  bufszptr                                                                         \
-              )),                                                                                  \
-            INIT_FAILED,                                                                           \
-            "Failed to get '%s' string array in response\n",                                       \
-            name                                                                                   \
-        );                                                                                         \
-        buf = tmp;                                                                                 \
-    }
-
-    /* retrieved string must be freed after use */
-#define GET_JSON_STRING_ON_SUCCESS(json, name, var, success)                                       \
-    if (success) {                                                                                 \
-        GET_JSON_STRING (json, name, var);                                                         \
-    } else {                                                                                       \
-        var = Null;                                                                                \
-    }
-
-#define GET_JSON_NUM_ON_SUCCESS(json, name, var, success)                                          \
-    if (success) {                                                                                 \
-        GET_JSON_NUM (json, name, var);                                                            \
-    } else {                                                                                       \
-        var = 0;                                                                                   \
-    }
 
     /* each response type has a different structure */
     switch (type) {
@@ -281,24 +295,6 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
-#define GET_ANALYSIS_INFO(ainfo)                                                                   \
-    do {                                                                                           \
-        GET_JSON_NUM (analysis, "binary_id", ainfo.binary_id);                                     \
-        GET_JSON_STRING (analysis, "binary_name", ainfo.binary_name);                              \
-        GET_JSON_STRING (analysis, "creation", ainfo.creation);                                    \
-        GET_JSON_NUM (analysis, "model_id", ainfo.model_id);                                       \
-        GET_JSON_STRING (analysis, "model_name", ainfo.model_name);                                \
-        GET_JSON_STRING (analysis, "sha_256_hash", ainfo.sha_256_hash);                            \
-        ReaiAnalysisStatus estatus = 0;                                                            \
-        GET_JSON_STRING (analysis, "status", analysis_status);                                     \
-        GOTO_HANDLER_IF (                                                                          \
-            !(estatus = reai_analysis_status_from_cstr (analysis_status)),                         \
-            INIT_FAILED,                                                                           \
-            "Failed to convert analysis status to enum\n"                                          \
-        );                                                                                         \
-        ainfo.status = estatus;                                                                    \
-    } while (0)
-
         case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
             response->type = REAI_RESPONSE_TYPE_RECENT_ANALYSIS;
 
@@ -312,29 +308,26 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                     "Expected array or object for analysis.\n"
                 );
 
-                /* create array to store analysis info records */
                 GOTO_HANDLER_IF (
                     !(response->recent_analysis.analysis_infos = reai_analysis_info_vec_create()),
                     INIT_FAILED,
                     "Failed to create analysis info array\n"
                 );
 
-                /* switch on whether analysis info is an array or an object */
                 ReaiAnalysisInfo analysis_info;
                 if (cJSON_IsObject (analysis)) {
-                    GET_ANALYSIS_INFO (analysis_info);
+                    GET_JSON_ANALYSIS_INFO (analysis, analysis_info);
 
                     reai_analysis_info_vec_append (
                         response->recent_analysis.analysis_infos,
                         &analysis_info
                     );
-                } else if (cJSON_IsArray (analysis)) {
-                    /* rename to make macro work */
-                    cJSON* analysis_arr = analysis;
-
+                } else {
                     /* iterate over all elements, parse and insert */
-                    cJSON_ArrayForEach (analysis, analysis_arr) {
-                        GET_ANALYSIS_INFO (analysis_info);
+                    cJSON* info = Null;
+
+                    cJSON_ArrayForEach (info, analysis) {
+                        GET_JSON_ANALYSIS_INFO (info, analysis_info);
 
                         reai_analysis_info_vec_append (
                             response->recent_analysis.analysis_infos,
@@ -347,19 +340,65 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
-#undef GET_ANALYSIS_INFO
 
         case REAI_RESPONSE_TYPE_ANALYSIS_STATUS : {
             response->type = REAI_RESPONSE_TYPE_ANALYSIS_STATUS;
 
             GET_JSON_BOOL (json, "success", response->analysis_status.success);
-            GET_JSON_STRING_ON_SUCCESS (
-                json,
-                "status",
-                analysis_status,
-                response->analysis_status.success
-            );
-            response->analysis_status.status = reai_analysis_status_from_cstr (analysis_status);
+
+            CString status = Null;
+            GET_JSON_STRING_ON_SUCCESS (json, "status", status, response->analysis_status.success);
+
+            if (!(response->analysis_status.status = reai_analysis_status_from_cstr (status))) {
+                PRINT_ERR ("Failed to convert analysis status from string to enum.\n");
+                if (status) {
+                    FREE (status);
+                }
+                goto INIT_FAILED;
+            }
+
+            break;
+        }
+
+
+        case REAI_RESPONSE_TYPE_SEARCH : {
+            response->type = REAI_RESPONSE_TYPE_SEARCH;
+
+            GET_JSON_BOOL (json, "success", response->search.success);
+
+            if (response->search.success) {
+                cJSON* query_results = cJSON_GetObjectItem (json, "query_results");
+                GOTO_HANDLER_IF (
+                    !cJSON_IsObject (query_results) && !cJSON_IsArray (query_results),
+                    INIT_FAILED,
+                    "Expected array or object for analysis.\n"
+                );
+
+                /* create array to store analysis info records */
+                GOTO_HANDLER_IF (
+                    !(response->search.query_results = reai_query_result_vec_create()),
+                    INIT_FAILED,
+                    "Failed to create query results array\n"
+                );
+
+                ReaiQueryResult query_result;
+
+                if (cJSON_IsObject (query_results)) {
+                    /* insert just one item */
+                    GET_JSON_QUERY_RESULT (query_results, query_result);
+                    reai_query_result_vec_append (response->search.query_results, &query_result);
+                } else {
+                    /* iterate over all elements, parse and insert */
+                    cJSON* result = Null;
+                    cJSON_ArrayForEach (result, query_results) {
+                        GET_JSON_QUERY_RESULT (result, query_result);
+                        reai_query_result_vec_append (
+                            response->search.query_results,
+                            &query_result
+                        );
+                    }
+                }
+            }
 
             break;
         }
@@ -381,13 +420,10 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 "Failed to get 'detail' object from returned response\n"
             );
 
+            // BUG:TODO: fix this, go over all entries in detail_obj
+
             /* loc */
-            GET_JSON_STRING_ARR (
-                detail_obj,
-                "loc",
-                response->validation_error.locations,
-                &response->validation_error.locations_capacity
-            );
+            GET_JSON_STRING_ARR (detail_obj, "loc", response->validation_error.locations);
 
             /* msg */
             GET_JSON_STRING (detail_obj, "msg", response->validation_error.message);
@@ -405,18 +441,9 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         }
     }
 
-#undef GET_JSON_BOOL
-#undef GET_JSON_STRING
-#undef GET_JSON_STRING_ARR
-#undef GET_JSON_STRING_ON_SUCCESS
-
 DEFAULT_RETURN:
     if (json) {
         cJSON_Delete (json);
-    }
-
-    if (analysis_status) {
-        FREE (analysis_status);
     }
 
     return response;
@@ -425,6 +452,13 @@ INIT_FAILED:
     response = Null;
     goto DEFAULT_RETURN;
 }
+
+#undef GET_JSON_BOOL
+#undef GET_JSON_STRING
+#undef GET_JSON_STRING_ARR
+#undef GET_JSON_STRING_ON_SUCCESS
+#undef GET_JSON_ANALYSIS_INFO
+#undef GET_JSON_QUERY_RESULT
 
 /**
  * @b This callback is set as `CURLOPT_WRITEFUNCTION` to receive response data,
@@ -557,18 +591,6 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
 }
 
 /**
- * @b Helper method to extract a array of string form given JSON
- * into a comma separated string list. This means the whole array
- * will be converted into a single string.
- *
- * NOTE: The pointer returned may or may not be same as buf. This depends on
- * the response size and whether a reallocation is required or not. Caller
- * must keep the buffer and returned size value in sync to avoid UB.
- *
- * NOTE: If provided buffer is Null or if given buffer size pointer contains
- * zero value, then the buffer will be reallocated for sure and returned pointer
- * will definitely be different (given no errors occur).
- *
  * @param json[in] JSON Object containing the string field.
  * @param name[in] Name of string field.
  * @param buf[out] Buffer where string list will be written to.
@@ -579,15 +601,10 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
  * @return @c buf if field is present.
  * @return @c Null otherwise.
  * */
-PRIVATE Char* json_response_get_string_array_as_comma_separated_list (
-    cJSON*  json,
-    CString name,
-    Char*   buf,
-    Size*   buf_cap
-) {
-    RETURN_VALUE_IF (!json || !name || !buf_cap, Null, ERR_INVALID_ARGUMENTS);
+PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
+    RETURN_VALUE_IF (!json || !name, Null, ERR_INVALID_ARGUMENTS);
 
-    /* get message */
+    /* get array object*/
     cJSON* arr_value = cJSON_GetObjectItemCaseSensitive (json, name);
     RETURN_VALUE_IF (
         !arr_value || !cJSON_IsArray (arr_value),
@@ -596,22 +613,11 @@ PRIVATE Char* json_response_get_string_array_as_comma_separated_list (
         name
     );
 
-    Size  tmpbuf_length = 0;
-    Size  tmpbuf_cap    = *buf_cap;
-    Char* tmpbuf        = buf;
-    Bool  allocated     = False;
-
-    /* allocate buffer if not provided */
-    if (!tmpbuf || !tmpbuf_cap) {
-        tmpbuf = ALLOCATE (Char, RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP);
-        RETURN_VALUE_IF (!tmpbuf, Null, ERR_OUT_OF_MEMORY);
-        tmpbuf_cap = RESPONSE_VALIDATION_ERR_LOCATIONS_BUF_INITIAL_CAP;
-        allocated  = True;
-    }
+    CStrVec* vec = reai_cstr_vec_create();
+    RETURN_VALUE_IF (!vec, Null, "Failed to create new CStrVec object.\n");
 
     /* iterate over array and keep appending entries to a comma separated string list */
     cJSON* location = Null;
-    Char*  iter     = tmpbuf;
     cJSON_ArrayForEach (location, arr_value) {
         /* if an entry is not string then just deallocated (if allocated) and exit */
         GOTO_HANDLER_IF (
@@ -620,31 +626,17 @@ PRIVATE Char* json_response_get_string_array_as_comma_separated_list (
             "Locations array expects entries to be in String."
         );
 
-        /* append string */
-        /* NOTE: the value returned by sprintf does not count null terminal character */
-        tmpbuf_length += sprintf (iter, "%s, ", cJSON_GetStringValue (location));
-        iter          += tmpbuf_length;
-
-        /* reallocated if required */
-        if (tmpbuf_length + 1 >= tmpbuf_cap) {
-            Size off = iter - tmpbuf; /* distance from starting position of array */
-
-            Char* tmp = REALLOCATE (tmpbuf, Char, tmpbuf_length * 2);
-            GOTO_HANDLER_IF (!tmp, PARSE_FAILED, ERR_OUT_OF_MEMORY);
-
-            /* readjust iter */
-            tmpbuf = tmp;
-            iter   = tmpbuf + off;
+        CString loc = cJSON_GetStringValue (location);
+        if (!reai_cstr_vec_append (vec, &loc)) {
+            PRINT_ERR ("Failed to append value to list.\n");
+            reai_cstr_vec_destroy (vec);
+            return Null;
         }
     }
 
-    *buf_cap = tmpbuf_cap;
-    return tmpbuf;
+    return vec;
 
 PARSE_FAILED:
-    if (allocated) {
-        FREE (tmpbuf);
-    }
     return Null;
 }
 
@@ -662,6 +654,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
 
     memset (response->raw.data, 0, response->raw.length);
     response->raw.length = 0;
+
+    if (response->validation_error.locations) {
+        reai_cstr_vec_destroy (response->validation_error.locations);
+        response->validation_error.locations = Null;
+    }
 
     switch (response->type) {
         case REAI_RESPONSE_TYPE_AUTH_CHECK :
@@ -697,6 +694,14 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             if (response->recent_analysis.analysis_infos) {
                 reai_analysis_info_vec_destroy (response->recent_analysis.analysis_infos);
                 response->recent_analysis.analysis_infos = Null;
+            }
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_SEARCH : {
+            if (response->search.query_results) {
+                reai_query_result_vec_destroy (response->search.query_results);
+                response->search.query_results = Null;
             }
             break;
         }

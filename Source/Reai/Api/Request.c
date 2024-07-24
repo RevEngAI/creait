@@ -14,8 +14,6 @@
 /* libc */
 #include <memory.h>
 
-#include "Reai/Util/AnalysisInfo.h"
-
 static CString reai_model_to_name[] = {
     [REAI_MODEL_X86_WINDOWS] = "binnet-0.3-x86-windows",
     [REAI_MODEL_X86_LINUX]   = "binnet-0.3-x86-linux",
@@ -31,24 +29,6 @@ static CString reai_file_opt_to_str[] = {
     [REAI_FILE_OPTION_EXE]   = "EXE",
     [REAI_FILE_OPTION_DLL]   = "DLL",
 };
-
-/**
- * @b Convert given request to json.
- *
- * The returned string is completely owned by the caller and must be freed
- * after use. Don't use this method for requests that are not convertible
- * to json (like health-check, auth-check, upload etc...).
- *
- * @param[in] request
- *
- * @return @c CString containing request data in json format.
- * @return @c Null if json is empty or on failure.
- * */
-HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
-    RETURN_VALUE_IF (!request, Null, ERR_INVALID_ARGUMENTS);
-
-    cJSON* json = cJSON_CreateObject();
-    GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON\n");
 
 #define JSON_ADD_STRING(cj, item_name, value)                                                      \
     {                                                                                              \
@@ -87,6 +67,24 @@ HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
         GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON\n");      \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
+
+/**
+ * @b Convert given request to json.
+ *
+ * The returned string is completely owned by the caller and must be freed
+ * after use. Don't use this method for requests that are not convertible
+ * to json (like health-check, auth-check, upload etc...).
+ *
+ * @param[in] request
+ *
+ * @return @c CString containing request data in json format.
+ * @return @c Null if json is empty or on failure.
+ * */
+HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
+    RETURN_VALUE_IF (!request, Null, ERR_INVALID_ARGUMENTS);
+
+    cJSON* json = cJSON_CreateObject();
+    GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON\n");
 
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
@@ -248,6 +246,22 @@ HIDDEN CString reai_request_get_json_str (ReaiRequest* request) {
                 JSON_ADD_NUMBER (json, "n", request->recent_analysis.count);
             }
 
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_SEARCH : {
+            if (request->search.sha_256_hash) {
+                JSON_ADD_STRING (json, "sha_256_hash", request->search.sha_256_hash);
+            }
+            if (request->search.binary_name) {
+                JSON_ADD_STRING (json, "binary_name", request->search.binary_name);
+            }
+            if (request->search.collection_name) {
+                JSON_ADD_STRING (json, "collection_name", request->search.collection_name);
+            }
+            if (request->search.state) {
+                JSON_ADD_STRING (json, "state", request->search.state);
+            }
             break;
         }
 

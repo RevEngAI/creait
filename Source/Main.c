@@ -6,15 +6,6 @@
 /* sqlite */
 #include <sqlite3.h>
 
-/* libc */
-#include <threads.h>
-#include <time.h>
-
-/* linux */
-#include <unistd.h>
-
-#include "Reai/Api/Request.h"
-
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
 
@@ -36,36 +27,26 @@ int main (int argc, char **argv) {
 
     ReaiRequest request = {0};
 
-    request.type                  = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
-    request.recent_analysis.count = 20;
+    memset (&request, 0, sizeof (request));
+    request.type                   = REAI_REQUEST_TYPE_SEARCH;
+    request.search.collection_name = "trojan";
     reai_request (reai, &request, &response);
+
     RETURN_VALUE_IF (
-        response.type != REAI_RESPONSE_TYPE_RECENT_ANALYSIS,
+        response.type != REAI_RESPONSE_TYPE_SEARCH,
         EXIT_FAILURE,
-        "Failed to get recent analysis info from RevEngAI servers : %s.\n",
+        "Failed to perform search : %s.\n",
         response.raw.data
     );
 
-    ReaiAnalysisInfoVec *recent_analyses =
-        reai_analysis_info_vec_clone_create (response.recent_analysis.analysis_infos);
-    RETURN_VALUE_IF (!recent_analyses, EXIT_FAILURE, "Failed to clone recent analysis vec\n");
-
-    for (Size s = 0; s < recent_analyses->count; s++) {
-        ReaiAnalysisInfo *info = recent_analyses->items + s;
-
-        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;
-        request.analysis_status.binary_id = info->binary_id;
-        reai_request (reai, &request, &response);
-
-        PRINT_ERR (
-            "%llu:%s:%s\n",
-            info->binary_id,
-            info->binary_name,
-            reai_analysis_status_to_cstr (response.analysis_status.status)
-        );
+    if (response.search.success) {
+        PRINT_ERR ("Search result count = %zu\n", response.search.query_results->count);
+        REAI_VEC_FOREACH (response.search.query_results, result, {
+            PRINT_ERR ("%s\n", result->binary_name);
+        });
+    } else {
+        PRINT_ERR ("Search failed.\n");
     }
-
-    reai_analysis_info_vec_destroy (recent_analyses);
 
     reai_destroy (reai);
     sqlite3_close (sql);

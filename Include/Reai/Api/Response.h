@@ -8,9 +8,10 @@
 #ifndef REAI_API_RESPONSE_H
 #define REAI_API_RESPONSE_H
 
+#include <Reai/AnalysisInfo.h>
 #include <Reai/Api/Request.h>
-#include <Reai/Util/AnalysisInfo.h>
-#include <Reai/Util/FnInfo.h>
+#include <Reai/FnInfo.h>
+#include <Reai/QueryResult.h>
 
 C_SOURCE_BEGIN
 
@@ -18,17 +19,29 @@ C_SOURCE_BEGIN
 typedef struct ReaiResponseBuf ReaiResponseBuf;
 
 typedef enum ReaiResponseType {
-    REAI_RESPONSE_TYPE_UNKNOWN_ERR         = 0,
-    REAI_RESPONSE_TYPE_VALIDATION_ERR      = -1,
-    REAI_RESPONSE_TYPE_UPLOAD_FILE         = REAI_REQUEST_TYPE_UPLOAD_FILE,
-    REAI_RESPONSE_TYPE_AUTH_CHECK          = REAI_REQUEST_TYPE_AUTH_CHECK,
-    REAI_RESPONSE_TYPE_HEALTH_CHECK        = REAI_REQUEST_TYPE_HEALTH_CHECK,
+    REAI_RESPONSE_TYPE_UNKNOWN_ERR = 0,
+
+    /* health api */
+    REAI_RESPONSE_TYPE_HEALTH_CHECK = REAI_REQUEST_TYPE_HEALTH_CHECK,
+
+    /* authentication api */
+    REAI_RESPONSE_TYPE_AUTH_CHECK = REAI_REQUEST_TYPE_AUTH_CHECK,
+
+    /* utility api */
+    REAI_RESPONSE_TYPE_UPLOAD_FILE = REAI_REQUEST_TYPE_UPLOAD_FILE,
+    /* REAI_RESPONSE_TYPE_GET_CONFIG  = REAI_REQUEST_TYPE_GET_CONFIG, */
+    REAI_RESPONSE_TYPE_SEARCH = REAI_REQUEST_TYPE_SEARCH,
+    /* REAI_RESPONSE_TYPE_GET_MODELS  = REAI_REQUEST_TYPE_GET_MODELS, */
+
+    /* analysis api */
     REAI_RESPONSE_TYPE_CREATE_ANALYSIS     = REAI_REQUEST_TYPE_CREATE_ANALYSIS,
     REAI_RESPONSE_TYPE_DELETE_ANALYSIS     = REAI_REQUEST_TYPE_DELETE_ANALYSIS,
     REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO = REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
     REAI_RESPONSE_TYPE_RECENT_ANALYSIS     = REAI_REQUEST_TYPE_RECENT_ANALYSIS,
     REAI_RESPONSE_TYPE_ANALYSIS_STATUS     = REAI_REQUEST_TYPE_ANALYSIS_STATUS,
-    REAI_RESPONSE_TYPE_MAX /* enum value less than this is valid */
+
+    REAI_RESPONSE_TYPE_VALIDATION_ERR,
+    REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
 } ReaiResponseType;
 
 
@@ -73,10 +86,9 @@ typedef struct ReaiResponse {
      * of the above reason that we place it here.
      * */
     struct {
-        Char*   locations;          /**< @b Error locations (comma separated). */
-        Size    locations_capacity; /**< @b Total capacity of locations string. */
-        CString message;            /**< @b Error message. */
-        CString type;               /**< @b Error type. */
+        CStrVec* locations;
+        CString  message; /**< @b Error message. */
+        CString  type;    /**< @b Error type. */
     } validation_error;
 
     union {
@@ -110,6 +122,11 @@ typedef struct ReaiResponse {
             Bool               success;
             ReaiAnalysisStatus status;
         } analysis_status;
+
+        struct {
+            Bool                success;
+            ReaiQueryResultVec* query_results;
+        } search;
     };
 } ReaiResponse;
 
