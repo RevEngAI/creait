@@ -14,7 +14,9 @@
 /* libc */
 #include <memory.h>
 
-C_SOURCE_BEGIN
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * @b Represents a single function symbol information entry in array of symbol
@@ -109,6 +111,8 @@ REAI_MAKE_VEC (
     reai_fn_info_clone_deinit
 );
 
-C_SOURCE_END
+#ifdef __cplusplus
+}
+#endif
 
 #endif // REAI_FN_INFO_H

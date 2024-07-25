@@ -14,6 +14,10 @@
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef struct ReaiConfig {
     CString host;
     CString apikey;
@@ -22,5 +26,9 @@ typedef struct ReaiConfig {
 
 ReaiConfig *reai_config_load (CString path);
 void        reai_config_destroy (ReaiConfig *cfg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // REAI_CONFIG_H

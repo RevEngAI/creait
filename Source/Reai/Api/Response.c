@@ -207,15 +207,35 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
     /* each response type has a different structure */
     switch (type) {
-        case REAI_RESPONSE_TYPE_DELETE_ANALYSIS :
-        case REAI_RESPONSE_TYPE_HEALTH_CHECK :
+        case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
+            response->type = REAI_RESPONSE_TYPE_HEALTH_CHECK;
+
+            GET_JSON_BOOL (json, "success", response->auth_check.success);
+
+            CString msg_keyname = response->auth_check.success ? "message" : "error";
+            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_AUTH_CHECK : {
             response->type = REAI_RESPONSE_TYPE_AUTH_CHECK;
 
             GET_JSON_BOOL (json, "success", response->auth_check.success);
 
-            CString msg_keyname = response->auth_check.success ? "msg" : "error";
+            CString msg_keyname = response->auth_check.success ? "message" : "error";
             GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_DELETE_ANALYSIS : {
+            response->type = REAI_RESPONSE_TYPE_AUTH_CHECK;
+
+            GET_JSON_BOOL (json, "success", response->delete_analysis.success);
+
+            CString msg_keyname = response->delete_analysis.success ? "msg" : "error";
+            GET_JSON_STRING (json, msg_keyname, response->delete_analysis.message);
 
             break;
         }

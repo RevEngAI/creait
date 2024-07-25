@@ -6,11 +6,13 @@
 /* sqlite */
 #include <sqlite3.h>
 
+#include "Reai/Api/Request.h"
+
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
 
     ReaiConfig *cfg = reai_config_load (Null);
-    PRINT_ERR ("HOST = %s\nAPIKEY = %s\n", cfg->host, cfg->apikey);
+    RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.\n");
 
     sqlite3 *sql = Null;
     RETURN_VALUE_IF (
@@ -27,26 +29,10 @@ int main (int argc, char **argv) {
 
     ReaiRequest request = {0};
 
-    memset (&request, 0, sizeof (request));
-    request.type                   = REAI_REQUEST_TYPE_SEARCH;
-    request.search.collection_name = "trojan";
+    request.type = REAI_REQUEST_TYPE_HEALTH_CHECK;
     reai_request (reai, &request, &response);
 
-    RETURN_VALUE_IF (
-        response.type != REAI_RESPONSE_TYPE_SEARCH,
-        EXIT_FAILURE,
-        "Failed to perform search : %s.\n",
-        response.raw.data
-    );
-
-    if (response.search.success) {
-        PRINT_ERR ("Search result count = %zu\n", response.search.query_results->count);
-        REAI_VEC_FOREACH (response.search.query_results, result, {
-            PRINT_ERR ("%s\n", result->binary_name);
-        });
-    } else {
-        PRINT_ERR ("Search failed.\n");
-    }
+    PRINT_ERR ("%s", response.raw.data);
 
     reai_destroy (reai);
     sqlite3_close (sql);

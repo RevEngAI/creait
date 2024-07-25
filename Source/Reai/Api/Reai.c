@@ -16,6 +16,9 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Api/Request.h"
+#include "Reai/Api/Response.h"
+
 struct Reai {
     CURL*              curl;
     struct curl_slist* headers;
@@ -206,7 +209,11 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
                                                                                                    \
+        /* WARN: this method will fail if MAKE request makes any jump */                           \
         MAKE_REQUEST (expected_retcode, expected_response);                                        \
+                                                                                                   \
+        /* free after use */                                                                       \
+        FREE (json);                                                                               \
                                                                                                    \
         /* unset json data */                                                                      \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, Null);                                   \
@@ -333,3 +340,110 @@ REQUEST_FAILED:
     response = Null;
     goto DEFAULT_RETURN;
 };
+
+/**
+ * Upload given file.
+ *
+ * @parma reai
+ * @param response Where complete response will be stored.
+ * @param file_path
+ *
+ * @return @c CString containing returned sh256 hash value in response.
+ * @return @c Null on failure.
+ * */
+CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path) {
+    RETURN_VALUE_IF (!reai || !file_path, Null, ERR_INVALID_ARGUMENTS);
+
+    /* prepare request */
+    ReaiRequest request           = {0};
+    request.type                  = REAI_REQUEST_TYPE_UPLOAD_FILE;
+    request.upload_file.file_path = file_path;
+
+    /* make request */
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
+                return response->upload_file.sha_256_hash;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return Null;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected type.\n");
+            }
+        }
+    } else {
+        return Null;
+    }
+}
+
+/**
+ * @b Create a new analysis by providing as minimum context as possible.
+ *
+ * @param reai
+ * @param response
+ * @param model
+ * @param fn_info_vec Must be provided if functions don't have default boundaries.
+ * @param is_private @c True if new analysis created will be private.
+ * @param sha_256_hash SHA-256 hash value for previously uploaded binary.
+ * @param file_name Name of file (will be name of analysis as well)
+ * @param size_in_bytes Size of file in bytes.
+ *
+ * @return binary id on success.
+ * @return 0 on failure.
+ * */
+BinaryId reai_create_analysis (
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiModel      model,
+    ReaiFnInfoVec* fn_info_vec,
+    Bool           is_private,
+    CString        sha_256_hash,
+    CString        file_name,
+    CString        cmdline_args,
+    Size           size_in_bytes
+) {
+    RETURN_VALUE_IF (
+        !reai || !response || !model || !sha_256_hash || !file_name || !size_in_bytes,
+        0,
+        ERR_INVALID_ARGUMENTS
+    );
+
+
+    /* prepare new request to perform analysis */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
+
+    request.create_analysis.model        = REAI_MODEL_X86_LINUX;
+    request.create_analysis.platform_opt = Null;
+    request.create_analysis.isa_opt      = Null;
+    request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
+    request.create_analysis.dyn_exec     = False;
+    request.create_analysis.tags         = Null;
+    request.create_analysis.tags_count   = 0;
+    request.create_analysis.functions    = fn_info_vec;
+    request.create_analysis.bin_scope =
+        is_private ? REAI_BINARY_SCOPE_PRIVATE : REAI_BINARY_SCOPE_PUBLIC;
+    request.create_analysis.file_name     = file_name;
+    request.create_analysis.cmdline_args  = Null;
+    request.create_analysis.priority      = 0;
+    request.create_analysis.sha_256_hash  = sha_256_hash;
+    request.create_analysis.debug_hash    = cmdline_args;
+    request.create_analysis.size_in_bytes = size_in_bytes;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_CREATE_ANALYSIS : {
+                return response->create_analysis.binary_id;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return 0;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (0, "Unexpected response type.\n");
+            }
+        }
+    } else {
+        return 0;
+    }
+}

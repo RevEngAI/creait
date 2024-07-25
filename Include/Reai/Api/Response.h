@@ -13,39 +13,41 @@
 #include <Reai/FnInfo.h>
 #include <Reai/QueryResult.h>
 
-C_SOURCE_BEGIN
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-/* fwd declarations */
-typedef struct ReaiResponseBuf ReaiResponseBuf;
+    /* fwd declarations */
+    typedef struct ReaiResponseBuf ReaiResponseBuf;
 
-typedef enum ReaiResponseType {
-    REAI_RESPONSE_TYPE_UNKNOWN_ERR = 0,
+    typedef enum ReaiResponseType {
+        REAI_RESPONSE_TYPE_UNKNOWN_ERR = 0,
 
-    /* health api */
-    REAI_RESPONSE_TYPE_HEALTH_CHECK = REAI_REQUEST_TYPE_HEALTH_CHECK,
+        /* health api */
+        REAI_RESPONSE_TYPE_HEALTH_CHECK = REAI_REQUEST_TYPE_HEALTH_CHECK,
 
-    /* authentication api */
-    REAI_RESPONSE_TYPE_AUTH_CHECK = REAI_REQUEST_TYPE_AUTH_CHECK,
+        /* authentication api */
+        REAI_RESPONSE_TYPE_AUTH_CHECK = REAI_REQUEST_TYPE_AUTH_CHECK,
 
-    /* utility api */
-    REAI_RESPONSE_TYPE_UPLOAD_FILE = REAI_REQUEST_TYPE_UPLOAD_FILE,
-    /* REAI_RESPONSE_TYPE_GET_CONFIG  = REAI_REQUEST_TYPE_GET_CONFIG, */
-    REAI_RESPONSE_TYPE_SEARCH = REAI_REQUEST_TYPE_SEARCH,
-    /* REAI_RESPONSE_TYPE_GET_MODELS  = REAI_REQUEST_TYPE_GET_MODELS, */
+        /* utility api */
+        REAI_RESPONSE_TYPE_UPLOAD_FILE = REAI_REQUEST_TYPE_UPLOAD_FILE,
+        /* REAI_RESPONSE_TYPE_GET_CONFIG  = REAI_REQUEST_TYPE_GET_CONFIG, */
+        REAI_RESPONSE_TYPE_SEARCH = REAI_REQUEST_TYPE_SEARCH,
+        /* REAI_RESPONSE_TYPE_GET_MODELS  = REAI_REQUEST_TYPE_GET_MODELS, */
 
-    /* analysis api */
-    REAI_RESPONSE_TYPE_CREATE_ANALYSIS     = REAI_REQUEST_TYPE_CREATE_ANALYSIS,
-    REAI_RESPONSE_TYPE_DELETE_ANALYSIS     = REAI_REQUEST_TYPE_DELETE_ANALYSIS,
-    REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO = REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
-    REAI_RESPONSE_TYPE_RECENT_ANALYSIS     = REAI_REQUEST_TYPE_RECENT_ANALYSIS,
-    REAI_RESPONSE_TYPE_ANALYSIS_STATUS     = REAI_REQUEST_TYPE_ANALYSIS_STATUS,
+        /* analysis api */
+        REAI_RESPONSE_TYPE_CREATE_ANALYSIS     = REAI_REQUEST_TYPE_CREATE_ANALYSIS,
+        REAI_RESPONSE_TYPE_DELETE_ANALYSIS     = REAI_REQUEST_TYPE_DELETE_ANALYSIS,
+        REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO = REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO,
+        REAI_RESPONSE_TYPE_RECENT_ANALYSIS     = REAI_REQUEST_TYPE_RECENT_ANALYSIS,
+        REAI_RESPONSE_TYPE_ANALYSIS_STATUS     = REAI_REQUEST_TYPE_ANALYSIS_STATUS,
 
-    REAI_RESPONSE_TYPE_VALIDATION_ERR,
-    REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
-} ReaiResponseType;
+        REAI_RESPONSE_TYPE_VALIDATION_ERR,
+        REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
+    } ReaiResponseType;
 
 
-/**
+    /**
  * @b Structure returned and taken by reai_request calls that get
  * a response from an API endpoint.
  *
@@ -55,10 +57,10 @@ typedef enum ReaiResponseType {
  * all the returned details into this structure with proper response type
  * information in `type` member.
  * */
-typedef struct ReaiResponse {
-    ReaiResponseType type; /**< @b Received response type. */
+    typedef struct ReaiResponse {
+        ReaiResponseType type; /**< @b Received response type. */
 
-    /**
+        /**
      * This is where write callback writes raw response data.
      * Usually this is JSON data when interacting with Reai API,
      * but this is treated as raw data.
@@ -71,13 +73,13 @@ typedef struct ReaiResponse {
      * object only once and keep reusing it throughout the lifetime of application,
      * and de-initialize it only when you're done with it finally.
      * */
-    struct {
-        Char* data;
-        Size  length;
-        Size  capacity;
-    } raw;
+        struct {
+            Char* data;
+            Size  length;
+            Size  capacity;
+        } raw;
 
-    /**
+        /**
      * Like raw data this is initialized/allocated when init is called and
      * de-initialized/deallocated when deinit is called. This is again to reduce
      * the total number of allocations/reallocations throught program lifetime.
@@ -85,54 +87,57 @@ typedef struct ReaiResponse {
      * Ideally this should've been part of the union below, but it is because
      * of the above reason that we place it here.
      * */
-    struct {
-        CStrVec* locations;
-        CString  message; /**< @b Error message. */
-        CString  type;    /**< @b Error type. */
-    } validation_error;
-
-    union {
         struct {
-            Bool    success; /**< @b Is true when request was successful */
-            CString message; /**< @b Message returned by request */
-        } health_check, auth_check, delete_analysis;
+            CStrVec* locations;
+            CString  message; /**< @b Error message. */
+            CString  type;    /**< @b Error type. */
+        } validation_error;
 
-        struct {
-            Bool    success;      /**< @b Is true when request was successful */
-            CString message;      /**< @b Message returned by request */
-            CString sha_256_hash; /**< @b Contains sha256 hash value if upload was successful */
-        } upload_file;
+        union {
+            struct {
+                Bool    success; /**< @b Is true when request was successful */
+                CString message; /**< @b Message returned by request */
+            } health_check, auth_check, delete_analysis;
 
-        struct {
-            Bool   success;   /**< @b True when analysis created successfully */
-            Uint64 binary_id; /**< @b Contains binary id if analysis creation was successful. */
-        } create_analysis;
+            struct {
+                Bool    success;      /**< @b Is true when request was successful */
+                CString message;      /**< @b Message returned by request */
+                CString sha_256_hash; /**< @b Contains sha256 hash value if upload was successful */
+            } upload_file;
 
-        struct {
-            Bool           success;  /**< @b True on success */
-            ReaiFnInfoVec* fn_infos; /**< @b Contains array of (id, name, vaddr, size) records */
-        } basic_function_info;
+            struct {
+                Bool     success;   /**< @b True when analysis created successfully */
+                BinaryId binary_id; /**< @b Binary id returned in response */
+            } create_analysis;
 
-        struct {
-            Bool                 success;
-            ReaiAnalysisInfoVec* analysis_infos;
-        } recent_analysis;
+            struct {
+                Bool success; /**< @b True on success */
+                ReaiFnInfoVec*
+                    fn_infos; /**< @b Contains array of (id, name, vaddr, size) records */
+            } basic_function_info;
 
-        struct {
-            Bool               success;
-            ReaiAnalysisStatus status;
-        } analysis_status;
+            struct {
+                Bool                 success;
+                ReaiAnalysisInfoVec* analysis_infos;
+            } recent_analysis;
 
-        struct {
-            Bool                success;
-            ReaiQueryResultVec* query_results;
-        } search;
-    };
-} ReaiResponse;
+            struct {
+                Bool               success;
+                ReaiAnalysisStatus status;
+            } analysis_status;
 
-ReaiResponse* reai_response_init (ReaiResponse* response);
-ReaiResponse* reai_response_deinit (ReaiResponse* response);
+            struct {
+                Bool                success;
+                ReaiQueryResultVec* query_results;
+            } search;
+        };
+    } ReaiResponse;
 
-C_SOURCE_END
+    ReaiResponse* reai_response_init (ReaiResponse* response);
+    ReaiResponse* reai_response_deinit (ReaiResponse* response);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // REAI_API_RESPONSE_H

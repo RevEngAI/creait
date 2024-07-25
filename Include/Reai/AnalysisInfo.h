@@ -11,10 +11,9 @@
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 
-/* libc */
-#include <string.h>
-
-C_SOURCE_BEGIN
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 typedef enum ReaiAnalysisStatus {
     REAI_ANALYSIS_STATUS_INVALID,
@@ -56,6 +55,8 @@ REAI_MAKE_VEC (
 );
 
 
-C_SOURCE_END
+#ifdef __cplusplus
+}
+#endif
 
 #endif // REAI_ANALYSIS_INFO_H

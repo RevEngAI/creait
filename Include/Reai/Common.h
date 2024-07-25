@@ -50,14 +50,6 @@
 #define PUBLIC  /* functions that are public and can be used directly by including a header file */
 #define PRIVATE static inline /* functions not visible outside compilation unit */
 
-#ifdef __cplusplus
-#    define C_SOURCE_BEGIN extern "C" {
-#    define C_SOURCE_END   }
-#else
-#    define C_SOURCE_BEGIN
-#    define C_SOURCE_END
-#endif
-
 
 
 

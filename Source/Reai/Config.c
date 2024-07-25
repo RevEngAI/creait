@@ -65,9 +65,16 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
         cfg->model = model.u.s;
     }
 
+    if (reai_conf) {
+        toml_free (reai_conf);
+    }
     return cfg;
 
 LOAD_FAILED:
+    if (reai_conf) {
+        toml_free (reai_conf);
+    }
+
     reai_config_destroy (cfg);
     return Null;
 }

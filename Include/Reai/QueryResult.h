@@ -13,32 +13,36 @@
 #include <Reai/Types.h>
 #include <Reai/Util/CStrVec.h>
 
-C_SOURCE_BEGIN
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-typedef struct ReaiQueryResult {
-    Uint64             binary_id;
-    CString            binary_name;
-    CStrVec*           collections;
-    CString            creation;
-    Uint64             model_id;
-    CString            model_name;
-    ReaiModel          model;
-    CString            sha_256_hash;
-    ReaiAnalysisStatus status;
-    CStrVec*           tags;
-} ReaiQueryResult;
+    typedef struct ReaiQueryResult {
+        Uint64             binary_id;
+        CString            binary_name;
+        CStrVec*           collections;
+        CString            creation;
+        Uint64             model_id;
+        CString            model_name;
+        ReaiModel          model;
+        CString            sha_256_hash;
+        ReaiAnalysisStatus status;
+        CStrVec*           tags;
+    } ReaiQueryResult;
 
-ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, ReaiQueryResult* src);
-ReaiQueryResult* reai_query_result_clone_deinit (ReaiQueryResult* clone);
+    ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, ReaiQueryResult* src);
+    ReaiQueryResult* reai_query_result_clone_deinit (ReaiQueryResult* clone);
 
-REAI_MAKE_VEC (
-    ReaiQueryResultVec,
-    query_result,
-    ReaiQueryResult,
-    reai_query_result_clone_init,
-    reai_query_result_clone_deinit
-);
+    REAI_MAKE_VEC (
+        ReaiQueryResultVec,
+        query_result,
+        ReaiQueryResult,
+        reai_query_result_clone_init,
+        reai_query_result_clone_deinit
+    );
 
-C_SOURCE_BEGIN
+#ifdef __cplusplus
+}
+#endif
 
 #endif // REAI_QUERY_RESULT_H

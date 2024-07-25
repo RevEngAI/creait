@@ -8,6 +8,9 @@
 /* reai */
 #include <Reai/AnalysisInfo.h>
 
+/* libc */
+#include <string.h>
+
 #define CREATE_CSTR_CLONE(d, s)                                                                    \
     GOTO_HANDLER_IF (!(d = strdup (s)), CLONE_FAILED, ERR_OUT_OF_MEMORY);
 
