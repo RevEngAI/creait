@@ -12,6 +12,8 @@
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 
+#include "Reai/AnalysisInfo.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -25,19 +27,39 @@ extern "C" {
     Reai*         reai_create (CString host, CString api_key);
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
-    CString       reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
-    BinaryId      reai_create_analysis (
-             Reai*          reai,
-             ReaiResponse*  response,
-             ReaiModel      model,
-             ReaiFnInfoVec* fn_info_vec,
-             Bool           is_private,
-             CString        sha_256_hash,
-             CString        file_name,
-             CString        cmdline_args,
-             Size           size_in_bytes
-         );
 
+    CString  reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
+    BinaryId reai_create_analysis (
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiModel      model,
+        ReaiFnInfoVec* fn_info_vec,
+        Bool           is_private,
+        CString        sha_256_hash,
+        CString        file_name,
+        CString        cmdline_args,
+        Size           size_in_bytes
+    );
+    ReaiAnalysisInfoVec* reai_get_recent_analyses (
+        Reai*              reai,
+        ReaiResponse*      response,
+        ReaiAnalysisStatus status,
+        ReaiBinaryScope    scope,
+        Size               count
+    );
+    ReaiFnInfoVec*
+         reai_get_basic_function_info (Reai* reai, ReaiResponse* response, BinaryId bin_id);
+    Bool reai_batch_renames_functions (
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiFnInfoVec* new_name_mappings
+    );
+    Bool reai_rename_function (
+        Reai*         reai,
+        ReaiResponse* response,
+        FunctionId    fn_id,
+        CString       new_name
+    );
 
 #ifdef __cplusplus
 }

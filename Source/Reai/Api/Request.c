@@ -14,6 +14,8 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Util/Vec.h"
+
 static CString reai_model_to_name[] = {
     [REAI_MODEL_X86_WINDOWS] = "binnet-0.3-x86-windows",
     [REAI_MODEL_X86_LINUX]   = "binnet-0.3-x86-linux",
@@ -262,6 +264,58 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             if (request->search.state) {
                 JSON_ADD_STRING (json, "state", request->search.state);
             }
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS : {
+            if (request->batch_renames_functions.new_name_mapping) {
+                /* create new json array to store mappings */
+                cJSON* mapping_arr = cJSON_CreateObject();
+                GOTO_HANDLER_IF (
+                    !mapping_arr,
+                    CONVERSION_FAILED,
+                    "Failed to create JSON object.\n"
+                );
+                cJSON_AddItemToObject (json, "new_name_mapping", mapping_arr);
+
+                /* create new id-name pair for each rename in batch rename */
+                REAI_VEC_FOREACH (request->batch_renames_functions.new_name_mapping, function, {
+                    /* create a new object for each function to store id-name pairs */
+                    cJSON* new_map = cJSON_CreateObject();
+                    GOTO_HANDLER_IF (
+                        !new_map,
+                        CONVERSION_FAILED,
+                        "Failed to create JSON object.\n"
+                    );
+                    cJSON_AddItemToArray (mapping_arr, new_map);
+
+                    /* create map */
+                    JSON_ADD_NUMBER (new_map, "function_id", function->id);
+                    if (function->name) {
+                        JSON_ADD_STRING (new_map, "function_name", function->name);
+                    } else {
+                        PRINT_ERR (
+                            "Function name is required for each rename : id = %llu.\n",
+                            function->id
+                        );
+                    }
+                });
+            } else {
+                PRINT_ERR ("'new_name_mapping' is a required field for batch rename.\n");
+            }
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_RENAME_FUNCTION : {
+            if (request->rename_function.new_name) {
+                JSON_ADD_STRING (json, "new_name", request->rename_function.new_name);
+            } else {
+                PRINT_ERR (
+                    "'new_name' is a requred field for function name : id = %llu.\n",
+                    request->rename_function.function_id
+                );
+            }
+
             break;
         }
 

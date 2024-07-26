@@ -42,6 +42,12 @@ extern "C" {
         REAI_RESPONSE_TYPE_RECENT_ANALYSIS     = REAI_REQUEST_TYPE_RECENT_ANALYSIS,
         REAI_RESPONSE_TYPE_ANALYSIS_STATUS     = REAI_REQUEST_TYPE_ANALYSIS_STATUS,
 
+        /* analysis info api */
+        /* REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS = REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS, */
+        REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS = REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS,
+        REAI_RESPONSE_TYPE_RENAME_FUNCTION         = REAI_REQUEST_TYPE_RENAME_FUNCTION,
+        /* REAI_RESPONSE_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS = REAI_REQUEST_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS, */
+
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
     } ReaiResponseType;
@@ -130,6 +136,11 @@ extern "C" {
                 Bool                success;
                 ReaiQueryResultVec* query_results;
             } search;
+
+            struct {
+                Bool    success;
+                CString msg;
+            } rename_function;
         };
     } ReaiResponse;
 

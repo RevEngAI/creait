@@ -290,26 +290,30 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 );
 
                 /* create vector to store information */
-                ReaiFnInfoVec* vec = Null;
+                ReaiFnInfoVec* fn_infos = Null;
                 GOTO_HANDLER_IF (
-                    !(vec = reai_fn_info_vec_create()),
+                    !(fn_infos = reai_fn_info_vec_create()),
                     INIT_FAILED,
                     "Failed to create FnInfo vector to store retrieved function information.\n"
                 );
 
                 /* go over each item in array and insert */
-                cJSON*      function = Null;
-                ReaiFnInfo* info     = vec->items;
+                cJSON* function = Null;
                 cJSON_ArrayForEach (function, functions) {
-                    GET_JSON_NUM (function, "function_id", info->id);
-                    GET_JSON_STRING (function, "function_name", info->name);
-                    GET_JSON_NUM (function, "function_size", info->size);
-                    GET_JSON_NUM (function, "function_vaddr", info->vaddr);
+                    ReaiFnInfo fn = {0};
+                    GET_JSON_NUM (function, "function_id", fn.id);
+                    GET_JSON_STRING (function, "function_name", fn.name);
+                    GET_JSON_NUM (function, "function_size", fn.size);
+                    GET_JSON_NUM (function, "function_vaddr", fn.vaddr);
 
-                    info++;
+                    if (!reai_fn_info_vec_append (fn_infos, &fn)) {
+                        PRINT_ERR ("Failed to insert a new function info to vector.\n");
+                        reai_fn_info_vec_destroy (fn_infos);
+                        goto INIT_FAILED;
+                    }
                 }
 
-                response->basic_function_info.fn_infos = vec;
+                response->basic_function_info.fn_infos = fn_infos;
             }
 
             break;
@@ -419,6 +423,21 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                     }
                 }
             }
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS;
+            break;
+        }
+        case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
+            response->type = REAI_RESPONSE_TYPE_RENAME_FUNCTION;
+
+            GET_JSON_BOOL (json, "success", response->rename_function.success);
+
+            /* this string is optional, so we won't throw error if failed */
+            response->rename_function.msg = json_response_get_string (json, "msg");
 
             break;
         }

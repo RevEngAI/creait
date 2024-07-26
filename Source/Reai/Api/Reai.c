@@ -318,6 +318,24 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS : {
+            SET_ENDPOINT ("%s/functions/batch/rename", reai->host);
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_RENAME_FUNCTION : {
+            SET_ENDPOINT (
+                "%s/functions/rename/%llu",
+                reai->host,
+                request->rename_function.function_id
+            );
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_RENAME_FUNCTION);
+            break;
+        }
+
         default :
             PRINT_ERR ("Invalid request.\n");
             break;
@@ -343,6 +361,9 @@ REQUEST_FAILED:
 
 /**
  * Upload given file.
+ *
+ * The returned string is owned the @c response provided. When response
+ * is reset or destroyed, the returned string will automatically be freed as well.
  *
  * @parma reai
  * @param response Where complete response will be stored.
@@ -409,7 +430,6 @@ BinaryId reai_create_analysis (
         ERR_INVALID_ARGUMENTS
     );
 
-
     /* prepare new request to perform analysis */
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
@@ -445,5 +465,176 @@ BinaryId reai_create_analysis (
         }
     } else {
         return 0;
+    }
+}
+
+/**
+ * @b Get basic function info for given binary id.
+ *
+ * Returned vector is owned by the given @c response object. The vector
+ * will automatically be destroyed when response is reset or destroyed.
+ *
+ * @param reai
+ * @param response
+ * @parma bin_id
+ *
+ * @return @c ReaiFnInfoVec* on success.
+ * @return @c Null otherwise.
+ * */
+ReaiFnInfoVec* reai_get_basic_function_info (Reai* reai, ReaiResponse* response, BinaryId bin_id) {
+    RETURN_VALUE_IF (!reai || !response || !bin_id, Null, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to get function info list for given binary id */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO;
+
+    request.basic_function_info.binary_id = bin_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO : {
+                return response->basic_function_info.fn_infos;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return Null;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.\n");
+            }
+        }
+    } else {
+        return Null;
+    }
+}
+
+
+/**
+ * @b Get recently created analysis.
+ *
+ * The returned vector is owned the @c response provided. When response
+ * is reset or destroyed, the returned vector will automatically be destroyed as well.
+ *
+ * @param reai
+ * @param response
+ * @param status Complete, Queued, etc...
+ * @param scope Public, Private, Default.
+ * @param count Default value is 10 (if zero is provided).
+ *
+ * @return @c ReaiAnalysisInfoVec reference on success.
+ * @return @c Null otherwise.
+ * */
+ReaiAnalysisInfoVec* reai_get_recent_analyses (
+    Reai*              reai,
+    ReaiResponse*      response,
+    ReaiAnalysisStatus status,
+    ReaiBinaryScope    scope,
+    Size               count
+) {
+    RETURN_VALUE_IF (!reai || !response, Null, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to get recent analysis */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
+
+    request.recent_analysis.count  = count;
+    request.recent_analysis.scope  = scope;
+    request.recent_analysis.status = status;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
+                return response->recent_analysis.analysis_infos;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return Null;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.\n");
+            }
+        }
+    } else {
+        return Null;
+    }
+}
+
+/**
+ * @b Rename many functions at once.
+ *
+ * Ownership of given vector is not transferred and caller is responsible
+ * for managing it's lifetime.
+ *
+ * @param reai
+ * @param response
+ * @param new_name_mapping
+ *
+ * @return @c True if response type is same as request type.
+ *         Note that this does not mean all functions are renamed correctly.
+ * @return @c False otherwise.
+ * */
+Bool reai_batch_renames_functions (
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiFnInfoVec* new_name_mapping
+) {
+    RETURN_VALUE_IF (!reai || !response || !new_name_mapping, False, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to rename functions in batch */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS;
+
+    request.batch_renames_functions.new_name_mapping = new_name_mapping;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS : {
+                return True;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return False;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.\n");
+            }
+        }
+    } else {
+        return False;
+    }
+}
+
+/**
+ * @b Rename function with given function id to given new name.
+ *
+ * @param reai
+ * @param response
+ * @param fn_id
+ * @param new_name
+ *
+ * @return @c True on success.
+ * @return @c False otherwise.
+ * */
+Bool reai_rename_function (Reai* reai, ReaiResponse* response, FunctionId fn_id, CString new_name) {
+    RETURN_VALUE_IF (!reai || !response || !fn_id || !new_name, False, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to rename functions in batch */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_RENAME_FUNCTION;
+
+    request.rename_function.function_id = fn_id;
+    request.rename_function.new_name    = new_name;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
+                return response->rename_function.success;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return False;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.\n");
+            }
+        }
+    } else {
+        return False;
     }
 }

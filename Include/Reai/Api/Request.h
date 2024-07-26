@@ -63,6 +63,11 @@ extern "C" {
         REAI_REQUEST_TYPE_RECENT_ANALYSIS,
         REAI_REQUEST_TYPE_ANALYSIS_STATUS,
 
+        /* analysis info api */
+        /* REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS, */
+        REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS,
+        REAI_REQUEST_TYPE_RENAME_FUNCTION,
+        /* REAI_REQUEST_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS, */
 
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
@@ -132,6 +137,15 @@ extern "C" {
                 CString collection_name;
                 CString state;
             } search;
+
+            struct {
+                ReaiFnInfoVec* new_name_mapping;
+            } batch_renames_functions;
+
+            struct {
+                FunctionId function_id;
+                CString    new_name;
+            } rename_function;
         };
     } ReaiRequest;
 

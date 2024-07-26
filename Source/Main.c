@@ -1,12 +1,9 @@
 /* reai */
 #include <Reai/Api/Api.h>
-#include <Reai/Common.h>
 #include <Reai/Config.h>
 
 /* sqlite */
 #include <sqlite3.h>
-
-#include "Reai/Api/Request.h"
 
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
@@ -27,13 +24,23 @@ int main (int argc, char **argv) {
     ReaiResponse response;
     reai_response_init (&response);
 
-    ReaiRequest request = {0};
+    /* get function infos and print info abt them */
+    ReaiFnInfoVec *fn_infos = reai_get_basic_function_info (reai, &response, 18434);
+    REAI_VEC_FOREACH (fn_infos, fn, { PRINT_ERR ("%llu:%s\n", fn->id, fn->name); });
 
-    request.type = REAI_REQUEST_TYPE_HEALTH_CHECK;
-    reai_request (reai, &request, &response);
+    /* since we need to reuse the fn_infos vec, we clone */
+    fn_infos = reai_fn_info_vec_clone_create (fn_infos);
+    REAI_VEC_FOREACH (fn_infos, fn, {
+        Char new_name[40] = {0};
+        snprintf (new_name, sizeof (new_name), "renamed_%s", fn->name);
+        if (!reai_rename_function (reai, &response, fn->id, new_name)) {
+            PRINT_ERR ("Failed to rename function.\n");
+        } else {
+            PRINT_ERR ("Renamed function '%s' -> '%s'\n", fn->name, new_name);
+        }
+    });
 
-    PRINT_ERR ("%s", response.raw.data);
-
+    reai_response_deinit (&response);
     reai_destroy (reai);
     sqlite3_close (sql);
     reai_config_destroy (cfg);
