@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
-include(FetchContent)
 
-project(LibReaiAPI LANGUAGES C VERSION 0)
+project(CREAIT LANGUAGES C VERSION 0)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
@@ -42,7 +41,8 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 # dependencies
 add_subdirectory(Deps/cJSON)
 add_subdirectory(Deps/tomlc99)
-find_package (SQLite3 REQUIRED)
+find_package(CURL REQUIRED)
+find_package(SQLite3 REQUIRED)
 
 # Add library source
 add_subdirectory(Source)

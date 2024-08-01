@@ -18,8 +18,6 @@
 extern "C" {
 #endif
 
-    typedef Uint64 FunctionId;
-
     /**
      * @b Represents a single function symbol information entry in array of symbol
      * info. This same struct is used in both `ReaiRequest` and `ReaiResponse` structures
@@ -35,7 +33,7 @@ extern "C" {
          * in the `ReaiResponse` structure returned by request to
          * get basic function info `/analyse/functions/binary_id` endpoint.
          * */
-        FunctionId id;
+        ReaiFunctionId id;
 
         /**
          * @b Must specify name of function.

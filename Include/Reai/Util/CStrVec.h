@@ -13,8 +13,6 @@
 
 #include <Reai/Util/Vec.h>
 
-#include "Reai/Common.h"
-
 /**
  * Create another CString* from given one.
  *

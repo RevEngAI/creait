@@ -17,8 +17,6 @@
 extern "C" {
 #endif
 
-    typedef Uint64 BinaryId;
-
     typedef enum ReaiFileOption {
         REAI_FILE_OPTION_DEFAULT,
         REAI_FILE_OPTION_PE,
@@ -77,12 +75,12 @@ extern "C" {
      * This is used in create analysis request type.
      * */
     typedef enum ReaiModel {
-        REAI_MODEL_UNKNOWN = 0,
-        REAI_MODEL_X86_WINDOWS,
-        REAI_MODEL_X86_LINUX,
-        REAI_MODEL_X86_MACOS,
-        REAI_MODEL_X86_ANDROID,
-        REAI_MODEL_MAX
+        REAI_MODEL_BINNET_0_3_UNKNOWN = 0,
+        REAI_MODEL_BINNET_0_3_X86_WINDOWS,
+        REAI_MODEL_BINNET_0_3_X86_LINUX,
+        REAI_MODEL_BINNET_0_3_X86_MACOS,
+        REAI_MODEL_BINNET_0_3_X86_ANDROID,
+        REAI_MODEL_BINNET_0_3_MAX
     } ReaiModel;
 
     /**
@@ -119,10 +117,8 @@ extern "C" {
                 Size    size_in_bytes;    /**< @b Size of file in bytes. */
             } create_analysis;
 
-            // TODO: request waits for too long when calling endpoint GET `/analyse/functions/{binary_id}`
-
             struct {
-                BinaryId binary_id;
+                ReaiBinaryId binary_id;
             } delete_analysis, basic_function_info, analysis_status;
 
             struct {
@@ -143,8 +139,8 @@ extern "C" {
             } batch_renames_functions;
 
             struct {
-                FunctionId function_id;
-                CString    new_name;
+                ReaiFunctionId function_id;
+                CString        new_name;
             } rename_function;
         };
     } ReaiRequest;

@@ -1,9 +1,27 @@
 /* reai */
 #include <Reai/Api/Api.h>
 #include <Reai/Config.h>
+#include <Reai/Db.h>
 
 /* sqlite */
 #include <sqlite3.h>
+
+#include "Reai/Api/Request.h"
+#include "Reai/Util/Vec.h"
+
+Size file_size (CString file_name) {
+    RETURN_VALUE_IF (!file_name, 0, ERR_INVALID_ARGUMENTS);
+
+    FILE *f = fopen (file_name, "r");
+
+    fseek (f, 0, SEEK_END);
+    Size size = ftell (f);
+    fseek (f, 0, SEEK_SET);
+
+    fclose (f);
+
+    return size;
+}
 
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
@@ -11,38 +29,74 @@ int main (int argc, char **argv) {
     ReaiConfig *cfg = reai_config_load (Null);
     RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.\n");
 
-    sqlite3 *sql = Null;
-    RETURN_VALUE_IF (
-        (sqlite3_open (".reai.db", &sql) != SQLITE_OK) || !sql,
-        EXIT_FAILURE,
-        "Failed to load sqlite database : %s\n",
-        sqlite3_errmsg (sql)
-    );
-
     Reai *reai = reai_create (cfg->host, cfg->apikey);
+
+    Char db_path[64] = {0};
+    snprintf (db_path, sizeof (db_path) - 1, "%s/reai.db", cfg->db_dir_path);
+    ReaiDb *db = reai_db_create (db_path);
+    RETURN_VALUE_IF (!db, EXIT_FAILURE, "Failed to create database.\n");
 
     ReaiResponse response;
     reai_response_init (&response);
 
-    /* get function infos and print info abt them */
-    ReaiFnInfoVec *fn_infos = reai_get_basic_function_info (reai, &response, 18434);
-    REAI_VEC_FOREACH (fn_infos, fn, { PRINT_ERR ("%llu:%s\n", fn->id, fn->name); });
+    RETURN_VALUE_IF (
+        !reai_upload_file (reai, &response, argv[0]),
+        EXIT_FAILURE,
+        "Failed to make request to upload file.\n"
+    );
+    RETURN_VALUE_IF (
+        !reai_db_add_upload (db, argv[0], response.upload_file.sha_256_hash),
+        EXIT_FAILURE,
+        "Failed to add uploaded file to database.\n"
+    );
 
-    /* since we need to reuse the fn_infos vec, we clone */
-    fn_infos = reai_fn_info_vec_clone_create (fn_infos);
-    REAI_VEC_FOREACH (fn_infos, fn, {
-        Char new_name[40] = {0};
-        snprintf (new_name, sizeof (new_name), "renamed_%s", fn->name);
-        if (!reai_rename_function (reai, &response, fn->id, new_name)) {
-            PRINT_ERR ("Failed to rename function.\n");
-        } else {
-            PRINT_ERR ("Renamed function '%s' -> '%s'\n", fn->name, new_name);
-        }
+    CStrVec *hashes = reai_db_get_hashes_for_file_path (db, argv[0]);
+    RETURN_VALUE_IF (!hashes, EXIT_FAILURE, "No hashes found??\n");
+    REAI_VEC_FOREACH (hashes, hash, {
+        CString upload_time = reai_db_get_upload_time (db, *hash);
+        PRINT_ERR ("%s @ %s\n", *hash, upload_time);
+        FREE (upload_time);
     });
+    reai_cstr_vec_destroy (hashes);
 
-    reai_response_deinit (&response);
+    CString latest_hash = reai_db_get_latest_hash_for_file_path (db, argv[0]);
+
+    reai_create_analysis (
+        reai,
+        &response,
+        REAI_MODEL_BINNET_0_3_X86_LINUX,
+        Null,
+        True,
+        latest_hash,
+        argv[0],
+        Null,
+        file_size (argv[0])
+    );
+
+    reai_db_add_analysis (
+        db,
+        response.create_analysis.binary_id,
+        latest_hash,
+        REAI_MODEL_BINNET_0_3_X86_LINUX,
+        argv[0],
+        Null
+    );
+
+    U64Vec *analyses = reai_db_get_analyses_created_for_binary (db, latest_hash);
+    REAI_VEC_FOREACH (analyses, bin_id, {
+        // NOTE: the strings returend must be freed, but IDC right noow.
+        PRINT_ERR (
+            "bin_id = %llu\n hash = %s\n ai_model_name = %s\n",
+            *bin_id,
+            reai_db_get_analysis_binary_file_hash (db, *bin_id),
+            reai_db_get_analysis_model_name (db, *bin_id)
+        );
+    });
+    reai_u64_vec_destroy (analyses);
+
+    reai_db_destroy (db);
     reai_destroy (reai);
-    sqlite3_close (sql);
+    reai_response_deinit (&response);
     reai_config_destroy (cfg);
 
     return EXIT_SUCCESS;

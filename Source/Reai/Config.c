@@ -60,6 +60,14 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.\n");
     cfg->host = host.u.s;
 
+    toml_datum_t db_dir_path = toml_string_in (reai_conf, "db_dir_path");
+    GOTO_HANDLER_IF (
+        !db_dir_path.ok,
+        LOAD_FAILED,
+        "Cannot find 'db_dir_path' (required) in RevEngAI config.\n"
+    );
+    cfg->db_dir_path = db_dir_path.u.s;
+
     toml_datum_t model = toml_string_in (reai_conf, "model");
     if (model.ok) {
         cfg->model = model.u.s;

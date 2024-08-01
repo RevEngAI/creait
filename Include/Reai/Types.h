@@ -31,6 +31,9 @@ typedef unsigned char Bool;
 
 typedef const Char *CString;
 
+typedef Uint64 ReaiBinaryId;
+typedef Uint64 ReaiFunctionId;
+
 // clang-format on
 
 #define True  ((Bool)1)
@@ -39,6 +42,10 @@ typedef const Char *CString;
 
 #ifndef SIZE_MAX
 #    define SIZE_MAX ((Size)1 << (sizeof (Size) * 8 - 1))
+#endif
+
+#ifndef UINT32_MAX
+#    define UINT32_MAX ((Uint32)1 << (sizeof (Uint32) * 8 - 1))
 #endif
 
 #endif // REAI_TYPE_H

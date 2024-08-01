@@ -24,6 +24,9 @@
 #    define REAI_VEC_INITIAL_ITEM_CAPACITY 32
 #endif
 
+typedef void* (*ReaiGenericCloneInit) (void* dst, void* src);
+typedef void* (*ReaiGenericCloneDeinit) (void* clone);
+
 #define REAI_VEC_FOREACH(vec, iter, body)                                                          \
     do {                                                                                           \
         if (!vec) {                                                                                \
@@ -91,9 +94,10 @@
     PRIVATE vec_tname* reai_##fn_infix##_vec_deinit (vec_tname* vec) {                             \
         RETURN_VALUE_IF (!vec, Null, ERR_INVALID_ARGUMENTS);                                       \
                                                                                                    \
-        if (vec_iclone_deinit != Null) {                                                           \
+        ReaiGenericCloneDeinit deiniter = (ReaiGenericCloneDeinit)vec_iclone_deinit;               \
+        if (deiniter != Null) {                                                                    \
             for (Size s = 0; s < vec->count; s++) {                                                \
-                vec_iclone_deinit (vec->items + s);                                                \
+                deiniter (vec->items + s);                                                         \
             }                                                                                      \
         } else {                                                                                   \
             memset (vec->items, 0, sizeof (vec_itype) * vec->count);                               \
@@ -117,9 +121,10 @@
             vec->capacity = newcap;                                                                \
         }                                                                                          \
                                                                                                    \
-        if (vec_iclone_init != Null) {                                                             \
+        ReaiGenericCloneInit initer = (ReaiGenericCloneInit)vec_iclone_init;                       \
+        if (initer != Null) {                                                                      \
             RETURN_VALUE_IF (                                                                      \
-                !vec_iclone_init (vec->items + vec->count++, item),                                \
+                !initer (vec->items + vec->count++, item),                                         \
                 Null,                                                                              \
                 "Failed to make item clone"                                                        \
             );                                                                                     \
@@ -149,14 +154,20 @@
             clone_vec->capacity = vec->capacity;                                                   \
         }                                                                                          \
                                                                                                    \
-        for (Size s = 0; s < vec->count; s++) {                                                    \
-            vec_itype* clone_item = clone_vec->items + clone_vec->count++;                         \
-            vec_itype* item       = vec->items + s;                                                \
-            GOTO_HANDLER_IF (                                                                      \
-                !vec_iclone_init (clone_item, item),                                               \
-                CLONE_FAILED,                                                                      \
-                "Failed to create item clone\n"                                                    \
-            );                                                                                     \
+        ReaiGenericCloneInit initer = (ReaiGenericCloneInit)vec_iclone_init;                       \
+        if (initer) {                                                                              \
+            for (Size s = 0; s < vec->count; s++) {                                                \
+                vec_itype* clone_item = clone_vec->items + clone_vec->count++;                     \
+                vec_itype* item       = vec->items + s;                                            \
+                GOTO_HANDLER_IF (                                                                  \
+                    !initer (clone_item, item),                                                    \
+                    CLONE_FAILED,                                                                  \
+                    "Failed to create item clone\n"                                                \
+                );                                                                                 \
+            }                                                                                      \
+        } else {                                                                                   \
+            memcpy (clone_vec->items, vec->items, sizeof (vec_itype) * vec->count);                \
+            clone_vec->count = vec->count;                                                         \
         }                                                                                          \
         return clone_vec;                                                                          \
                                                                                                    \

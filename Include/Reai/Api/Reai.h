@@ -28,8 +28,8 @@ extern "C" {
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
 
-    CString  reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
-    BinaryId reai_create_analysis (
+    CString      reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
+    ReaiBinaryId reai_create_analysis (
         Reai*          reai,
         ReaiResponse*  response,
         ReaiModel      model,
@@ -48,18 +48,20 @@ extern "C" {
         Size               count
     );
     ReaiFnInfoVec*
-         reai_get_basic_function_info (Reai* reai, ReaiResponse* response, BinaryId bin_id);
+         reai_get_basic_function_info (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id);
     Bool reai_batch_renames_functions (
         Reai*          reai,
         ReaiResponse*  response,
         ReaiFnInfoVec* new_name_mappings
     );
     Bool reai_rename_function (
-        Reai*         reai,
-        ReaiResponse* response,
-        FunctionId    fn_id,
-        CString       new_name
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiFunctionId fn_id,
+        CString        new_name
     );
+    ReaiAnalysisStatus
+        reai_get_analysis_status (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id);
 
 #ifdef __cplusplus
 }

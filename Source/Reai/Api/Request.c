@@ -17,10 +17,10 @@
 #include "Reai/Util/Vec.h"
 
 static CString reai_model_to_name[] = {
-    [REAI_MODEL_X86_WINDOWS] = "binnet-0.3-x86-windows",
-    [REAI_MODEL_X86_LINUX]   = "binnet-0.3-x86-linux",
-    [REAI_MODEL_X86_MACOS]   = "binnet-0.3-x86-macos",
-    [REAI_MODEL_X86_ANDROID] = "binnet-0.3-x86-android",
+    [REAI_MODEL_BINNET_0_3_X86_WINDOWS] = "binnet-0.3-x86-windows",
+    [REAI_MODEL_BINNET_0_3_X86_LINUX]   = "binnet-0.3-x86-linux",
+    [REAI_MODEL_BINNET_0_3_X86_MACOS]   = "binnet-0.3-x86-macos",
+    [REAI_MODEL_BINNET_0_3_X86_ANDROID] = "binnet-0.3-x86-android",
 };
 
 static CString reai_file_opt_to_str[] = {
@@ -91,8 +91,8 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
             GOTO_HANDLER_IF (
-                (request->create_analysis.model == REAI_MODEL_UNKNOWN ||
-                 request->create_analysis.model >= REAI_MODEL_MAX),
+                (request->create_analysis.model == REAI_MODEL_BINNET_0_3_UNKNOWN ||
+                 request->create_analysis.model >= REAI_MODEL_BINNET_0_3_MAX),
                 CONVERSION_FAILED,
                 "Required field model is invalid\n"
             );

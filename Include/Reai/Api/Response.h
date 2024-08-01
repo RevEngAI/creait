@@ -113,7 +113,7 @@ extern "C" {
 
             struct {
                 Bool     success;   /**< @b True when analysis created successfully */
-                BinaryId binary_id; /**< @b Binary id returned in response */
+                ReaiBinaryId binary_id; /**< @b Binary id returned in response */
             } create_analysis;
 
             struct {

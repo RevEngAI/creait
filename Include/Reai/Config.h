@@ -18,14 +18,15 @@
 extern "C" {
 #endif
 
-typedef struct ReaiConfig {
-    CString host;
-    CString apikey;
-    CString model;
-} ReaiConfig;
+    typedef struct ReaiConfig {
+        CString host;
+        CString apikey;
+        CString model;
+        CString db_dir_path;
+    } ReaiConfig;
 
-ReaiConfig *reai_config_load (CString path);
-void        reai_config_destroy (ReaiConfig *cfg);
+    ReaiConfig *reai_config_load (CString path);
+    void        reai_config_destroy (ReaiConfig *cfg);
 
 #ifdef __cplusplus
 }

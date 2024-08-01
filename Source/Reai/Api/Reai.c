@@ -16,6 +16,7 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/AnalysisInfo.h"
 #include "Reai/Api/Request.h"
 #include "Reai/Api/Response.h"
 
@@ -413,7 +414,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
  * @return binary id on success.
  * @return 0 on failure.
  * */
-BinaryId reai_create_analysis (
+ReaiBinaryId reai_create_analysis (
     Reai*          reai,
     ReaiResponse*  response,
     ReaiModel      model,
@@ -434,7 +435,7 @@ BinaryId reai_create_analysis (
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
 
-    request.create_analysis.model        = REAI_MODEL_X86_LINUX;
+    request.create_analysis.model        = REAI_MODEL_BINNET_0_3_X86_LINUX;
     request.create_analysis.platform_opt = Null;
     request.create_analysis.isa_opt      = Null;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
@@ -481,7 +482,8 @@ BinaryId reai_create_analysis (
  * @return @c ReaiFnInfoVec* on success.
  * @return @c Null otherwise.
  * */
-ReaiFnInfoVec* reai_get_basic_function_info (Reai* reai, ReaiResponse* response, BinaryId bin_id) {
+ReaiFnInfoVec*
+    reai_get_basic_function_info (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id) {
     RETURN_VALUE_IF (!reai || !response || !bin_id, Null, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to get function info list for given binary id */
@@ -612,7 +614,12 @@ Bool reai_batch_renames_functions (
  * @return @c True on success.
  * @return @c False otherwise.
  * */
-Bool reai_rename_function (Reai* reai, ReaiResponse* response, FunctionId fn_id, CString new_name) {
+Bool reai_rename_function (
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiFunctionId fn_id,
+    CString        new_name
+) {
     RETURN_VALUE_IF (!reai || !response || !fn_id || !new_name, False, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to rename functions in batch */
@@ -636,5 +643,46 @@ Bool reai_rename_function (Reai* reai, ReaiResponse* response, FunctionId fn_id,
         }
     } else {
         return False;
+    }
+}
+
+
+/**
+ * @b Get analysis status for given binary.
+ *
+ * @param reai
+ * @param response
+ * @param bin_id Binary ID to get analysis status for.
+ *
+ * @return @c ReaiAnaylsisStatus < @c REAI_ANALYSIS_STATUS_MAX enum on success.
+ * @return @c REAI_ANALYSIS_STATUS_INVALID otherwise.
+ * */
+ReaiAnalysisStatus
+    reai_get_analysis_status (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id) {
+    RETURN_VALUE_IF (!reai || !response, REAI_ANALYSIS_STATUS_INVALID, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to get analysis status */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_ANALYSIS_STATUS;
+
+    request.analysis_status.binary_id = bin_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_ANALYSIS_STATUS : {
+                return response->analysis_status.status;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return REAI_ANALYSIS_STATUS_INVALID;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (
+                    REAI_ANALYSIS_STATUS_INVALID,
+                    "Unexpected response type.\n"
+                );
+            }
+        }
+    } else {
+        return REAI_ANALYSIS_STATUS_INVALID;
     }
 }
