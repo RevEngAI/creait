@@ -12,13 +12,13 @@
 
 /* reai */
 #include <Reai/Api/Api.h>
+#include <Reai/Db.h>
+#include <Reai/Util/Vec.h>
 
 /* libc */
 #include <memory.h>
 
-#include "Reai/AnalysisInfo.h"
 #include "Reai/Api/Request.h"
-#include "Reai/Api/Response.h"
 
 struct Reai {
     CURL*              curl;
@@ -26,6 +26,8 @@ struct Reai {
 
     CString host;
     CString api_key;
+
+    ReaiDb* db;
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
@@ -361,6 +363,82 @@ REQUEST_FAILED:
 };
 
 /**
+ * @b Set a database in Reai. This will make sure that database
+ * is automatically updated in case of file upload or analysis creation.
+ *
+ * The given DB object is now owned by Reai and will automatically be
+ * destroyed when given Reai object is destroyed.
+ *
+ * @param reai
+ * @param db
+ *
+ * @return @c reai On success.
+ * @return @c Null otherwise.
+ * */
+Reai* reai_set_db (Reai* reai, ReaiDb* db) {
+    RETURN_VALUE_IF (!reai || !db, Null, ERR_INVALID_ARGUMENTS);
+
+    reai->db = db;
+
+    return reai;
+}
+
+/**
+ * @b Update analysis status of all created analyses in database.
+ *
+ * This call requires that Reai already has a set database.
+ *
+ * @param reai
+ *
+ * @return @c reai On success.
+ * @return @c Null otherwise.
+ * */
+Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
+    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.\n");
+
+    U64Vec* bin_ids = reai_db_get_all_created_analyses (reai->db);
+    RETURN_VALUE_IF (!bin_ids, Null, "Failed to get all created analyses from DB.\n");
+
+    ReaiResponse response;
+    GOTO_HANDLER_IF (
+        !reai_response_init (&response),
+        STATUS_UPDATE_FAILED,
+        "Failed to create response structure.\n"
+    );
+
+    REAI_VEC_FOREACH (bin_ids, bin_id, {
+        ReaiRequest request               = {0};
+        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;
+        request.analysis_status.binary_id = *bin_id;
+
+        GOTO_HANDLER_IF (
+            !reai_request (reai, &request, &response),
+            STATUS_UPDATE_FAILED,
+            "Failed to make request to RevEngAI servers : %s.\n",
+            response.raw.data
+        );
+
+        reai_db_set_analysis_status (
+            reai->db,
+            *bin_id,
+            response.analysis_status.status ? response.analysis_status.status :
+                                              REAI_ANALYSIS_STATUS_QUEUED
+        );
+    });
+
+
+DEFAULT_RETURN:
+    reai_u64_vec_destroy (bin_ids);
+    reai_response_deinit (&response);
+    return reai;
+
+STATUS_UPDATE_FAILED:
+    reai = Null;
+    goto DEFAULT_RETURN;
+}
+
+/**
  * Upload given file.
  *
  * The returned string is owned the @c response provided. When response
@@ -385,6 +463,16 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
+                if (reai->db) {
+                    if (!reai_db_add_upload (
+                            reai->db,
+                            file_path,
+                            response->upload_file.sha_256_hash
+                        )) {
+                        PRINT_ERR ("Failed to add uploaded file into to Reai DB.\n");
+                    }
+                }
+
                 return response->upload_file.sha_256_hash;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
@@ -435,7 +523,7 @@ ReaiBinaryId reai_create_analysis (
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
 
-    request.create_analysis.model        = REAI_MODEL_BINNET_0_3_X86_LINUX;
+    request.create_analysis.model        = model;
     request.create_analysis.platform_opt = Null;
     request.create_analysis.isa_opt      = Null;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
@@ -446,15 +534,28 @@ ReaiBinaryId reai_create_analysis (
     request.create_analysis.bin_scope =
         is_private ? REAI_BINARY_SCOPE_PRIVATE : REAI_BINARY_SCOPE_PUBLIC;
     request.create_analysis.file_name     = file_name;
-    request.create_analysis.cmdline_args  = Null;
+    request.create_analysis.cmdline_args  = cmdline_args;
     request.create_analysis.priority      = 0;
     request.create_analysis.sha_256_hash  = sha_256_hash;
-    request.create_analysis.debug_hash    = cmdline_args;
+    request.create_analysis.debug_hash    = Null;
     request.create_analysis.size_in_bytes = size_in_bytes;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_CREATE_ANALYSIS : {
+                if (reai->db) {
+                    if (!reai_db_add_analysis (
+                            reai->db,
+                            response->create_analysis.binary_id,
+                            sha_256_hash,
+                            model,
+                            file_name,
+                            cmdline_args
+                        )) {
+                        PRINT_ERR ("Failed to add created analysis info to database.\n");
+                    }
+                }
+
                 return response->create_analysis.binary_id;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {

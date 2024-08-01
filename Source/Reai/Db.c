@@ -310,9 +310,7 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
         binary_sha_256_hash
     );
 
-    /* only one result so we execute only once */
-    Bool has_results = True;
-    while (has_results) {
+    while (True) {
         switch (sqlite3_step (stmt)) {
             case SQLITE_ROW : {
                 Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
@@ -322,7 +320,6 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
 
             case SQLITE_DONE : {
                 sqlite3_finalize (stmt);
-                has_results = False;
                 return vec;
             }
 
@@ -339,8 +336,51 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
             }
         }
     }
+}
 
-    return vec;
+/**
+ * @b Get binary ID for all created analyses.
+ *
+ * @param db
+ *
+ * @return @c U64Vec containing binary ids for all created analyses on success.
+ * @return @c Null otherwise.
+ * */
+U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
+    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+
+    U64Vec* vec = reai_u64_vec_create();
+    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.\n");
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (stmt, "SELECT binary_id FROM created_analysis;%s", "");
+
+    while (True) {
+        switch (sqlite3_step (stmt)) {
+            case SQLITE_ROW : {
+                Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
+                reai_u64_vec_append (vec, &binary_id);
+                break;
+            }
+
+            case SQLITE_DONE : {
+                sqlite3_finalize (stmt);
+                return vec;
+            }
+
+            default : {
+                sqlite3_finalize (stmt);
+                reai_u64_vec_destroy (vec);
+
+                PRINT_ERR (
+                    "Failed to execute query : %s @off=%d.\n",
+                    sqlite3_errmsg (db->db_conn),
+                    sqlite3_error_offset (db->db_conn)
+                );
+                return Null;
+            }
+        }
+    }
 }
 
 /**
@@ -646,7 +686,7 @@ Bool reai_db_set_analysis_status (
     );
 
     EXEC_SQL_QUERY (
-        "UPDATE created_analysis SET status = %s WHERE binary_id = %llu",
+        "UPDATE created_analysis SET status = '%s' WHERE binary_id = %llu",
         reai_analysis_status_to_cstr (new_status),
         binary_id
     );

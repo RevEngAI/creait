@@ -14,6 +14,7 @@
 #include <Reai/Util/IntVec.h>
 
 typedef struct ReaiDb ReaiDb;
+typedef struct Reai   Reai;
 
 ReaiDb* reai_db_create (CString name);
 void    reai_db_destroy (ReaiDb* db);
@@ -22,6 +23,7 @@ CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path);
 CString  reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path);
 CString  reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash);
 U64Vec*  reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_256_hash);
+U64Vec*  reai_db_get_all_created_analyses (ReaiDb* db);
 CString  reai_db_get_analysis_creation_time (ReaiDb* db, ReaiBinaryId id);
 CString  reai_db_get_analysis_binary_file_hash (ReaiDb* db, ReaiBinaryId id);
 CString  reai_db_get_analysis_file_name (ReaiDb* db, ReaiBinaryId id);
