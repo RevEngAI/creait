@@ -7,7 +7,7 @@
 
 /* reai */
 #include <Reai/Common.h>
-#include <Reai/Util/Log.h>
+#include <Reai/Log.h>
 
 /* libc */
 #include <errno.h>
@@ -127,13 +127,20 @@ void reai_log_printf (ReaiLog* logger, ReaiLogLevel level, CString tag, const ch
         timeinfo = localtime (&rawtime);
         Char timebuf[10];
         strftime (timebuf, sizeof (timebuf), "%H:%M:%S", timeinfo);
-        fprintf (logger->log_fd, "[%s] : [%s] : [%s] : ", log_level_to_cstr (level), timebuf, tag);
+        fprintf (
+            logger->log_fd,
+            "[%-5s] : [%s] : [%s] : ",
+            log_level_to_cstr (level),
+            timebuf,
+            tag
+        );
     }
 
     /* pass on everything else to fprintf */
     va_list args;
     va_start (args, fmtstr);
     vfprintf (logger->log_fd, fmtstr, args);
+    fprintf (logger->log_fd, "\n");
     va_end (args);
 }
 

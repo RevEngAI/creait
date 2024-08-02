@@ -68,6 +68,14 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     );
     cfg->db_dir_path = db_dir_path.u.s;
 
+    toml_datum_t log_dir_path = toml_string_in (reai_conf, "log_dir_path");
+    GOTO_HANDLER_IF (
+        !log_dir_path.ok,
+        LOAD_FAILED,
+        "Cannot find 'log_dir_path' (required) in RevEngAI config.\n"
+    );
+    cfg->log_dir_path = log_dir_path.u.s;
+
     toml_datum_t model = toml_string_in (reai_conf, "model");
     if (model.ok) {
         cfg->model = model.u.s;

@@ -2,13 +2,10 @@
 #include <Reai/Api/Api.h>
 #include <Reai/Config.h>
 #include <Reai/Db.h>
+#include <Reai/Log.h>
 
 /* sqlite */
 #include <sqlite3.h>
-
-#include "Reai/Api/Reai.h"
-#include "Reai/Api/Request.h"
-#include "Reai/Util/Vec.h"
 
 Size file_size (CString file_name) {
     RETURN_VALUE_IF (!file_name, 0, ERR_INVALID_ARGUMENTS);
@@ -39,8 +36,6 @@ int main (int argc, char **argv) {
 
     reai_set_db (reai, db);
 
-    reai_update_all_analyses_status_in_db (reai);
-
     U64Vec *analyses = reai_db_get_all_created_analyses (db);
     REAI_VEC_FOREACH (analyses, bin_id, {
         // NOTE: the strings returend must be freed, but IDC right noow.
@@ -56,6 +51,16 @@ int main (int argc, char **argv) {
 
     reai_destroy (reai);
     reai_config_destroy (cfg);
+
+    /* create logger */
+    ReaiLog *log = reai_log_create (Null);
+    RETURN_VALUE_IF (!log, False, "Failed to create Reai logger.\n");
+
+    REAI_LOG_ERROR (log, "Log Level %s\n", "Debug");
+    REAI_LOG_TRACE (log, "Log Level %s\n", "TRACE");
+    REAI_LOG_INFO (log, "Log Level %s %d\n", "INFO", rand());
+
+    reai_log_destroy (log);
 
     return EXIT_SUCCESS;
 }

@@ -23,6 +23,7 @@ extern "C" {
         CString apikey;
         CString model;
         CString db_dir_path;
+        CString log_dir_path;
     } ReaiConfig;
 
     ReaiConfig *reai_config_load (CString path);
