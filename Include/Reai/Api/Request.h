@@ -67,6 +67,9 @@ extern "C" {
         REAI_REQUEST_TYPE_RENAME_FUNCTION,
         /* REAI_REQUEST_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS, */
 
+        /* ann api */
+        REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
+
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
 
@@ -142,6 +145,15 @@ extern "C" {
                 ReaiFunctionId function_id;
                 CString        new_name;
             } rename_function;
+
+            struct {
+                ReaiBinaryId binary_id;
+                Size         results_per_function;
+                Bool         debug_mode; ///< IDK what this means
+                Float32      distance;
+                CString*     collection;
+                Size         collection_count;
+            } batch_binary_symbol_ann;
         };
     } ReaiRequest;
 

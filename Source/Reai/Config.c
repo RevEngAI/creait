@@ -116,6 +116,14 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
         memset ((Char *)cfg->model, 0, strlen (cfg->model));
         FREE (cfg->model);
     }
+    if (cfg->db_dir_path) {
+        memset ((Char *)cfg->db_dir_path, 0, strlen (cfg->db_dir_path));
+        FREE (cfg->db_dir_path);
+    }
+    if (cfg->log_dir_path) {
+        memset ((Char *)cfg->log_dir_path, 0, strlen (cfg->log_dir_path));
+        FREE (cfg->log_dir_path);
+    }
 
     memset (cfg, 0, sizeof (ReaiConfig));
     FREE (cfg);

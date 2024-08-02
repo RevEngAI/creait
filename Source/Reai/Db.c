@@ -15,6 +15,7 @@
 /* sqlite3 */
 #include <sqlite3.h>
 
+#include "Reai/AnalysisInfo.h"
 #include "Reai/Api/Request.h"
 
 typedef struct ReaiDb {
@@ -454,6 +455,56 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
 
     sqlite3_stmt* stmt = Null;
     PREPARE_SQL_QUERY (stmt, "SELECT binary_id FROM created_analysis;%s", "");
+
+    while (True) {
+        switch (sqlite3_step (stmt)) {
+            case SQLITE_ROW : {
+                Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
+                reai_u64_vec_append (vec, &binary_id);
+                break;
+            }
+
+            case SQLITE_DONE : {
+                sqlite3_finalize (stmt);
+                return vec;
+            }
+
+            default : {
+                sqlite3_finalize (stmt);
+                reai_u64_vec_destroy (vec);
+
+                PRINT_ERR (
+                    "Failed to execute query : %s @off=%d.",
+                    sqlite3_errmsg (db->db_conn),
+                    sqlite3_error_offset (db->db_conn)
+                );
+                return Null;
+            }
+        }
+    }
+}
+
+/**
+ * @b Get all binaries with given analysis status in given database.
+ *
+ * @param db
+ * @param status
+ *
+ * @return @c U64Vec containing binary id of all analyses with given status on success.
+ * @return @c Null otherwise.
+ * */
+U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status) {
+    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+
+    U64Vec* vec = reai_u64_vec_create();
+    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (
+        stmt,
+        "SELECT binary_id FROM created_analysis WHERE status = '%s';",
+        reai_analysis_status_to_cstr (status)
+    );
 
     while (True) {
         switch (sqlite3_step (stmt)) {

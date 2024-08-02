@@ -14,8 +14,12 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/AnnFnMatch.h"
+#include "Reai/Util/CStrVec.h"
+
 PRIVATE Bool         json_response_get_bool (cJSON* json, CString name);
-PRIVATE Uint64*      json_response_get_num (cJSON* json, CString name, Uint64* num);
+PRIVATE Uint64*      json_response_get_u64 (cJSON* json, CString name, Uint64* num);
+PRIVATE Float64*     json_response_get_f64 (cJSON* json, CString name, Float64* num);
 PRIVATE CString      json_response_get_string (cJSON* json, CString name);
 PRIVATE CStrVec*     json_response_get_string_arr (cJSON* json, CString name);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response);
@@ -79,11 +83,24 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 
 #define GET_JSON_BOOL(json, name, var) var = json_response_get_bool (json, name);
 
-#define GET_JSON_NUM(json, name, var)                                                              \
+#define GET_JSON_U64(json, name, var)                                                              \
     {                                                                                              \
         Uint64 num = 0;                                                                            \
         GOTO_HANDLER_IF (                                                                          \
-            !(json_response_get_num (json, name, &num)),                                           \
+            !(json_response_get_u64 (json, name, &num)),                                           \
+            INIT_FAILED,                                                                           \
+            "Failed to get number '%s' from response.",                                            \
+            name                                                                                   \
+        );                                                                                         \
+                                                                                                   \
+        var = num;                                                                                 \
+    }
+
+#define GET_JSON_F64(json, name, var)                                                              \
+    {                                                                                              \
+        Float64 num = 0;                                                                           \
+        GOTO_HANDLER_IF (                                                                          \
+            !(json_response_get_f64 (json, name, &num)),                                           \
             INIT_FAILED,                                                                           \
             "Failed to get number '%s' from response.",                                            \
             name                                                                                   \
@@ -125,19 +142,34 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         var = Null;                                                                                \
     }
 
-#define GET_JSON_NUM_ON_SUCCESS(json, name, var, success)                                          \
+#define GET_JSON_U64_ON_SUCCESS(json, name, var, success)                                          \
     if (success) {                                                                                 \
-        GET_JSON_NUM (json, name, var);                                                            \
+        GET_JSON_U64 (json, name, var);                                                            \
     } else {                                                                                       \
         var = 0;                                                                                   \
     }
 
+#define GET_JSON_F64_ON_SUCCESS(json, name, var, success)                                          \
+    if (success) {                                                                                 \
+        GET_JSON_F64 (json, name, var);                                                            \
+    } else {                                                                                       \
+        var = 0;                                                                                   \
+    }
+
+#define GET_JSON_FN_INFO(json, fn)                                                                 \
+    do {                                                                                           \
+        GET_JSON_U64 (json, "function_id", fn.id);                                                 \
+        GET_JSON_STRING (json, "function_name", fn.name);                                          \
+        GET_JSON_U64 (json, "function_size", fn.size);                                             \
+        GET_JSON_U64 (json, "function_vaddr", fn.vaddr);                                           \
+    } while (0)
+
 #define GET_JSON_ANALYSIS_INFO(json, ainfo)                                                        \
     do {                                                                                           \
-        GET_JSON_NUM (json, "binary_id", ainfo.binary_id);                                         \
+        GET_JSON_U64 (json, "binary_id", ainfo.binary_id);                                         \
         GET_JSON_STRING (json, "binary_name", ainfo.binary_name);                                  \
         GET_JSON_STRING (json, "creation", ainfo.creation);                                        \
-        GET_JSON_NUM (json, "model_id", ainfo.model_id);                                           \
+        GET_JSON_U64 (json, "model_id", ainfo.model_id);                                           \
         GET_JSON_STRING (json, "model_name", ainfo.model_name);                                    \
         GET_JSON_STRING (json, "sha_256_hash", ainfo.sha_256_hash);                                \
                                                                                                    \
@@ -159,11 +191,11 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 
 #define GET_JSON_QUERY_RESULT(json, qres)                                                          \
     do {                                                                                           \
-        GET_JSON_NUM (json, "binary_id", qres.binary_id);                                          \
+        GET_JSON_U64 (json, "binary_id", qres.binary_id);                                          \
         GET_JSON_STRING (json, "binary_name", qres.binary_name);                                   \
         GET_JSON_STRING_ARR (json, "collections", qres.collections);                               \
         GET_JSON_STRING (json, "creation", qres.creation);                                         \
-        GET_JSON_NUM (json, "model_id", qres.model_id);                                            \
+        GET_JSON_U64 (json, "model_id", qres.model_id);                                            \
         GET_JSON_STRING (json, "model_name", qres.model_name);                                     \
         GET_JSON_STRING (json, "sha_256_hash", qres.sha_256_hash);                                 \
         GET_JSON_STRING_ARR (json, "tags", qres.tags);                                             \
@@ -182,6 +214,47 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
             FREE (status);                                                                         \
         }                                                                                          \
         qres.status = estatus;                                                                     \
+    } while (0)
+
+#define GET_JSON_ANN_FN_MATCH(match, fn_match)                                                     \
+    do {                                                                                           \
+        GET_JSON_F64 (match, "confidence", fn_match.confidence);                                   \
+        GET_JSON_U64 (match, "nearest_neighbor_binary_id", fn_match.nn_binary_id);                 \
+        GET_JSON_STRING (match, "nearest_neighbor_binary_name", fn_match.nn_binary_name);          \
+        GET_JSON_BOOL (match, "nearest_neighbor_debug", fn_match.nn_debug);                        \
+        GET_JSON_STRING (match, "nearest_neighbor_function_name", fn_match.nn_function_name);      \
+        GET_JSON_U64 (match, "nearest_neighbor_id", fn_match.nn_function_id);                      \
+        GET_JSON_STRING (match, "nearest_neighbor_sha_256_hash", fn_match.nn_sha_256_hash);        \
+        GET_JSON_U64 (match, "origin_function_id", fn_match.origin_function_id);                   \
+    } while (0)
+
+#define GET_JSON_CUSTOM_ARR(json, type_name, type_infix, reader, vec)                              \
+    do {                                                                                           \
+        vec = reai_##type_infix##_vec_create();                                                    \
+        GOTO_HANDLER_IF (!vec, INIT_FAILED, "Failed to create " #type_name " vector.");            \
+                                                                                                   \
+        if (cJSON_IsObject (json)) {                                                               \
+            type_name item = {0};                                                                  \
+            reader (json, item);                                                                   \
+                                                                                                   \
+            if (!reai_##type_infix##_vec_append (vec, &item)) {                                    \
+                PRINT_ERR ("Failed to insert " #type_name " object into vector.");                 \
+                reai_##type_infix##_vec_destroy (vec);                                             \
+                goto INIT_FAILED;                                                                  \
+            }                                                                                      \
+        } else {                                                                                   \
+            cJSON* arr_item = Null;                                                                \
+            cJSON_ArrayForEach (arr_item, json) {                                                  \
+                type_name item = {0};                                                              \
+                reader (arr_item, item);                                                           \
+                                                                                                   \
+                if (!reai_##type_infix##_vec_append (vec, &item)) {                                \
+                    PRINT_ERR ("Failed to insert " #type_name " object into vector.");             \
+                    reai_##type_infix##_vec_destroy (vec);                                         \
+                    goto INIT_FAILED;                                                              \
+                }                                                                                  \
+            }                                                                                      \
+        }                                                                                          \
     } while (0)
 
 /**
@@ -265,7 +338,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             GET_JSON_BOOL (json, "success", response->create_analysis.success);
 
             /* binary id provided only on success */
-            GET_JSON_NUM_ON_SUCCESS (
+            GET_JSON_U64_ON_SUCCESS (
                 json,
                 "binary_id",
                 response->create_analysis.binary_id,
@@ -279,42 +352,24 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO;
 
             GET_JSON_BOOL (json, "success", response->basic_function_info.success);
-
-            if (response->basic_function_info.success) {
-                /* get functions array */
-                cJSON* functions = cJSON_GetObjectItem (json, "functions");
-                GOTO_HANDLER_IF (
-                    !functions || !cJSON_IsArray (functions),
-                    INIT_FAILED,
-                    "Given JSON response does not contain 'functions' array"
-                );
-
-                /* create vector to store information */
-                ReaiFnInfoVec* fn_infos = Null;
-                GOTO_HANDLER_IF (
-                    !(fn_infos = reai_fn_info_vec_create()),
-                    INIT_FAILED,
-                    "Failed to create FnInfo vector to store retrieved function information."
-                );
-
-                /* go over each item in array and insert */
-                cJSON* function = Null;
-                cJSON_ArrayForEach (function, functions) {
-                    ReaiFnInfo fn = {0};
-                    GET_JSON_NUM (function, "function_id", fn.id);
-                    GET_JSON_STRING (function, "function_name", fn.name);
-                    GET_JSON_NUM (function, "function_size", fn.size);
-                    GET_JSON_NUM (function, "function_vaddr", fn.vaddr);
-
-                    if (!reai_fn_info_vec_append (fn_infos, &fn)) {
-                        PRINT_ERR ("Failed to insert a new function info to vector.");
-                        reai_fn_info_vec_destroy (fn_infos);
-                        goto INIT_FAILED;
-                    }
-                }
-
-                response->basic_function_info.fn_infos = fn_infos;
+            if (!response->basic_function_info.success) {
+                break;
             }
+
+            cJSON* functions = cJSON_GetObjectItem (json, "functions");
+            GOTO_HANDLER_IF (
+                !functions || !cJSON_IsArray (functions),
+                INIT_FAILED,
+                "Given JSON response does not contain 'functions' array"
+            );
+
+            GET_JSON_CUSTOM_ARR (
+                functions,
+                ReaiFnInfo,
+                fn_info,
+                GET_JSON_FN_INFO,
+                response->basic_function_info.fn_infos
+            );
 
             break;
         }
@@ -323,43 +378,24 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_RECENT_ANALYSIS;
 
             GET_JSON_BOOL (json, "success", response->recent_analysis.success);
-
-            if (response->recent_analysis.success) {
-                cJSON* analysis = cJSON_GetObjectItem (json, "analysis");
-                GOTO_HANDLER_IF (
-                    !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
-                    INIT_FAILED,
-                    "Expected array or object for analysis."
-                );
-
-                GOTO_HANDLER_IF (
-                    !(response->recent_analysis.analysis_infos = reai_analysis_info_vec_create()),
-                    INIT_FAILED,
-                    "Failed to create analysis info array"
-                );
-
-                ReaiAnalysisInfo analysis_info;
-                if (cJSON_IsObject (analysis)) {
-                    GET_JSON_ANALYSIS_INFO (analysis, analysis_info);
-
-                    reai_analysis_info_vec_append (
-                        response->recent_analysis.analysis_infos,
-                        &analysis_info
-                    );
-                } else {
-                    /* iterate over all elements, parse and insert */
-                    cJSON* info = Null;
-
-                    cJSON_ArrayForEach (info, analysis) {
-                        GET_JSON_ANALYSIS_INFO (info, analysis_info);
-
-                        reai_analysis_info_vec_append (
-                            response->recent_analysis.analysis_infos,
-                            &analysis_info
-                        );
-                    }
-                }
+            if (!response->recent_analysis.success) {
+                break;
             }
+
+            cJSON* analysis = cJSON_GetObjectItem (json, "analysis");
+            GOTO_HANDLER_IF (
+                !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
+                INIT_FAILED,
+                "Expected array or object for analysis."
+            );
+
+            GET_JSON_CUSTOM_ARR (
+                analysis,
+                ReaiAnalysisInfo,
+                analysis_info,
+                GET_JSON_ANALYSIS_INFO,
+                response->recent_analysis.analysis_infos
+            );
 
             break;
         }
@@ -389,40 +425,24 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_SEARCH;
 
             GET_JSON_BOOL (json, "success", response->search.success);
-
-            if (response->search.success) {
-                cJSON* query_results = cJSON_GetObjectItem (json, "query_results");
-                GOTO_HANDLER_IF (
-                    !cJSON_IsObject (query_results) && !cJSON_IsArray (query_results),
-                    INIT_FAILED,
-                    "Expected array or object for analysis."
-                );
-
-                /* create array to store analysis info records */
-                GOTO_HANDLER_IF (
-                    !(response->search.query_results = reai_query_result_vec_create()),
-                    INIT_FAILED,
-                    "Failed to create query results array"
-                );
-
-                ReaiQueryResult query_result;
-
-                if (cJSON_IsObject (query_results)) {
-                    /* insert just one item */
-                    GET_JSON_QUERY_RESULT (query_results, query_result);
-                    reai_query_result_vec_append (response->search.query_results, &query_result);
-                } else {
-                    /* iterate over all elements, parse and insert */
-                    cJSON* result = Null;
-                    cJSON_ArrayForEach (result, query_results) {
-                        GET_JSON_QUERY_RESULT (result, query_result);
-                        reai_query_result_vec_append (
-                            response->search.query_results,
-                            &query_result
-                        );
-                    }
-                }
+            if (!response->search.success) {
+                break;
             }
+
+            cJSON* query_results = cJSON_GetObjectItem (json, "query_results");
+            GOTO_HANDLER_IF (
+                !cJSON_IsObject (query_results) && !cJSON_IsArray (query_results),
+                INIT_FAILED,
+                "Expected array or object for analysis."
+            );
+
+            GET_JSON_CUSTOM_ARR (
+                query_results,
+                ReaiQueryResult,
+                query_result,
+                GET_JSON_QUERY_RESULT,
+                response->search.query_results
+            );
 
             break;
         }
@@ -431,6 +451,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS;
             break;
         }
+
         case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
             response->type = REAI_RESPONSE_TYPE_RENAME_FUNCTION;
 
@@ -438,6 +459,63 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
             /* this string is optional, so we won't throw error if failed */
             response->rename_function.msg = json_response_get_string (json, "msg");
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN;
+
+            GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
+            if (!response->batch_binary_symbol_ann.success) {
+                break;
+            }
+
+            cJSON* settings = cJSON_GetObjectItem (json, "settings");
+            GOTO_HANDLER_IF (
+                !settings,
+                INIT_FAILED,
+                "Failed to get 'settings' from returned response"
+            );
+
+            GET_JSON_STRING_ARR (
+                settings,
+                "collection",
+                response->batch_binary_symbol_ann.settings.collections
+            );
+
+            GET_JSON_BOOL (
+                settings,
+                "debug_mode",
+                response->batch_binary_symbol_ann.settings.debug_mode
+            );
+
+            GET_JSON_F64 (
+                settings,
+                "distance",
+                response->batch_binary_symbol_ann.settings.distance
+            );
+
+            GET_JSON_U64 (
+                settings,
+                "result_per_function",
+                response->batch_binary_symbol_ann.settings.result_per_function
+            );
+
+            cJSON* function_matches = cJSON_GetObjectItem (json, "function_matches");
+            GOTO_HANDLER_IF (
+                !function_matches,
+                INIT_FAILED,
+                "Failed to get 'function_matches' array from returned response"
+            );
+
+            GET_JSON_CUSTOM_ARR (
+                function_matches,
+                ReaiAnnFnMatch,
+                ann_fn_match,
+                GET_JSON_ANN_FN_MATCH,
+                response->batch_binary_symbol_ann.function_matches
+            );
 
             break;
         }
@@ -460,14 +538,8 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             );
 
             // BUG:TODO: fix this, go over all entries in detail_obj
-
-            /* loc */
             GET_JSON_STRING_ARR (detail_obj, "loc", response->validation_error.locations);
-
-            /* msg */
             GET_JSON_STRING (detail_obj, "msg", response->validation_error.message);
-
-            /* type */
             GET_JSON_STRING (detail_obj, "type", response->validation_error.type);
 
             break;
@@ -570,17 +642,41 @@ PRIVATE Bool json_response_get_bool (cJSON* json, CString name) {
 /**
  * @b Helper method to extract a String field form given JSON.
  * 
- * The returned pointer (if any) is created by `strdup` and hence is
- * completely owned by the caller. After use, the string must be freed
- * using `FREE`
+ * @param json[in] JSON Object containing the string field.
+ * @param name[in] Name of string field.
+ * @param num[in] Pointer to memory where value will be read.
+ * 
+ * @return @c num if field is present and loaded successful.
+ * @return @c Null otherwise.
+ * */
+PRIVATE Uint64* json_response_get_u64 (cJSON* json, CString name, Uint64* num) {
+    RETURN_VALUE_IF (!json || !name || !num, Null, ERR_INVALID_ARGUMENTS);
+
+    /* get message */
+    cJSON* flt_value = cJSON_GetObjectItemCaseSensitive (json, name);
+    RETURN_VALUE_IF (
+        !flt_value || !cJSON_IsNumber (flt_value),
+        Null,
+        "Failed to get string value for key '%s'\n",
+        name
+    );
+
+    /* copy value */
+    *num = cJSON_GetNumberValue (flt_value);
+    return num;
+}
+
+/**
+ * @b Helper method to extract a Float64 field form given JSON.
  *
  * @param json[in] JSON Object containing the string field.
  * @param name[in] Name of string field.
- * 
+ * @param num[in]  Pointer to memory where value will be read.
+ *
  * @return @c num if field is present and loaded successfull.
  * @return @c Null otherwise.
  * */
-PRIVATE Uint64* json_response_get_num (cJSON* json, CString name, Uint64* num) {
+PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num) {
     RETURN_VALUE_IF (!json || !name || !num, Null, ERR_INVALID_ARGUMENTS);
 
     /* get message */
@@ -743,6 +839,18 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 response->search.query_results = Null;
             }
             break;
+        }
+
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            if (response->batch_binary_symbol_ann.function_matches) {
+                reai_ann_fn_match_vec_destroy (response->batch_binary_symbol_ann.function_matches);
+                response->batch_binary_symbol_ann.function_matches = Null;
+            }
+
+            if (response->batch_binary_symbol_ann.settings.collections) {
+                reai_cstr_vec_destroy (response->batch_binary_symbol_ann.settings.collections);
+                response->batch_binary_symbol_ann.settings.collections = Null;
+            }
         }
 
         default :

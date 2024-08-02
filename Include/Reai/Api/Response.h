@@ -9,6 +9,7 @@
 #define REAI_API_RESPONSE_H
 
 #include <Reai/AnalysisInfo.h>
+#include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
 #include <Reai/FnInfo.h>
 #include <Reai/QueryResult.h>
@@ -48,37 +49,40 @@ extern "C" {
         REAI_RESPONSE_TYPE_RENAME_FUNCTION         = REAI_REQUEST_TYPE_RENAME_FUNCTION,
         /* REAI_RESPONSE_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS = REAI_REQUEST_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS, */
 
+        /* ann api */
+        REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
+
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
     } ReaiResponseType;
 
 
     /**
- * @b Structure returned and taken by reai_request calls that get
- * a response from an API endpoint.
- *
- * User must initialize a `ReaiResponse` structure and must pass it
- * when making a call to `reai_request`. When a response is returned,
- * the `reai_request` method will parse the response data and store
- * all the returned details into this structure with proper response type
- * information in `type` member.
- * */
+     * @b Structure returned and taken by reai_request calls that get
+     * a response from an API endpoint.
+     *
+     * User must initialize a `ReaiResponse` structure and must pass it
+     * when making a call to `reai_request`. When a response is returned,
+     * the `reai_request` method will parse the response data and store
+     * all the returned details into this structure with proper response type
+     * information in `type` member.
+     * */
     typedef struct ReaiResponse {
         ReaiResponseType type; /**< @b Received response type. */
 
         /**
-     * This is where write callback writes raw response data.
-     * Usually this is JSON data when interacting with Reai API,
-     * but this is treated as raw data.
-     *
-     * Internally code uses `reai_response_init_for_type(response, type)`
-     * to parse this raw data as JSON data based on given type.
-     *
-     * This is initialized when `reai_response_init` is called with a
-     * preallocated response object. The idea is to initialize a response
-     * object only once and keep reusing it throughout the lifetime of application,
-     * and de-initialize it only when you're done with it finally.
-     * */
+         * This is where write callback writes raw response data.
+         * Usually this is JSON data when interacting with Reai API,
+         * but this is treated as raw data.
+         *
+         * Internally code uses `reai_response_init_for_type(response, type)`
+         * to parse this raw data as JSON data based on given type.
+         *
+         * This is initialized when `reai_response_init` is called with a
+         * preallocated response object. The idea is to initialize a response
+         * object only once and keep reusing it throughout the lifetime of application,
+         * and de-initialize it only when you're done with it finally.
+         * */
         struct {
             Char* data;
             Size  length;
@@ -86,13 +90,13 @@ extern "C" {
         } raw;
 
         /**
-     * Like raw data this is initialized/allocated when init is called and
-     * de-initialized/deallocated when deinit is called. This is again to reduce
-     * the total number of allocations/reallocations throught program lifetime.
-     *
-     * Ideally this should've been part of the union below, but it is because
-     * of the above reason that we place it here.
-     * */
+         * Like raw data this is initialized/allocated when init is called and
+         * de-initialized/deallocated when deinit is called. This is again to reduce
+         * the total number of allocations/reallocations throught program lifetime.
+         *
+         * Ideally this should've been part of the union below, but it is because
+         * of the above reason that we place it here.
+         * */
         struct {
             CStrVec* locations;
             CString  message; /**< @b Error message. */
@@ -112,7 +116,7 @@ extern "C" {
             } upload_file;
 
             struct {
-                Bool     success;   /**< @b True when analysis created successfully */
+                Bool         success;   /**< @b True when analysis created successfully */
                 ReaiBinaryId binary_id; /**< @b Binary id returned in response */
             } create_analysis;
 
@@ -141,6 +145,17 @@ extern "C" {
                 Bool    success;
                 CString msg;
             } rename_function;
+
+            struct {
+                Bool success;
+                struct {
+                    CStrVec* collections;
+                    Bool     debug_mode;
+                    Float64  distance;
+                    Size     result_per_function;
+                } settings;
+                ReaiAnnFnMatchVec* function_matches;
+            } batch_binary_symbol_ann;
         };
     } ReaiResponse;
 

@@ -29,6 +29,7 @@ ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path
 Bool         reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id);
 U64Vec*      reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_256_hash);
 U64Vec*      reai_db_get_all_created_analyses (ReaiDb* db);
+U64Vec*      reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus);
 CString      reai_db_get_analysis_creation_time (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_binary_file_hash (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_file_name (ReaiDb* db, ReaiBinaryId id);

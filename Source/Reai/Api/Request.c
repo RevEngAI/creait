@@ -35,7 +35,7 @@ static CString reai_file_opt_to_str[] = {
 #define JSON_ADD_STRING(cj, item_name, value)                                                      \
     {                                                                                              \
         cJSON* e = cJSON_CreateString (value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");        \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
 
@@ -51,7 +51,7 @@ static CString reai_file_opt_to_str[] = {
                                                                                                    \
         for (Size s = 0; s < value_count; s++) {                                                   \
             cJSON* e = cJSON_CreateString (values[s]);                                             \
-            GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");  \
+            GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");    \
             cJSON_AddItemToArray (earr, e);                                                        \
         }                                                                                          \
     }
@@ -59,16 +59,18 @@ static CString reai_file_opt_to_str[] = {
 #define JSON_ADD_BOOL(cj, item_name, value)                                                        \
     {                                                                                              \
         cJSON* e = cJSON_CreateBool (!!value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");        \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
 
-#define JSON_ADD_NUMBER(cj, item_name, value)                                                      \
+#define JSON_ADD_U64(cj, item_name, value)                                                         \
     {                                                                                              \
         cJSON* e = cJSON_CreateNumber (value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");        \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
+
+#define JSON_ADD_F64 JSON_ADD_U64
 
 /**
  * @b Convert given request to json.
@@ -158,7 +160,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 cJSON_AddItemToObject (json, "symbols", symbols);
 
                 /* add base addr info to symbols obect */
-                JSON_ADD_NUMBER (symbols, "base_addr", request->create_analysis.base_addr);
+                JSON_ADD_U64 (symbols, "base_addr", request->create_analysis.base_addr);
 
                 /* optionally if function infos are provided  */
                 if (request->create_analysis.functions) {
@@ -179,8 +181,8 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
 
                         /* function ID ignored here */
                         JSON_ADD_STRING (fn, "name", fninfo->name)
-                        JSON_ADD_NUMBER (fn, "start_addr", fninfo->vaddr)
-                        JSON_ADD_NUMBER (fn, "end_addr", fninfo->vaddr + fninfo->size)
+                        JSON_ADD_U64 (fn, "start_addr", fninfo->vaddr)
+                        JSON_ADD_U64 (fn, "end_addr", fninfo->vaddr + fninfo->size)
 
                         cJSON_AddItemToArray (functions, fn);
                     }
@@ -198,7 +200,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 JSON_ADD_STRING (json, "command_line_args", request->create_analysis.cmdline_args);
             }
 
-            JSON_ADD_NUMBER (json, "priority", request->create_analysis.priority);
+            JSON_ADD_U64 (json, "priority", request->create_analysis.priority);
 
             /* optional */
             if (request->create_analysis.sha_256_hash) {
@@ -217,7 +219,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 "File size is a required field. Cannot be zero.\n"
             );
 
-            JSON_ADD_NUMBER (json, "size_in_bytes", request->create_analysis.size_in_bytes);
+            JSON_ADD_U64 (json, "size_in_bytes", request->create_analysis.size_in_bytes);
 
             break;
         }
@@ -245,7 +247,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             }
 
             if (request->recent_analysis.count) {
-                JSON_ADD_NUMBER (json, "n", request->recent_analysis.count);
+                JSON_ADD_U64 (json, "n", request->recent_analysis.count);
             }
 
             break;
@@ -290,7 +292,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                     cJSON_AddItemToArray (mapping_arr, new_map);
 
                     /* create map */
-                    JSON_ADD_NUMBER (new_map, "function_id", function->id);
+                    JSON_ADD_U64 (new_map, "function_id", function->id);
                     if (function->name) {
                         JSON_ADD_STRING (new_map, "function_name", function->name);
                     } else {
@@ -317,6 +319,31 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             }
 
             break;
+        }
+
+        case REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            JSON_ADD_U64 (
+                json,
+                "result_per_function",
+                request->batch_binary_symbol_ann.results_per_function
+            );
+
+            JSON_ADD_BOOL (json, "debug_mode", request->batch_binary_symbol_ann.debug_mode);
+
+            /* set default value if distance is 0 (assuming not initialized) */
+            request->batch_binary_symbol_ann.distance =
+                request->batch_binary_symbol_ann.distance ?
+                    request->batch_binary_symbol_ann.distance :
+                    0.1;
+
+            JSON_ADD_F64 (json, "distance", request->batch_binary_symbol_ann.distance);
+
+            JSON_ADD_STRING_ARR (
+                json,
+                "collection",
+                request->batch_binary_symbol_ann.collection,
+                request->batch_binary_symbol_ann.collection_count
+            );
         }
 
         default : {

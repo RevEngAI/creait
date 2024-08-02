@@ -19,6 +19,7 @@
 #include <memory.h>
 
 #include "Reai/Api/Request.h"
+#include "Reai/Api/Response.h"
 
 struct Reai {
     CURL*              curl;
@@ -339,6 +340,16 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            SET_ENDPOINT (
+                "%s/ann/symbol/%llu",
+                reai->host,
+                request->batch_binary_symbol_ann.binary_id
+            );
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN);
+        }
+
         default :
             PRINT_ERR ("Invalid request.");
             break;
@@ -397,8 +408,11 @@ Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
     RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.");
 
-    U64Vec* bin_ids = reai_db_get_all_created_analyses (reai->db);
-    RETURN_VALUE_IF (!bin_ids, Null, "Failed to get all created analyses from DB.");
+    U64Vec* bin_ids_in_processing =
+        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_PROCESSING);
+    U64Vec* bin_ids_in_queue =
+        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_QUEUED);
+    RETURN_VALUE_IF (!bin_ids_in_processing, Null, "Failed to get all created analyses from DB.");
 
     ReaiResponse response;
     GOTO_HANDLER_IF (
@@ -407,29 +421,40 @@ Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
         "Failed to create response structure."
     );
 
-    REAI_VEC_FOREACH (bin_ids, bin_id, {
-        ReaiRequest request               = {0};
-        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;
-        request.analysis_status.binary_id = *bin_id;
-
-        GOTO_HANDLER_IF (
-            !reai_request (reai, &request, &response),
-            STATUS_UPDATE_FAILED,
-            "Failed to make request to RevEngAI servers : %s.",
-            response.raw.data
-        );
-
-        reai_db_set_analysis_status (
-            reai->db,
-            *bin_id,
-            response.analysis_status.status ? response.analysis_status.status :
-                                              REAI_ANALYSIS_STATUS_QUEUED
-        );
+#define UPDATE_STATUS_FOR(bin_ids)                                                                 \
+    REAI_VEC_FOREACH (bin_ids, bin_id, {                                                           \
+        ReaiRequest request               = {0};                                                   \
+        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;                     \
+        request.analysis_status.binary_id = *bin_id;                                               \
+                                                                                                   \
+        GOTO_HANDLER_IF (                                                                          \
+            !reai_request (reai, &request, &response),                                             \
+            STATUS_UPDATE_FAILED,                                                                  \
+            "Failed to make request to RevEngAI servers : %s.",                                    \
+            response.raw.data                                                                      \
+        );                                                                                         \
+                                                                                                   \
+        GOTO_HANDLER_IF (                                                                          \
+            !response.analysis_status.status,                                                      \
+            STATUS_UPDATE_FAILED,                                                                  \
+            "Invalid analysis status."                                                             \
+        );                                                                                         \
+                                                                                                   \
+        GOTO_HANDLER_IF (                                                                          \
+            !reai_db_set_analysis_status (reai->db, *bin_id, response.analysis_status.status),     \
+            STATUS_UPDATE_FAILED,                                                                  \
+            "Failed to update analysis status in db."                                              \
+        );                                                                                         \
     });
 
+    UPDATE_STATUS_FOR (bin_ids_in_processing);
+    UPDATE_STATUS_FOR (bin_ids_in_queue);
+
+#undef UPDATE_STATUS_FOR
 
 DEFAULT_RETURN:
-    reai_u64_vec_destroy (bin_ids);
+    reai_u64_vec_destroy (bin_ids_in_processing);
+    reai_u64_vec_destroy (bin_ids_in_queue);
     reai_response_deinit (&response);
     return reai;
 
