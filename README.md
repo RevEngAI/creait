@@ -53,7 +53,7 @@ the data in it for you to use easily.
 
 int main() {
     ReaiConfig *cfg = reai_config_load (Null);
-    RETURN_VALUE_IF(!cfg, EXIT_FAILURE, "Failed to load configuration.\n");
+    RETURN_VALUE_IF(!cfg, EXIT_FAILURE, "Failed to load configuration.");
     
     return EXIT_SUCCESS;
 }
@@ -73,7 +73,7 @@ int main() {
     // load config
     
     Reai *reai = reai_create (cfg->host, cfg->apikey);
-    RETURN_VALUE_IF(!reai, EXIT_FAILURE, "Failed to connect to RevEng.AI servers.\n");
+    RETURN_VALUE_IF(!reai, EXIT_FAILURE, "Failed to connect to RevEng.AI servers.");
     
     return EXIT_SUCCESS;
 }

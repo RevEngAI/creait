@@ -58,19 +58,19 @@
 
 
 
-#define ERR_INVALID_ARGUMENTS              "Invalid Arguments\n"
-#define ERR_OUT_OF_MEMORY                  "Out of memory (allocation failed)\n"
-#define ERR_INVALID_SIZE                   "Invalid size (zero)\n"
-#define ERR_INVALID_OBJECT_REF             "Invalid object reference (NULL)\n"
-#define ERR_INVALID_OBJECT_CONTENTS        "Invalid contents inside provided object (not what expected)\n"
-#define ERR_INVALID_ITERATOR               "Invalid iterator (NULL)\n"
-#define ERR_OBJECT_INITIALIZATION_FAILED   "Failed to initialze object\n"
-#define ERR_OBJECT_DEINITIALIZATION_FAILED "Failed to de-initialze object\n"
+#define ERR_INVALID_ARGUMENTS              "Invalid Arguments"
+#define ERR_OUT_OF_MEMORY                  "Out of memory (allocation failed)"
+#define ERR_INVALID_SIZE                   "Invalid size (zero)"
+#define ERR_INVALID_OBJECT_REF             "Invalid object reference (NULL)"
+#define ERR_INVALID_OBJECT_CONTENTS        "Invalid contents inside provided object (not what expected)"
+#define ERR_INVALID_ITERATOR               "Invalid iterator (NULL)"
+#define ERR_OBJECT_INITIALIZATION_FAILED   "Failed to initialze object"
+#define ERR_OBJECT_DEINITIALIZATION_FAILED "Failed to de-initialze object"
 
-#define ERR_FILE_OPEN_FAILED        "Failed to open file (NULL returned)\n"
-#define ERR_FILE_SEEK_FAILED        "Failed to seek/tell file position\n"
-#define ERR_FILE_READ_FAILED        "Failed to read file\n"
-#define ERR_UNSUPPORTED_FILE_FORMAT "Unsupported file format\n"
+#define ERR_FILE_OPEN_FAILED        "Failed to open file (NULL returned)"
+#define ERR_FILE_SEEK_FAILED        "Failed to seek/tell file position"
+#define ERR_FILE_READ_FAILED        "Failed to read file"
+#define ERR_UNSUPPORTED_FILE_FORMAT "Unsupported file format"
 
 /**
  * @brief Macro to return a value if a condition is met, with error message.
@@ -85,6 +85,7 @@
                 fputs (__FUNCTION__, stderr);                                                      \
                 fputs (" : ", stderr);                                                             \
                 fprintf (stderr, __VA_ARGS__);                                                     \
+                fputc ('\n', stderr);                                                              \
                 return value;                                                                      \
             }                                                                                      \
         } while (0)
@@ -102,6 +103,7 @@
                 fputs (__FUNCTION__, stderr);                                                      \
                 fputs (" : ", stderr);                                                             \
                 fprintf (stderr, __VA_ARGS__);                                                     \
+                fputc ('\n', stderr);                                                              \
                 return;                                                                            \
             }                                                                                      \
         } while (0)
@@ -118,6 +120,7 @@
             fputs (__FUNCTION__, stderr);                                                          \
             fputs (" : " #handler " : ", stderr);                                                  \
             fprintf (stderr, __VA_ARGS__);                                                         \
+            fputc ('\n', stderr);                                                                  \
             goto handler;                                                                          \
         } while (0)
 #endif
@@ -135,6 +138,7 @@
                 fputs (__FUNCTION__, stderr);                                                      \
                 fputs (" : " #handler " : ", stderr);                                              \
                 fprintf (stderr, __VA_ARGS__);                                                     \
+                fputc ('\n', stderr);                                                              \
                 goto handler;                                                                      \
             }                                                                                      \
         } while (0)
@@ -153,6 +157,7 @@
                 fputs (__FUNCTION__, stderr);                                                      \
                 fputs (" : ", stderr);                                                             \
                 fprintf (stderr, __VA_ARGS__);                                                     \
+                fputc ('\n', stderr);                                                              \
                 handler;                                                                           \
             }                                                                                      \
         } while (0)
@@ -170,6 +175,7 @@
                 fputs (__FUNCTION__, stderr);                                                      \
                 fputs (" : ", stderr);                                                             \
                 fprintf (stderr, __VA_ARGS__);                                                     \
+                fputc ('\n', stderr);                                                              \
                 abort();                                                                           \
             }                                                                                      \
         } while (0)
@@ -187,6 +193,7 @@
             fputs (" : ", stderr);                                                                 \
             fputs ("unreachable code reached : ", stderr);                                         \
             fprintf (stderr, __VA_ARGS__);                                                         \
+            fputc ('\n', stderr);                                                                  \
             return val;                                                                            \
         } while (0)
 #endif
@@ -202,6 +209,7 @@
             fputs (" : ", stderr);                                                                 \
             fputs ("unreachable code reached : ", stderr);                                         \
             fprintf (stderr, __VA_ARGS__);                                                         \
+            fputc ('\n', stderr);                                                                  \
             return;                                                                                \
         } while (0)
 #endif
@@ -217,6 +225,7 @@
             fputs (" : ", stderr);                                                                 \
             fputs ("unreachable code reached : ", stderr);                                         \
             fprintf (stderr, __VA_ARGS__);                                                         \
+            fputc ('\n', stderr);                                                                  \
             abort();                                                                               \
         } while (0)
 #endif
@@ -231,6 +240,7 @@
             fputs (__FUNCTION__, stderr);                                                          \
             fputs (" : ", stderr);                                                                 \
             fprintf (stderr, __VA_ARGS__);                                                         \
+            fputc ('\n', stderr);                                                                  \
         } while (0)
 #endif
 

@@ -35,7 +35,7 @@ static CString reai_file_opt_to_str[] = {
 #define JSON_ADD_STRING(cj, item_name, value)                                                      \
     {                                                                                              \
         cJSON* e = cJSON_CreateString (value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON\n");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
 
@@ -51,7 +51,7 @@ static CString reai_file_opt_to_str[] = {
                                                                                                    \
         for (Size s = 0; s < value_count; s++) {                                                   \
             cJSON* e = cJSON_CreateString (values[s]);                                             \
-            GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON\n");  \
+            GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");  \
             cJSON_AddItemToArray (earr, e);                                                        \
         }                                                                                          \
     }
@@ -59,14 +59,14 @@ static CString reai_file_opt_to_str[] = {
 #define JSON_ADD_BOOL(cj, item_name, value)                                                        \
     {                                                                                              \
         cJSON* e = cJSON_CreateBool (!!value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON\n");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
 
 #define JSON_ADD_NUMBER(cj, item_name, value)                                                      \
     {                                                                                              \
         cJSON* e = cJSON_CreateNumber (value);                                                     \
-        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON\n");      \
+        GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");      \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
     }
 
@@ -86,7 +86,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
     RETURN_VALUE_IF (!request, Null, ERR_INVALID_ARGUMENTS);
 
     cJSON* json = cJSON_CreateObject();
-    GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON\n");
+    GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");
 
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
@@ -154,7 +154,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             if (request->create_analysis.base_addr) {
                 /* create new object for symbol info */
                 cJSON* symbols = cJSON_CreateObject();
-                GOTO_HANDLER_IF (!symbols, CONVERSION_FAILED, "Failed to create JSON object\n");
+                GOTO_HANDLER_IF (!symbols, CONVERSION_FAILED, "Failed to create JSON object");
                 cJSON_AddItemToObject (json, "symbols", symbols);
 
                 /* add base addr info to symbols obect */

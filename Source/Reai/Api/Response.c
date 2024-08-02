@@ -85,7 +85,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         GOTO_HANDLER_IF (                                                                          \
             !(json_response_get_num (json, name, &num)),                                           \
             INIT_FAILED,                                                                           \
-            "Failed to get number '%s' from response.\n",                                          \
+            "Failed to get number '%s' from response.",                                            \
             name                                                                                   \
         );                                                                                         \
                                                                                                    \
@@ -99,7 +99,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         GOTO_HANDLER_IF (                                                                          \
             !(str = json_response_get_string (json, name)),                                        \
             INIT_FAILED,                                                                           \
-            "Failed to get string '%s' from response.\n",                                          \
+            "Failed to get string '%s' from response.",                                            \
             name                                                                                   \
         );                                                                                         \
                                                                                                    \
@@ -112,7 +112,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         GOTO_HANDLER_IF (                                                                          \
             !(arr = json_response_get_string_arr (json, name)),                                    \
             INIT_FAILED,                                                                           \
-            "Failed to get '%s' string array in response\n",                                       \
+            "Failed to get '%s' string array in response.",                                        \
             name                                                                                   \
         );                                                                                         \
     }
@@ -145,7 +145,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         ReaiAnalysisStatus estatus = 0;                                                            \
         GET_JSON_STRING (json, "status", status);                                                  \
         if (!(estatus = reai_analysis_status_from_cstr (status))) {                                \
-            PRINT_ERR ("Failed to convert analysis status to enum\n");                             \
+            PRINT_ERR ("Failed to convert analysis status to enum");                               \
             if (status) {                                                                          \
                 FREE (status);                                                                     \
             }                                                                                      \
@@ -172,7 +172,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         ReaiAnalysisStatus estatus = 0;                                                            \
         GET_JSON_STRING (json, "status", status);                                                  \
         if (!(qres.status = reai_analysis_status_from_cstr (status))) {                            \
-            PRINT_ERR ("Failed to convert analysis status to enum\n");                             \
+            PRINT_ERR ("Failed to convert analysis status to enum");                               \
             if (status) {                                                                          \
                 FREE (status);                                                                     \
             }                                                                                      \
@@ -203,7 +203,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
     /* convert from string to json */
     cJSON* json = cJSON_ParseWithLength (response->raw.data, response->raw.length);
-    GOTO_HANDLER_IF (!json, INIT_FAILED, "Failed to parse given response as JSON data\n");
+    GOTO_HANDLER_IF (!json, INIT_FAILED, "Failed to parse given response as JSON data");
 
     /* each response type has a different structure */
     switch (type) {
@@ -286,7 +286,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 GOTO_HANDLER_IF (
                     !functions || !cJSON_IsArray (functions),
                     INIT_FAILED,
-                    "Given JSON response does not contain 'functions' array\n"
+                    "Given JSON response does not contain 'functions' array"
                 );
 
                 /* create vector to store information */
@@ -294,7 +294,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 GOTO_HANDLER_IF (
                     !(fn_infos = reai_fn_info_vec_create()),
                     INIT_FAILED,
-                    "Failed to create FnInfo vector to store retrieved function information.\n"
+                    "Failed to create FnInfo vector to store retrieved function information."
                 );
 
                 /* go over each item in array and insert */
@@ -307,7 +307,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                     GET_JSON_NUM (function, "function_vaddr", fn.vaddr);
 
                     if (!reai_fn_info_vec_append (fn_infos, &fn)) {
-                        PRINT_ERR ("Failed to insert a new function info to vector.\n");
+                        PRINT_ERR ("Failed to insert a new function info to vector.");
                         reai_fn_info_vec_destroy (fn_infos);
                         goto INIT_FAILED;
                     }
@@ -329,13 +329,13 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 GOTO_HANDLER_IF (
                     !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
                     INIT_FAILED,
-                    "Expected array or object for analysis.\n"
+                    "Expected array or object for analysis."
                 );
 
                 GOTO_HANDLER_IF (
                     !(response->recent_analysis.analysis_infos = reai_analysis_info_vec_create()),
                     INIT_FAILED,
-                    "Failed to create analysis info array\n"
+                    "Failed to create analysis info array"
                 );
 
                 ReaiAnalysisInfo analysis_info;
@@ -374,7 +374,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             GET_JSON_STRING_ON_SUCCESS (json, "status", status, response->analysis_status.success);
 
             if (!(response->analysis_status.status = reai_analysis_status_from_cstr (status))) {
-                PRINT_ERR ("Failed to convert analysis status from string to enum.\n");
+                PRINT_ERR ("Failed to convert analysis status from string to enum.");
                 if (status) {
                     FREE (status);
                 }
@@ -395,14 +395,14 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 GOTO_HANDLER_IF (
                     !cJSON_IsObject (query_results) && !cJSON_IsArray (query_results),
                     INIT_FAILED,
-                    "Expected array or object for analysis.\n"
+                    "Expected array or object for analysis."
                 );
 
                 /* create array to store analysis info records */
                 GOTO_HANDLER_IF (
                     !(response->search.query_results = reai_query_result_vec_create()),
                     INIT_FAILED,
-                    "Failed to create query results array\n"
+                    "Failed to create query results array"
                 );
 
                 ReaiQueryResult query_result;
@@ -449,14 +449,14 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             GOTO_HANDLER_IF (
                 !detail_arr,
                 INIT_FAILED,
-                "Failed to get 'detail' array from returned response\n"
+                "Failed to get 'detail' array from returned response"
             );
 
             cJSON* detail_obj = cJSON_GetArrayItem (detail_arr, 0);
             GOTO_HANDLER_IF (
                 !detail_obj,
                 INIT_FAILED,
-                "Failed to get 'detail' object from returned response\n"
+                "Failed to get 'detail' object from returned response"
             );
 
             // BUG:TODO: fix this, go over all entries in detail_obj
@@ -557,7 +557,7 @@ PRIVATE Bool json_response_get_bool (cJSON* json, CString name) {
 
     /* get boolean value */
     cJSON* bool_value = cJSON_GetObjectItemCaseSensitive (json, name);
-    RETURN_VALUE_IF (!bool_value, False, "Failed to get '%s' result\n", name);
+    RETURN_VALUE_IF (!bool_value, False, "Failed to get '%s' result", name);
     RETURN_VALUE_IF (
         !cJSON_IsBool (bool_value),
         False,
@@ -653,7 +653,7 @@ PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
     );
 
     CStrVec* vec = reai_cstr_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create new CStrVec object.\n");
+    RETURN_VALUE_IF (!vec, Null, "Failed to create new CStrVec object.");
 
     /* iterate over array and keep appending entries to a comma separated string list */
     cJSON* location = Null;
@@ -667,7 +667,7 @@ PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
 
         CString loc = cJSON_GetStringValue (location);
         if (!reai_cstr_vec_append (vec, &loc)) {
-            PRINT_ERR ("Failed to append value to list.\n");
+            PRINT_ERR ("Failed to append value to list.");
             reai_cstr_vec_destroy (vec);
             return Null;
         }

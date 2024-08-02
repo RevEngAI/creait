@@ -19,19 +19,26 @@ typedef struct Reai   Reai;
 ReaiDb* reai_db_create (CString name);
 void    reai_db_destroy (ReaiDb* db);
 
+/* interaction with "uploaded_file" table */
 CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path);
 CString  reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path);
 CString  reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash);
-U64Vec*  reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_256_hash);
-U64Vec*  reai_db_get_all_created_analyses (ReaiDb* db);
-CString  reai_db_get_analysis_creation_time (ReaiDb* db, ReaiBinaryId id);
-CString  reai_db_get_analysis_binary_file_hash (ReaiDb* db, ReaiBinaryId id);
-CString  reai_db_get_analysis_file_name (ReaiDb* db, ReaiBinaryId id);
-CString  reai_db_get_analysis_cmdline_args (ReaiDb* db, ReaiBinaryId id);
-CString  reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId id);
-CString  reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId id);
-Uint32   reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name);
-CString  reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id);
+
+/* with "created_analysis" table */
+ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path);
+Bool         reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id);
+U64Vec*      reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_256_hash);
+U64Vec*      reai_db_get_all_created_analyses (ReaiDb* db);
+CString      reai_db_get_analysis_creation_time (ReaiDb* db, ReaiBinaryId id);
+CString      reai_db_get_analysis_binary_file_hash (ReaiDb* db, ReaiBinaryId id);
+CString      reai_db_get_analysis_file_name (ReaiDb* db, ReaiBinaryId id);
+CString      reai_db_get_analysis_cmdline_args (ReaiDb* db, ReaiBinaryId id);
+CString      reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId id);
+CString      reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId id);
+
+/* with "ai_model" table */
+Uint32  reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name);
+CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id);
 
 Bool reai_db_set_analysis_status (ReaiDb* db, ReaiBinaryId id, ReaiAnalysisStatus new_status);
 

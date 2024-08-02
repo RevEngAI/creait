@@ -56,7 +56,7 @@ PUBLIC ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, Reai
     GOTO_HANDLER_IF (
         !(dst->collections = reai_cstr_vec_clone_create (src->collections)),
         CLONE_FAILED,
-        "Failed to clone cstr vec.\n"
+        "Failed to clone cstr vec."
     );
 
     CREATE_CSTR_CLONE (dst->creation, src->creation);
@@ -66,7 +66,7 @@ PUBLIC ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, Reai
     GOTO_HANDLER_IF (
         !(dst->tags = reai_cstr_vec_clone_create (src->tags)),
         CLONE_FAILED,
-        "Failed to clone cstr vec.\n"
+        "Failed to clone cstr vec."
     );
 
     dst->binary_id = src->binary_id;

@@ -45,7 +45,7 @@ ReaiDb* reai_db_create (CString name) {
     GOTO_HANDLER_IF (
         (sqlite3_open (name, &db->db_conn) != SQLITE_OK) || !db->db_conn,
         CREATE_NEW_DB_FAILED,
-        "Failed to create new Reai DB \"%s\" : %s\n",
+        "Failed to create new Reai DB \"%s\" : %s",
         name,
         sqlite3_errmsg (db->db_conn)
     );
@@ -53,7 +53,7 @@ ReaiDb* reai_db_create (CString name) {
     GOTO_HANDLER_IF (
         !init_tables (db),
         CREATE_NEW_DB_FAILED,
-        "Failed to initialize tables in database.\n"
+        "Failed to initialize tables in database."
     );
 
     return db;
@@ -146,7 +146,7 @@ CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path) {
     RETURN_VALUE_IF (!db || !file_path, Null, ERR_INVALID_ARGUMENTS);
 
     CStrVec* vec = reai_cstr_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create cstring vector.\n");
+    RETURN_VALUE_IF (!vec, Null, "Failed to create cstring vector.");
 
     sqlite3_stmt* stmt = Null;
     PREPARE_SQL_QUERY (
@@ -177,7 +177,7 @@ CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path) {
                 reai_cstr_vec_destroy (vec);
 
                 PRINT_ERR (
-                    "Failed to execute query : %s @off=%d.\n",
+                    "Failed to execute query : %s @off=%d.",
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
@@ -229,7 +229,7 @@ CString reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path) {
             sqlite3_finalize (stmt);
 
             PRINT_ERR (
-                "Failed to execute query : %s @off=%d.\n",
+                "Failed to execute query : %s @off=%d.",
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
@@ -276,11 +276,111 @@ CString reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash) {
             sqlite3_finalize (stmt);
 
             PRINT_ERR (
-                "Failed to execute query : %s @off=%d.\n",
+                "Failed to execute query : %s @off=%d.",
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
             return Null;
+        }
+    }
+}
+
+/**
+ * @b Get latest record of analysis created for binary with given file path,
+ *    that exists in the database.
+ *
+ * @param db
+ * @param file_path
+ *
+ * @return @c ReaiBinaryId (non-zero) if found successfully.
+ * @return @c 0 otherwise.
+ * */
+ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path) {
+    RETURN_VALUE_IF (!db || !file_path, 0, ERR_INVALID_ARGUMENTS);
+
+    CString latest_hash = reai_db_get_latest_hash_for_file_path (db, file_path);
+    if (!latest_hash) {
+        return 0;
+    }
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (
+        stmt,
+        "SELECT binary_id FROM created_analysis WHERE sha_256_hash = '%s' "
+        "ORDER BY creation_date_time "
+        "LIMIT 1;",
+        latest_hash
+    );
+
+    // TODO: if above macro makes an early exit then this won't be freed
+    FREE (latest_hash);
+
+    switch (sqlite3_step (stmt)) {
+        case SQLITE_ROW : {
+            ReaiBinaryId binary_id = sqlite3_column_int64 (stmt, 0);
+            sqlite3_finalize (stmt);
+            return binary_id;
+        }
+
+        case SQLITE_DONE : {
+            sqlite3_finalize (stmt);
+            return 0;
+        }
+
+        default : {
+            sqlite3_finalize (stmt);
+
+            PRINT_ERR (
+                "Failed to execute query : %s @off=%d.",
+                sqlite3_errmsg (db->db_conn),
+                sqlite3_error_offset (db->db_conn)
+            );
+            return 0;
+        }
+    }
+}
+
+/**
+ * @b Check if analysis is already created for given binary id.
+ *
+ * @parma db
+ * @param id
+ *
+ * @return @c True if analysis already exists on success.
+ * @return @c False otherwise.
+ * */
+Bool reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id) {
+    RETURN_VALUE_IF (!db || !id, False, ERR_INVALID_ARGUMENTS);
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (
+        stmt,
+        "SELECT COUNT(binary_id) FROM created_analysis WHERE binary_id = %llu",
+        id
+    );
+
+    /* only one result so we execute only once */
+    switch (sqlite3_step (stmt)) {
+        case SQLITE_ROW : {
+            Bool has_analysis = sqlite3_column_int (stmt, 0) == 1;
+            sqlite3_finalize (stmt);
+            return has_analysis;
+        }
+
+        case SQLITE_DONE : {
+            sqlite3_finalize (stmt);
+            return False;
+        }
+
+        default : {
+            sqlite3_finalize (stmt);
+
+            PRINT_ERR (
+                "Failed to execute query : %s @off=%d.",
+                sqlite3_errmsg (db->db_conn),
+                sqlite3_error_offset (db->db_conn)
+            );
+            return False;
         }
     }
 }
@@ -301,7 +401,7 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
     RETURN_VALUE_IF (!db || !binary_sha_256_hash, Null, ERR_INVALID_ARGUMENTS);
 
     U64Vec* vec = reai_u64_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.\n");
+    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
 
     sqlite3_stmt* stmt = Null;
     PREPARE_SQL_QUERY (
@@ -328,7 +428,7 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
                 reai_u64_vec_destroy (vec);
 
                 PRINT_ERR (
-                    "Failed to execute query : %s @off=%d.\n",
+                    "Failed to execute query : %s @off=%d.",
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
@@ -350,7 +450,7 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
     RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
 
     U64Vec* vec = reai_u64_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.\n");
+    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
 
     sqlite3_stmt* stmt = Null;
     PREPARE_SQL_QUERY (stmt, "SELECT binary_id FROM created_analysis;%s", "");
@@ -373,7 +473,7 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
                 reai_u64_vec_destroy (vec);
 
                 PRINT_ERR (
-                    "Failed to execute query : %s @off=%d.\n",
+                    "Failed to execute query : %s @off=%d.",
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
@@ -422,7 +522,7 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
             default : {                                                                            \
                 sqlite3_finalize (stmt);                                                           \
                 PRINT_ERR (                                                                        \
-                    "Failed to execute query : %s @off=%d.\n",                                     \
+                    "Failed to execute query : %s @off=%d.",                                       \
                     sqlite3_errmsg (db->db_conn),                                                  \
                     sqlite3_error_offset (db->db_conn)                                             \
                 );                                                                                 \
@@ -476,7 +576,7 @@ CString reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId bin_id) {
             sqlite3_finalize (stmt);
 
             PRINT_ERR (
-                "Failed to execute query : %s @off=%d.\n",
+                "Failed to execute query : %s @off=%d.",
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
@@ -530,7 +630,7 @@ Uint32 reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name) {
         default : {
             sqlite3_finalize (stmt);
             PRINT_ERR (
-                "Failed to execute query : %s @off=%d.\n",
+                "Failed to execute query : %s @off=%d.",
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
@@ -572,7 +672,7 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
         default : {
             sqlite3_finalize (stmt);
             PRINT_ERR (
-                "Failed to execute query : %s @off=%d.\n",
+                "Failed to execute query : %s @off=%d.",
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
@@ -611,7 +711,7 @@ Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash) {
         }
         default : {
             sqlite3_finalize (stmt);
-            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.\n");
+            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.");
         }
     }
 }
@@ -659,7 +759,7 @@ Bool reai_db_add_analysis (
         }
         default : {
             sqlite3_finalize (stmt);
-            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.\n");
+            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.");
         }
     }
 }

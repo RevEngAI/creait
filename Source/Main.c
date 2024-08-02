@@ -25,14 +25,14 @@ int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
 
     ReaiConfig *cfg = reai_config_load (Null);
-    RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.\n");
+    RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.");
 
     Reai *reai = reai_create (cfg->host, cfg->apikey);
 
     Char db_path[64] = {0};
     snprintf (db_path, sizeof (db_path) - 1, "%s/reai.db", cfg->db_dir_path);
     ReaiDb *db = reai_db_create (db_path);
-    RETURN_VALUE_IF (!db, EXIT_FAILURE, "Failed to create database.\n");
+    RETURN_VALUE_IF (!db, EXIT_FAILURE, "Failed to create database.");
 
     reai_set_db (reai, db);
 
@@ -54,7 +54,7 @@ int main (int argc, char **argv) {
 
     /* create logger */
     ReaiLog *log = reai_log_create (Null);
-    RETURN_VALUE_IF (!log, False, "Failed to create Reai logger.\n");
+    RETURN_VALUE_IF (!log, False, "Failed to create Reai logger.");
 
     REAI_LOG_ERROR (log, "Log Level %s\n", "Debug");
     REAI_LOG_TRACE (log, "Log Level %s\n", "TRACE");

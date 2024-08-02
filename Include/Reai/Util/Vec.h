@@ -142,7 +142,7 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
         RETURN_VALUE_IF (                                                                          \
             !clone_vec,                                                                            \
             Null,                                                                                  \
-            "Failed to create new '%s' vector to create clone\n",                                  \
+            "Failed to create new '%s' vector to create clone",                                    \
             #vec_tname                                                                             \
         );                                                                                         \
                                                                                                    \
@@ -162,7 +162,7 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
                 GOTO_HANDLER_IF (                                                                  \
                     !initer (clone_item, item),                                                    \
                     CLONE_FAILED,                                                                  \
-                    "Failed to create item clone\n"                                                \
+                    "Failed to create item clone"                                                  \
                 );                                                                                 \
             }                                                                                      \
         } else {                                                                                   \

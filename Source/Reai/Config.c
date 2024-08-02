@@ -42,29 +42,29 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     char  errbuf[200];
 
     fp = fopen ("/home/misra/.reait.toml", "r");
-    RETURN_VALUE_IF (!fp, Null, ERR_FILE_OPEN_FAILED " : %s\n", strerror (errno));
+    RETURN_VALUE_IF (!fp, Null, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
 
     toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
     fclose (fp);
-    RETURN_VALUE_IF (!reai_conf, Null, "Failed to parse toml config file.\n");
+    RETURN_VALUE_IF (!reai_conf, Null, "Failed to parse toml config file.");
 
     toml_datum_t apikey = toml_string_in (reai_conf, "apikey");
     GOTO_HANDLER_IF (
         !apikey.ok,
         LOAD_FAILED,
-        "Cannot find 'apikey' (required) in RevEngAI config.\n"
+        "Cannot find 'apikey' (required) in RevEngAI config."
     );
     cfg->apikey = apikey.u.s;
 
     toml_datum_t host = toml_string_in (reai_conf, "host");
-    GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.\n");
+    GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.");
     cfg->host = host.u.s;
 
     toml_datum_t db_dir_path = toml_string_in (reai_conf, "db_dir_path");
     GOTO_HANDLER_IF (
         !db_dir_path.ok,
         LOAD_FAILED,
-        "Cannot find 'db_dir_path' (required) in RevEngAI config.\n"
+        "Cannot find 'db_dir_path' (required) in RevEngAI config."
     );
     cfg->db_dir_path = db_dir_path.u.s;
 
@@ -72,7 +72,7 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     GOTO_HANDLER_IF (
         !log_dir_path.ok,
         LOAD_FAILED,
-        "Cannot find 'log_dir_path' (required) in RevEngAI config.\n"
+        "Cannot find 'log_dir_path' (required) in RevEngAI config."
     );
     cfg->log_dir_path = log_dir_path.u.s;
 

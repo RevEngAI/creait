@@ -60,7 +60,7 @@ Reai* reai_create (CString host, CString api_key) {
         ERR_OUT_OF_MEMORY
     );
 
-    GOTO_HANDLER_IF (!reai_init_conn (reai), CREATE_FAILED, "Failed to create connection.\n");
+    GOTO_HANDLER_IF (!reai_init_conn (reai), CREATE_FAILED, "Failed to create connection.");
 
     return reai;
 
@@ -77,7 +77,7 @@ Reai* reai_init_conn (Reai* reai) {
 
     /* initialize curl isntance and set url */
     reai->curl = curl_easy_init();
-    RETURN_VALUE_IF (!reai->curl, Null, "Failed to easy init curl\n");
+    RETURN_VALUE_IF (!reai->curl, Null, "Failed to easy init curl");
 
     curl_easy_setopt (reai->curl, CURLOPT_WRITEFUNCTION, reai_response_write_callback);
     curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -94,7 +94,7 @@ Reai* reai_init_conn (Reai* reai) {
     reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
 
     /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
-    RETURN_VALUE_IF (!reai->headers, Null, "Failed to prepare initial headers\n");
+    RETURN_VALUE_IF (!reai->headers, Null, "Failed to prepare initial headers");
 
     /* set headers */
     curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
@@ -207,7 +207,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                                                                                                    \
         /* convert request to json string */                                                       \
         CString json = reai_request_to_json_cstr (request);                                        \
-        GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON\n");            \
+        GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON");              \
                                                                                                    \
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
@@ -226,11 +226,11 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     do {                                                                                           \
         /* create a new mime */                                                                    \
         mime = curl_mime_init (reai->curl);                                                        \
-        GOTO_HANDLER_IF (!mime, REQUEST_FAILED, "Failed to create mime data\n");                   \
+        GOTO_HANDLER_IF (!mime, REQUEST_FAILED, "Failed to create mime data");                     \
                                                                                                    \
         /* create mimepart for multipart data */                                                   \
         mimepart = curl_mime_addpart (mime);                                                       \
-        GOTO_HANDLER_IF (!mimepart, REQUEST_FAILED, "Failed to add mime part to mime data\n");     \
+        GOTO_HANDLER_IF (!mimepart, REQUEST_FAILED, "Failed to add mime part to mime data");       \
                                                                                                    \
         /* set part info */                                                                        \
         curl_mime_name (mimepart, "file");                                                         \
@@ -340,7 +340,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         }
 
         default :
-            PRINT_ERR ("Invalid request.\n");
+            PRINT_ERR ("Invalid request.");
             break;
     }
 
@@ -395,16 +395,16 @@ Reai* reai_set_db (Reai* reai, ReaiDb* db) {
  * */
 Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.\n");
+    RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.");
 
     U64Vec* bin_ids = reai_db_get_all_created_analyses (reai->db);
-    RETURN_VALUE_IF (!bin_ids, Null, "Failed to get all created analyses from DB.\n");
+    RETURN_VALUE_IF (!bin_ids, Null, "Failed to get all created analyses from DB.");
 
     ReaiResponse response;
     GOTO_HANDLER_IF (
         !reai_response_init (&response),
         STATUS_UPDATE_FAILED,
-        "Failed to create response structure.\n"
+        "Failed to create response structure."
     );
 
     REAI_VEC_FOREACH (bin_ids, bin_id, {
@@ -415,7 +415,7 @@ Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
         GOTO_HANDLER_IF (
             !reai_request (reai, &request, &response),
             STATUS_UPDATE_FAILED,
-            "Failed to make request to RevEngAI servers : %s.\n",
+            "Failed to make request to RevEngAI servers : %s.",
             response.raw.data
         );
 
@@ -469,7 +469,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
                             file_path,
                             response->upload_file.sha_256_hash
                         )) {
-                        PRINT_ERR ("Failed to add uploaded file into to Reai DB.\n");
+                        PRINT_ERR ("Failed to add uploaded file into to Reai DB.");
                     }
                 }
 
@@ -479,7 +479,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
                 return Null;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected type.\n");
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected type.");
             }
         }
     } else {
@@ -552,7 +552,7 @@ ReaiBinaryId reai_create_analysis (
                             file_name,
                             cmdline_args
                         )) {
-                        PRINT_ERR ("Failed to add created analysis info to database.\n");
+                        PRINT_ERR ("Failed to add created analysis info to database.");
                     }
                 }
 
@@ -562,7 +562,7 @@ ReaiBinaryId reai_create_analysis (
                 return 0;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (0, "Unexpected response type.\n");
+                RETURN_VALUE_IF_REACHED (0, "Unexpected response type.");
             }
         }
     } else {
@@ -602,7 +602,7 @@ ReaiFnInfoVec*
                 return Null;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.\n");
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
             }
         }
     } else {
@@ -652,7 +652,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
                 return Null;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.\n");
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
             }
         }
     } else {
@@ -696,7 +696,7 @@ Bool reai_batch_renames_functions (
                 return False;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.\n");
+                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.");
             }
         }
     } else {
@@ -739,7 +739,7 @@ Bool reai_rename_function (
                 return False;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.\n");
+                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.");
             }
         }
     } else {
@@ -777,10 +777,7 @@ ReaiAnalysisStatus
                 return REAI_ANALYSIS_STATUS_INVALID;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (
-                    REAI_ANALYSIS_STATUS_INVALID,
-                    "Unexpected response type.\n"
-                );
+                RETURN_VALUE_IF_REACHED (REAI_ANALYSIS_STATUS_INVALID, "Unexpected response type.");
             }
         }
     } else {

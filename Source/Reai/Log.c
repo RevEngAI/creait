@@ -73,7 +73,7 @@ ReaiLog* reai_log_create (CString file_name) {
     GOTO_HANDLER_IF (
         !log->log_fd,
         CREATE_FAILED,
-        "Failed to create new log file \"%s\" : %s\n",
+        "Failed to create new log file \"%s\" : %s",
         log->log_file,
         strerror (errno)
     );
