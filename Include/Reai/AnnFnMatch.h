@@ -36,7 +36,7 @@ extern "C" {
      * @return @c clone on success.
      * @return @c Null otherwise.
      * */
-    ReaiAnnFnMatch* reai_ann_fn_match_clone_deinit (ReaiAnnFnMatch* clone) {
+    PRIVATE ReaiAnnFnMatch* reai_ann_fn_match_clone_deinit (ReaiAnnFnMatch* clone) {
         RETURN_VALUE_IF (!clone, Null, ERR_INVALID_ARGUMENTS);
 
         if (clone->nn_binary_name) {
@@ -64,7 +64,8 @@ extern "C" {
      * @return @c dst on success.
      * @return @c src otherwise.
      * */
-    ReaiAnnFnMatch* reai_ann_fn_match_clone_init (ReaiAnnFnMatch* dst, ReaiAnnFnMatch* src) {
+    PRIVATE ReaiAnnFnMatch*
+        reai_ann_fn_match_clone_init (ReaiAnnFnMatch* dst, ReaiAnnFnMatch* src) {
         RETURN_VALUE_IF (!dst || !src, Null, ERR_INVALID_ARGUMENTS);
 
         dst->confidence         = src->confidence;

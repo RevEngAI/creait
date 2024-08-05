@@ -322,28 +322,31 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
         }
 
         case REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN : {
-            JSON_ADD_U64 (
-                json,
-                "result_per_function",
-                request->batch_binary_symbol_ann.results_per_function
-            );
+            if (request->batch_binary_symbol_ann.results_per_function) {
+                JSON_ADD_U64 (
+                    json,
+                    "result_per_function",
+                    request->batch_binary_symbol_ann.results_per_function
+                );
+            }
 
             JSON_ADD_BOOL (json, "debug_mode", request->batch_binary_symbol_ann.debug_mode);
 
-            /* set default value if distance is 0 (assuming not initialized) */
-            request->batch_binary_symbol_ann.distance =
-                request->batch_binary_symbol_ann.distance ?
-                    request->batch_binary_symbol_ann.distance :
-                    0.1;
+            if (request->batch_binary_symbol_ann.distance) {
+                JSON_ADD_F64 (json, "distance", request->batch_binary_symbol_ann.distance);
+            }
 
-            JSON_ADD_F64 (json, "distance", request->batch_binary_symbol_ann.distance);
+            if (request->batch_binary_symbol_ann.collection &&
+                request->batch_binary_symbol_ann.collection_count) {
+                JSON_ADD_STRING_ARR (
+                    json,
+                    "collection",
+                    request->batch_binary_symbol_ann.collection,
+                    request->batch_binary_symbol_ann.collection_count
+                );
+            }
 
-            JSON_ADD_STRING_ARR (
-                json,
-                "collection",
-                request->batch_binary_symbol_ann.collection,
-                request->batch_binary_symbol_ann.collection_count
-            );
+            break;
         }
 
         default : {

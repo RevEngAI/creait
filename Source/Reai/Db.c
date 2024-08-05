@@ -308,7 +308,7 @@ ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis WHERE sha_256_hash = '%s' "
-        "ORDER BY creation_date_time "
+        "ORDER BY creation_date_time DESC"
         "LIMIT 1;",
         latest_hash
     );
@@ -454,7 +454,12 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
     RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
 
     sqlite3_stmt* stmt = Null;
-    PREPARE_SQL_QUERY (stmt, "SELECT binary_id FROM created_analysis;%s", "");
+    PREPARE_SQL_QUERY (
+        stmt,
+        "SELECT binary_id FROM created_analysis "
+        "ORDER BY creation_date_time DESC;%s",
+        ""
+    );
 
     while (True) {
         switch (sqlite3_step (stmt)) {
