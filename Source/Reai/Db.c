@@ -125,6 +125,56 @@ void reai_db_destroy (ReaiDb* db) {
             MAX (sqlite3_error_offset (db->db_conn), sqlite3_error_offset (db->db_conn) - 10)
 
 /**
+ * @b Check whether or not given database requires to a analysis
+ *    status update. If any of the records in "created_analysis"
+ *    table has non "Complete" status then that requires a status
+ *    update from RevEng.AI servers.
+ *
+ * @param db
+ *
+ * @return @c True if db requires an update.
+ * @return @c False otherwise.
+ * */
+Bool reai_db_require_analysis_status_update (ReaiDb* db) {
+    RETURN_VALUE_IF (!db, False, ERR_INVALID_ARGUMENTS);
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (
+        stmt,
+        "SELECT COUNT(*) "
+        "FROM created_analysis "
+        "WHERE status != 'Complete';%s",
+        ""
+    );
+
+    /* only one result so we execute only once */
+    switch (sqlite3_step (stmt)) {
+        case SQLITE_ROW : {
+            Size incomplete_count = sqlite3_column_int64 (stmt, 0);
+            sqlite3_finalize (stmt);
+            return incomplete_count != 0;
+        }
+
+        case SQLITE_DONE : {
+            sqlite3_finalize (stmt);
+            return False;
+        }
+
+        default : {
+            sqlite3_finalize (stmt);
+
+            PRINT_ERR (
+                "Failed to execute query : %s @off=%d.",
+                sqlite3_errmsg (db->db_conn),
+                sqlite3_error_offset (db->db_conn)
+            );
+            return False;
+        }
+    }
+    return False;
+}
+
+/**
  * @b Get SHA-256 hash value for given file if it's already uploaded
  *    to RevEng.AI Servers.
  *
@@ -308,7 +358,7 @@ ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis WHERE sha_256_hash = '%s' "
-        "ORDER BY creation_date_time DESC"
+        "ORDER BY creation_date_time DESC "
         "LIMIT 1;",
         latest_hash
     );
@@ -592,7 +642,47 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
 GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE (binary_file_hash, sha_256_hash);
 GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE (file_name, file_name);
 GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE (cmdline_args, cmdline_args);
-GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE (status, status);
+
+/**
+ * @b Get analysis status for given binary id.
+ *
+ * @param db
+ * @param bin_id
+ *
+ * @return @c ReaiAnalysisStatus on success.
+ @ @return @c REAI_ANALYSIS_STATUS_INVALID otherwise
+ * */
+ReaiAnalysisStatus reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId bin_id) {
+    RETURN_VALUE_IF (!db || !bin_id, REAI_ANALYSIS_STATUS_INVALID, ERR_INVALID_ARGUMENTS);
+
+    sqlite3_stmt* stmt = Null;
+    PREPARE_SQL_QUERY (stmt, "SELECT status FROM created_analysis WHERE binary_id = %llu;", bin_id);
+
+    /* only one result so we execute only once */
+    switch (sqlite3_step (stmt)) {
+        case SQLITE_ROW : {
+            ReaiAnalysisStatus val =
+                reai_analysis_status_from_cstr ((CString)sqlite3_column_text (stmt, 0));
+            sqlite3_finalize (stmt);
+            return val;
+        }
+
+        case SQLITE_DONE : {
+            sqlite3_finalize (stmt);
+            return REAI_ANALYSIS_STATUS_INVALID;
+        }
+
+        default : {
+            sqlite3_finalize (stmt);
+            PRINT_ERR (
+                "Failed to execute query : %s @off=%d.",
+                sqlite3_errmsg (db->db_conn),
+                sqlite3_error_offset (db->db_conn)
+            );
+            return REAI_ANALYSIS_STATUS_INVALID;
+        }
+    }
+}
 
 /**
  * @b Get model name used to create given analysis.
@@ -667,7 +757,7 @@ Uint32 reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name) {
     RETURN_VALUE_IF (
         sqlite3_prepare_v2 (db->db_conn, query_buf, buf_size, &stmt, Null) != SQLITE_OK,
         0,
-        "Failed to prepare query for execution.\n"
+        "Failed to prepare query for execution."
     );
 
     /* execute once because we expect only one result */
@@ -736,6 +826,54 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
         }
     }
 }
+
+/* /\** */
+/*  * @b Get function name for given function id. */
+/*  * */
+/*  * The returned @c CString must be freed after use. */
+/*  * */
+/*  * @param db */
+/*  * @param fn_id */
+/*  * */
+/*  * @return @c CString on success. */
+/*  * @return @c Null otherwise. */
+/*  * *\/ */
+/* CString reai_db_get_function_name (ReaiDb* db, ReaiFunctionId fn_id) { */
+/*     RETURN_VALUE_IF (!db || !fn_id, Null, ERR_INVALID_ARGUMENTS); */
+
+/*     sqlite3_stmt* stmt = Null; */
+/*     PREPARE_SQL_QUERY ( */
+/*         stmt, */
+/*         "SELECT function_name " */
+/*         "FROM function " */
+/*         "WHERE function_id = %llu;", */
+/*         fn_id */
+/*     ); */
+
+/*     /\* execute once because we expect only one result *\/ */
+/*     switch (sqlite3_step (stmt)) { */
+/*         case SQLITE_ROW : { */
+/*             CString fn_name = strdup ((CString)sqlite3_column_text (stmt, 0)); */
+/*             sqlite3_finalize (stmt); */
+/*             return fn_name; */
+/*         } */
+
+/*         case SQLITE_DONE : { */
+/*             sqlite3_finalize (stmt); */
+/*             return Null; */
+/*         } */
+
+/*         default : { */
+/*             sqlite3_finalize (stmt); */
+/*             PRINT_ERR ( */
+/*                 "Failed to execute query : %s @off=%d.", */
+/*                 sqlite3_errmsg (db->db_conn), */
+/*                 sqlite3_error_offset (db->db_conn) */
+/*             ); */
+/*             return Null; */
+/*         } */
+/*     } */
+/* } */
 
 /**
  * @b Add binary file path and SHA-256 hash value retrieved from server
@@ -850,6 +988,31 @@ Bool reai_db_set_analysis_status (
     return True;
 }
 
+/* /\** */
+/*  * @b Add a new function to the databse. */
+/*  * */
+/*  * @param db */
+/*  * @param bin_id */
+/*  * @param fn_id */
+/*  * @param fn_name */
+/*  * */
+/*  * @return @c True if new function was added successfully to the database. */
+/*  * *\/ */
+/* Bool reai_db_add_function (ReaiDb* db, ReaiBinaryId bin_id, ReaiFunctionId fn_id, CString fn_name) { */
+/*     RETURN_VALUE_IF (!db || !bin_id || !fn_id || !fn_name, False, ERR_INVALID_ARGUMENTS); */
+
+/*     EXEC_SQL_QUERY ( */
+/*         "INSERT INTO function (binary_id, function_id, function_name) " */
+/*         "VALUES               (%llu,      %llu,        '%s');", */
+/*         bin_id, */
+/*         fn_id, */
+/*         fn_name */
+/*     ); */
+
+/*     return True; */
+/* } */
+
+
 /**
  * @b Add a new model id,name pair in database.
  *
@@ -924,6 +1087,16 @@ PRIVATE ReaiDb* init_tables (ReaiDb* db) {
         "   FOREIGN KEY (tag_id)    REFERENCES tags (tag_id) "
         " );%s",
         ""
+
+        /* // Table to keep track of functions a binary holds. */
+        /* " CREATE TABLE IF NOT EXISTS function ( " */
+        /* "   binary_id     UNSIGNED BIGINT NOT NULL, " */
+        /* "   function_id   UNSIGNED BIGINT PRIMARY KEY, " */
+        /* "   function_name VARCHAR(64)     NOT NULL, " */
+
+        /* "   FOREIGN KEY (binary_id) REFERENCES created_analysis (binary_id)" */
+        /* " );%s", */
+        /* "" */
     );
 
     /* insert AI models with ids */

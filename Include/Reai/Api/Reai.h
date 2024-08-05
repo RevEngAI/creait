@@ -8,11 +8,13 @@
 #ifndef REAI_API_REAI_H
 #define REAI_API_REAI_H
 
+#include <Reai/AnalysisInfo.h>
+#include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
 #include <Reai/Common.h>
 #include <Reai/Types.h>
+#include <Reai/Util/CStrVec.h>
 
-#include "Reai/AnalysisInfo.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,11 +26,13 @@ extern "C" {
     typedef struct ReaiResponse ReaiResponse;
     typedef struct ReaiRequest  ReaiRequest;
     typedef struct ReaiDb       ReaiDb;
+    typedef struct ReaiLog      ReaiLog;
 
     Reai*         reai_create (CString host, CString api_key);
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
     Reai*         reai_set_db (Reai* reai, ReaiDb* db);
+    Reai*         reai_set_logger (Reai* reai, ReaiLog* logger);
     Reai*         reai_update_all_analyses_status_in_db (Reai* reai);
 
     CString      reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
@@ -65,6 +69,14 @@ extern "C" {
     );
     ReaiAnalysisStatus
         reai_get_analysis_status (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id);
+    ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
+        Reai*         reai,
+        ReaiResponse* response,
+        ReaiBinaryId  bin_id,
+        Size          max_results_per_function,
+        Float64       min_distance,
+        CStrVec*      collection
+    );
 
 #ifdef __cplusplus
 }

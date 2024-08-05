@@ -43,6 +43,8 @@ a config file for RevEng.AI Toolkit (reait). A very basic config is
 apikey = "l1br3"
 host = "https://api.reveng.ai/v1"
 model = "binnet-0.3-x86"
+db_dir_path = "~/.reai"
+log_dir_path = "/tmp"
 ```
 
 To load the config, you must create a `ReaiConfig` object that parses this toml file and stores

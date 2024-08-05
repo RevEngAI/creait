@@ -13,13 +13,11 @@
 /* reai */
 #include <Reai/Api/Api.h>
 #include <Reai/Db.h>
+#include <Reai/Log.h>
 #include <Reai/Util/Vec.h>
 
 /* libc */
 #include <memory.h>
-
-#include "Reai/Api/Request.h"
-#include "Reai/Api/Response.h"
 
 struct Reai {
     CURL*              curl;
@@ -28,7 +26,8 @@ struct Reai {
     CString host;
     CString api_key;
 
-    ReaiDb* db;
+    ReaiDb*  db;
+    ReaiLog* logger;
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
@@ -128,6 +127,16 @@ void reai_destroy (Reai* reai) {
 
     reai_deinit_conn (reai);
 
+    if (reai->db) {
+        reai_db_destroy (reai->db);
+        reai->db = Null;
+    }
+
+    if (reai->logger) {
+        reai_log_destroy (reai->logger);
+        reai->logger = Null;
+    }
+
     if (reai->host) {
         FREE (reai->host);
         reai->host = Null;
@@ -175,11 +184,17 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     do {                                                                                           \
         snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);                       \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
+        if (reai->logger) {                                                                        \
+            REAI_LOG_TRACE (reai->logger, "ENDPOINT : '%s'", endpoint_str);                        \
+        }                                                                                          \
     } while (0)
 
 #define SET_METHOD(method)                                                                         \
     do {                                                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_CUSTOMREQUEST, method);                              \
+        if (reai->logger) {                                                                        \
+            REAI_LOG_TRACE (reai->logger, "METHOD : '%s'", method);                                \
+        }                                                                                          \
     } while (0)
 
 #define MAKE_REQUEST(expected_retcode, expected_response)                                          \
@@ -188,6 +203,10 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         if (retcode == CURLE_OK) {                                                                 \
             Uint32 http_code = 0;                                                                  \
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
+                                                                                                   \
+            if (reai->logger) {                                                                    \
+                REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);         \
+            }                                                                                      \
                                                                                                    \
             response = reai_response_init_for_type (                                               \
                 response,                                                                          \
@@ -209,6 +228,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* convert request to json string */                                                       \
         CString json = reai_request_to_json_cstr (request);                                        \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON");              \
+        if (reai->logger) {                                                                        \
+            REAI_LOG_TRACE (reai->logger, "REQUEST.JSON : '%s'", json);                            \
+        }                                                                                          \
                                                                                                    \
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
@@ -236,6 +258,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* set part info */                                                                        \
         curl_mime_name (mimepart, "file");                                                         \
         curl_mime_filedata (mimepart, request->upload_file.file_path);                             \
+        if (reai->logger) {                                                                        \
+            REAI_LOG_TRACE (reai->logger, "UPLOAD FILE : '%s'", request->upload_file.file_path);   \
+        }                                                                                          \
                                                                                                    \
         /* set the mime data for post */                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_MIMEPOST, mime);                                     \
@@ -396,6 +421,27 @@ Reai* reai_set_db (Reai* reai, ReaiDb* db) {
 }
 
 /**
+ * @b Set a logger in Reai. This will increase verbosity in the logger.
+ * Every request and respose will be dumped into the log file.
+ *
+ * The given Log object is now owned by Reai and will automatically be
+ * destroyed when given Reai object is destroyed.
+ *
+ * @param reai
+ * @param logger
+ *
+ * @return @c reai On success.
+ * @return @c Null otherwise.
+ * */
+Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
+    RETURN_VALUE_IF (!reai || !logger, Null, ERR_INVALID_ARGUMENTS);
+
+    reai->logger = logger;
+
+    return reai;
+}
+
+/**
  * @b Update analysis status of all created analyses in database.
  *
  * This call requires that Reai already has a set database.
@@ -408,6 +454,11 @@ Reai* reai_set_db (Reai* reai, ReaiDb* db) {
 Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
     RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.");
+
+    /* no need to continue if we don't need an update */
+    if (!reai_db_require_analysis_status_update (reai->db)) {
+        return reai;
+    }
 
     U64Vec* bin_ids_in_processing =
         reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_PROCESSING);
@@ -770,6 +821,65 @@ Bool reai_rename_function (
         }
     } else {
         return False;
+    }
+}
+
+
+/**
+ * @b Perform ANN Auto analysis and get similar function names.
+ *
+ * The returned vector is not to be explicitly freed as it is owned by
+ * the provided response object. The returned vector will automatically
+ * be freed when given response is deinitialized.
+ *
+ * @param reai
+ * @param response
+ * @param bin_id
+ * @param max_results_per_function
+ * @param min_distance
+ * @param collection Can be @c Null.
+ *
+ * @return @c ReaiAnnFnMatch on success.
+ * @return @c Null otherwise.
+ * */
+ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
+    Reai*         reai,
+    ReaiResponse* response,
+    ReaiBinaryId  bin_id,
+    Size          max_results_per_function,
+    Float64       max_distance,
+    CStrVec*      collection
+) {
+    RETURN_VALUE_IF (!reai || !response || !bin_id, Null, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to rename functions in batch */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN;
+
+    request.batch_binary_symbol_ann.binary_id            = bin_id;
+    request.batch_binary_symbol_ann.collection           = collection ? collection->items : Null;
+    request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
+    request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
+    request.batch_binary_symbol_ann.distance             = max_distance;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+                return response->batch_binary_symbol_ann.success ?
+                           response->batch_binary_symbol_ann.function_matches :
+                           Null;
+            }
+
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return Null;
+            }
+
+            default : {
+                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
+            }
+        }
+    } else {
+        return Null;
     }
 }
 

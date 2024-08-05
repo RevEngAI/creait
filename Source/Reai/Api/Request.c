@@ -272,7 +272,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
         case REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS : {
             if (request->batch_renames_functions.new_name_mapping) {
                 /* create new json array to store mappings */
-                cJSON* mapping_arr = cJSON_CreateObject();
+                cJSON* mapping_arr = cJSON_CreateArray();
                 GOTO_HANDLER_IF (
                     !mapping_arr,
                     CONVERSION_FAILED,

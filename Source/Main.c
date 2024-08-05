@@ -48,7 +48,7 @@ int main (int argc, char **argv) {
             reai_db_get_analysis_file_name (db, *bin_id),
             reai_db_get_analysis_binary_file_hash (db, *bin_id),
             reai_db_get_analysis_model_name (db, *bin_id),
-            reai_db_get_analysis_status (db, *bin_id)
+            reai_analysis_status_to_cstr (reai_db_get_analysis_status (db, *bin_id))
         );
     });
 
@@ -63,6 +63,8 @@ int main (int argc, char **argv) {
     ReaiRequest request                       = {0};
     request.type                              = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN;
     request.batch_binary_symbol_ann.binary_id = latest_analysis;
+    request.batch_binary_symbol_ann.distance  = 0.25f;
+    request.batch_binary_symbol_ann.results_per_function = 10;
 
     RETURN_VALUE_IF (
         !reai_request (reai, &request, &response),

@@ -19,6 +19,8 @@ typedef struct Reai   Reai;
 ReaiDb* reai_db_create (CString name);
 void    reai_db_destroy (ReaiDb* db);
 
+Bool reai_db_require_analysis_status_update (ReaiDb* db);
+
 /* interaction with "uploaded_file" table */
 CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path);
 CString  reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path);
@@ -34,12 +36,15 @@ CString      reai_db_get_analysis_creation_time (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_binary_file_hash (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_file_name (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_cmdline_args (ReaiDb* db, ReaiBinaryId id);
-CString      reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId id);
 CString      reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId id);
+ReaiAnalysisStatus reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId id);
 
 /* with "ai_model" table */
 Uint32  reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name);
 CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id);
+
+/* with "functions" table */
+/* CString reai_db_get_function_name (ReaiDb* db, ReaiFunctionId fn_id); */
 
 Bool reai_db_set_analysis_status (ReaiDb* db, ReaiBinaryId id, ReaiAnalysisStatus new_status);
 
@@ -53,5 +58,6 @@ Bool reai_db_add_analysis (
     CString      cmdline_args
 );
 Bool reai_db_add_ai_model (ReaiDb* db, CString model_name, Uint32 model_id);
+/* Bool reai_db_add_function (ReaiDb* db, ReaiBinaryId bin_id, ReaiFunctionId fn_id, CString fn_name); */
 
 #endif // REAI_DB_H
