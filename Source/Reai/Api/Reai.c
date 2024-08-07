@@ -83,9 +83,6 @@ Reai* reai_init_conn (Reai* reai) {
     curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1);
     curl_easy_setopt (reai->curl, CURLOPT_USERAGENT, "creait");
     curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
-    curl_easy_setopt (reai->curl, CURLOPT_SERVER_RESPONSE_TIMEOUT, 5);
-    curl_easy_setopt (reai->curl, CURLOPT_TIMEOUT, 5);
-    curl_easy_setopt (reai->curl, CURLOPT_CONNECTTIMEOUT, 5);
 
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
@@ -205,7 +202,11 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
                                                                                                    \
             if (reai->logger) {                                                                    \
-                REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);         \
+                if (response->raw.data && response->raw.length) {                                  \
+                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);     \
+                } else {                                                                           \
+                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : INVALID");                      \
+                }                                                                                  \
             }                                                                                      \
                                                                                                    \
             response = reai_response_init_for_type (                                               \
