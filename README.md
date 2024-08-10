@@ -13,6 +13,7 @@ creait is currently under development.
 ``` sh
 git clone git@github.com:RevEngAI/creait.git
 cd creait
+git submodule update --init
 mkdir Build
 cd Build
 cmake .. -G Ninja -D CMAKE_BUILD_TYPE=Debug
