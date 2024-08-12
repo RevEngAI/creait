@@ -84,6 +84,8 @@ Reai* reai_init_conn (Reai* reai) {
     curl_easy_setopt (reai->curl, CURLOPT_USERAGENT, "creait");
     curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
 
+    /* cache the CA cert bundle in memory for a week */
+    curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
     Char auth_hdr_str[80];
@@ -454,7 +456,6 @@ Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
  * */
 Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
     RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
-    RETURN_VALUE_IF (!reai->db, Null, "A Reai DB must already be set before making this call.");
 
     /* no need to continue if we don't need an update */
     if (!reai_db_require_analysis_status_update (reai->db)) {
@@ -584,6 +585,7 @@ ReaiBinaryId reai_create_analysis (
     Reai*          reai,
     ReaiResponse*  response,
     ReaiModel      model,
+    Uint64         base_addr,
     ReaiFnInfoVec* fn_info_vec,
     Bool           is_private,
     CString        sha_256_hash,
@@ -608,6 +610,7 @@ ReaiBinaryId reai_create_analysis (
     request.create_analysis.dyn_exec     = False;
     request.create_analysis.tags         = Null;
     request.create_analysis.tags_count   = 0;
+    request.create_analysis.base_addr    = base_addr;
     request.create_analysis.functions    = fn_info_vec;
     request.create_analysis.bin_scope =
         is_private ? REAI_BINARY_SCOPE_PRIVATE : REAI_BINARY_SCOPE_PUBLIC;

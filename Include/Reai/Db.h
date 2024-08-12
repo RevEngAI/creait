@@ -43,9 +43,6 @@ ReaiAnalysisStatus reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId id);
 Uint32  reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name);
 CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id);
 
-/* with "functions" table */
-/* CString reai_db_get_function_name (ReaiDb* db, ReaiFunctionId fn_id); */
-
 Bool reai_db_set_analysis_status (ReaiDb* db, ReaiBinaryId id, ReaiAnalysisStatus new_status);
 
 Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash);
@@ -58,6 +55,5 @@ Bool reai_db_add_analysis (
     CString      cmdline_args
 );
 Bool reai_db_add_ai_model (ReaiDb* db, CString model_name, Uint32 model_id);
-/* Bool reai_db_add_function (ReaiDb* db, ReaiBinaryId bin_id, ReaiFunctionId fn_id, CString fn_name); */
 
 #endif // REAI_DB_H

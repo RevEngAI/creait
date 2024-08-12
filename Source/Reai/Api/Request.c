@@ -153,39 +153,33 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             }
 
             /* optional */
-            if (request->create_analysis.base_addr) {
-                /* create new object for symbol info */
-                cJSON* symbols = cJSON_CreateObject();
-                GOTO_HANDLER_IF (!symbols, CONVERSION_FAILED, "Failed to create JSON object");
-                cJSON_AddItemToObject (json, "symbols", symbols);
+            /* create new object for symbol info */
+            cJSON* symbols = cJSON_CreateObject();
+            GOTO_HANDLER_IF (!symbols, CONVERSION_FAILED, "Failed to create JSON object");
+            cJSON_AddItemToObject (json, "symbols", symbols);
 
-                /* add base addr info to symbols obect */
-                JSON_ADD_U64 (symbols, "base_addr", request->create_analysis.base_addr);
+            /* add base addr info to symbols obect */
+            JSON_ADD_U64 (symbols, "base_addr", request->create_analysis.base_addr);
 
-                /* optionally if function infos are provided  */
-                if (request->create_analysis.functions) {
-                    /* create array for function infos and add to symbols object */
-                    cJSON* functions = cJSON_CreateArray();
-                    GOTO_HANDLER_IF (
-                        !functions,
-                        CONVERSION_FAILED,
-                        "Failed to create JSON array\n"
-                    );
-                    cJSON_AddItemToObject (symbols, "functions", functions);
+            /* optionally if function infos are provided  */
+            if (request->create_analysis.functions) {
+                /* create array for function infos and add to symbols object */
+                cJSON* functions = cJSON_CreateArray();
+                GOTO_HANDLER_IF (!functions, CONVERSION_FAILED, "Failed to create JSON array\n");
+                cJSON_AddItemToObject (symbols, "functions", functions);
 
-                    /* add all function info to functions array */
-                    for (Size s = 0; s < request->create_analysis.functions->count; s++) {
-                        cJSON* fn = cJSON_CreateObject();
+                /* add all function info to functions array */
+                for (Size s = 0; s < request->create_analysis.functions->count; s++) {
+                    cJSON* fn = cJSON_CreateObject();
 
-                        ReaiFnInfo* fninfo = request->create_analysis.functions->items + s;
+                    ReaiFnInfo* fninfo = request->create_analysis.functions->items + s;
 
-                        /* function ID ignored here */
-                        JSON_ADD_STRING (fn, "name", fninfo->name)
-                        JSON_ADD_U64 (fn, "start_addr", fninfo->vaddr)
-                        JSON_ADD_U64 (fn, "end_addr", fninfo->vaddr + fninfo->size)
+                    /* function ID ignored here */
+                    JSON_ADD_STRING (fn, "name", fninfo->name)
+                    JSON_ADD_U64 (fn, "start_addr", fninfo->vaddr)
+                    JSON_ADD_U64 (fn, "end_addr", fninfo->vaddr + fninfo->size)
 
-                        cJSON_AddItemToArray (functions, fn);
-                    }
+                    cJSON_AddItemToArray (functions, fn);
                 }
             }
 

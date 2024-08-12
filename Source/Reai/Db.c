@@ -615,9 +615,9 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
         CString val = Null;                                                                        \
         switch (sqlite3_step (stmt)) {                                                             \
             case SQLITE_ROW : {                                                                    \
-                val = strdup ((CString)sqlite3_column_text (stmt, 0));                             \
+                val = (CString)sqlite3_column_text (stmt, 0);                                      \
                 sqlite3_finalize (stmt);                                                           \
-                return val;                                                                        \
+                return val ? strdup (val) : Null;                                                  \
             }                                                                                      \
                                                                                                    \
             case SQLITE_DONE : {                                                                   \
@@ -827,54 +827,6 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
     }
 }
 
-/* /\** */
-/*  * @b Get function name for given function id. */
-/*  * */
-/*  * The returned @c CString must be freed after use. */
-/*  * */
-/*  * @param db */
-/*  * @param fn_id */
-/*  * */
-/*  * @return @c CString on success. */
-/*  * @return @c Null otherwise. */
-/*  * *\/ */
-/* CString reai_db_get_function_name (ReaiDb* db, ReaiFunctionId fn_id) { */
-/*     RETURN_VALUE_IF (!db || !fn_id, Null, ERR_INVALID_ARGUMENTS); */
-
-/*     sqlite3_stmt* stmt = Null; */
-/*     PREPARE_SQL_QUERY ( */
-/*         stmt, */
-/*         "SELECT function_name " */
-/*         "FROM function " */
-/*         "WHERE function_id = %llu;", */
-/*         fn_id */
-/*     ); */
-
-/*     /\* execute once because we expect only one result *\/ */
-/*     switch (sqlite3_step (stmt)) { */
-/*         case SQLITE_ROW : { */
-/*             CString fn_name = strdup ((CString)sqlite3_column_text (stmt, 0)); */
-/*             sqlite3_finalize (stmt); */
-/*             return fn_name; */
-/*         } */
-
-/*         case SQLITE_DONE : { */
-/*             sqlite3_finalize (stmt); */
-/*             return Null; */
-/*         } */
-
-/*         default : { */
-/*             sqlite3_finalize (stmt); */
-/*             PRINT_ERR ( */
-/*                 "Failed to execute query : %s @off=%d.", */
-/*                 sqlite3_errmsg (db->db_conn), */
-/*                 sqlite3_error_offset (db->db_conn) */
-/*             ); */
-/*             return Null; */
-/*         } */
-/*     } */
-/* } */
-
 /**
  * @b Add binary file path and SHA-256 hash value retrieved from server
  *    response after uploading file.
@@ -905,7 +857,11 @@ Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash) {
         }
         default : {
             sqlite3_finalize (stmt);
-            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.");
+            RETURN_VALUE_IF_REACHED (
+                False,
+                "Failed to execute sql query. : %s",
+                sqlite3_errmsg (db->db_conn)
+            );
         }
     }
 }
@@ -974,7 +930,7 @@ Bool reai_db_set_analysis_status (
     ReaiAnalysisStatus new_status
 ) {
     RETURN_VALUE_IF (
-        !db || !new_status || (new_status >= REAI_ANALYSIS_STATUS_MAX),
+        !db || !binary_id || !new_status || (new_status >= REAI_ANALYSIS_STATUS_MAX),
         False,
         ERR_INVALID_ARGUMENTS
     );
@@ -987,31 +943,6 @@ Bool reai_db_set_analysis_status (
 
     return True;
 }
-
-/* /\** */
-/*  * @b Add a new function to the databse. */
-/*  * */
-/*  * @param db */
-/*  * @param bin_id */
-/*  * @param fn_id */
-/*  * @param fn_name */
-/*  * */
-/*  * @return @c True if new function was added successfully to the database. */
-/*  * *\/ */
-/* Bool reai_db_add_function (ReaiDb* db, ReaiBinaryId bin_id, ReaiFunctionId fn_id, CString fn_name) { */
-/*     RETURN_VALUE_IF (!db || !bin_id || !fn_id || !fn_name, False, ERR_INVALID_ARGUMENTS); */
-
-/*     EXEC_SQL_QUERY ( */
-/*         "INSERT INTO function (binary_id, function_id, function_name) " */
-/*         "VALUES               (%llu,      %llu,        '%s');", */
-/*         bin_id, */
-/*         fn_id, */
-/*         fn_name */
-/*     ); */
-
-/*     return True; */
-/* } */
-
 
 /**
  * @b Add a new model id,name pair in database.
@@ -1087,16 +1018,6 @@ PRIVATE ReaiDb* init_tables (ReaiDb* db) {
         "   FOREIGN KEY (tag_id)    REFERENCES tags (tag_id) "
         " );%s",
         ""
-
-        /* // Table to keep track of functions a binary holds. */
-        /* " CREATE TABLE IF NOT EXISTS function ( " */
-        /* "   binary_id     UNSIGNED BIGINT NOT NULL, " */
-        /* "   function_id   UNSIGNED BIGINT PRIMARY KEY, " */
-        /* "   function_name VARCHAR(64)     NOT NULL, " */
-
-        /* "   FOREIGN KEY (binary_id) REFERENCES created_analysis (binary_id)" */
-        /* " );%s", */
-        /* "" */
     );
 
     /* insert AI models with ids */

@@ -40,6 +40,7 @@ extern "C" {
         Reai*          reai,
         ReaiResponse*  response,
         ReaiModel      model,
+        Uint64         base_addr,
         ReaiFnInfoVec* fn_info_vec,
         Bool           is_private,
         CString        sha_256_hash,
