@@ -30,7 +30,7 @@ int main (int argc, char **argv) {
     ReaiConfig *cfg = reai_config_load (Null);
     RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.");
 
-    Reai *reai = reai_create (cfg->host, cfg->apikey);
+    Reai *reai = reai_create (cfg->host, cfg->apikey, cfg->model);
 
     Char db_path[64] = {0};
     snprintf (db_path, sizeof (db_path) - 1, "%s/reai.db", cfg->db_dir_path);

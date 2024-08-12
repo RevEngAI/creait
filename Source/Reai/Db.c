@@ -1024,13 +1024,13 @@ PRIVATE ReaiDb* init_tables (ReaiDb* db) {
     EXEC_SQL_QUERY (
         "INSERT OR IGNORE INTO ai_model(model_id, model_name) VALUES "
         "(%u, '%s'), (%u, '%s'), (%u, '%s'), (%u, '%s');",
-        REAI_MODEL_BINNET_0_3_X86_WINDOWS,
+        REAI_MODEL_X86_WINDOWS,
         "binnet-0.3-x86-windows",
-        REAI_MODEL_BINNET_0_3_X86_LINUX,
+        REAI_MODEL_X86_LINUX,
         "binnet-0.3-x86-linux",
-        REAI_MODEL_BINNET_0_3_X86_MACOS,
+        REAI_MODEL_X86_MACOS,
         "binnet-0.3-x86-macos",
-        REAI_MODEL_BINNET_0_3_X86_ANDROID,
+        REAI_MODEL_X86_ANDROID,
         "binnet-0.3-x86-android"
     );
 

@@ -75,7 +75,9 @@ Next step is to connect with RevEng.AI servers. This is done using a single func
 int main() {
     // load config
     
-    Reai *reai = reai_create (cfg->host, cfg->apikey);
+    // These values can be passed without loading config as well if
+    // it is desired to be hardcoded ihe the program itself.
+    Reai *reai = reai_create (cfg->host, cfg->apikey, cfg->model);
     RETURN_VALUE_IF(!reai, EXIT_FAILURE, "Failed to connect to RevEng.AI servers.");
     
     return EXIT_SUCCESS;

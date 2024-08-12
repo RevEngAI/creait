@@ -17,10 +17,10 @@
 #include "Reai/Util/Vec.h"
 
 static CString reai_model_to_name[] = {
-    [REAI_MODEL_BINNET_0_3_X86_WINDOWS] = "binnet-0.3-x86-windows",
-    [REAI_MODEL_BINNET_0_3_X86_LINUX]   = "binnet-0.3-x86-linux",
-    [REAI_MODEL_BINNET_0_3_X86_MACOS]   = "binnet-0.3-x86-macos",
-    [REAI_MODEL_BINNET_0_3_X86_ANDROID] = "binnet-0.3-x86-android",
+    [REAI_MODEL_X86_WINDOWS] = "x86-windows",
+    [REAI_MODEL_X86_LINUX]   = "x86-linux",
+    [REAI_MODEL_X86_MACOS]   = "x86-macos",
+    [REAI_MODEL_X86_ANDROID] = "x86-android",
 };
 
 static CString reai_file_opt_to_str[] = {
@@ -84,8 +84,8 @@ static CString reai_file_opt_to_str[] = {
  * @return @c CString containing request data in json format.
  * @return @c Null if json is empty or on failure.
  * */
-HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
-    RETURN_VALUE_IF (!request, Null, ERR_INVALID_ARGUMENTS);
+HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
+    RETURN_VALUE_IF (!request || !model, Null, ERR_INVALID_ARGUMENTS);
 
     cJSON* json = cJSON_CreateObject();
     GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");
@@ -93,14 +93,18 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
             GOTO_HANDLER_IF (
-                (request->create_analysis.model == REAI_MODEL_BINNET_0_3_UNKNOWN ||
-                 request->create_analysis.model >= REAI_MODEL_BINNET_0_3_MAX),
+                (request->create_analysis.model == REAI_MODEL_UNKNOWN ||
+                 request->create_analysis.model >= REAI_MODEL_MAX),
                 CONVERSION_FAILED,
                 "Required field model is invalid\n"
             );
 
             /* required field */
-            CString model_name = reai_model_to_name[request->create_analysis.model];
+            CString model_suffix_name = reai_model_to_name[request->create_analysis.model];
+            CString model_prefix_name = model;
+            Size    model_name_len    = strlen (model_suffix_name) + strlen (model_prefix_name) + 2;
+            Char    model_name[model_name_len];
+            snprintf (model_name, model_name_len, "%s-%s", model_prefix_name, model_suffix_name);
             JSON_ADD_STRING (json, "model_name", model_name);
 
             /* optional field */

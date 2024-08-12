@@ -78,12 +78,12 @@ extern "C" {
      * This is used in create analysis request type.
      * */
     typedef enum ReaiModel {
-        REAI_MODEL_BINNET_0_3_UNKNOWN = 0,
-        REAI_MODEL_BINNET_0_3_X86_WINDOWS,
-        REAI_MODEL_BINNET_0_3_X86_LINUX,
-        REAI_MODEL_BINNET_0_3_X86_MACOS,
-        REAI_MODEL_BINNET_0_3_X86_ANDROID,
-        REAI_MODEL_BINNET_0_3_MAX
+        REAI_MODEL_UNKNOWN = 0,
+        REAI_MODEL_X86_WINDOWS,
+        REAI_MODEL_X86_LINUX,
+        REAI_MODEL_X86_MACOS,
+        REAI_MODEL_X86_ANDROID,
+        REAI_MODEL_MAX
     } ReaiModel;
 
     /**

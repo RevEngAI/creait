@@ -28,7 +28,7 @@ extern "C" {
     typedef struct ReaiDb       ReaiDb;
     typedef struct ReaiLog      ReaiLog;
 
-    Reai*         reai_create (CString host, CString api_key);
+    Reai*         reai_create (CString host, CString api_key, CString model);
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
     Reai*         reai_set_db (Reai* reai, ReaiDb* db);
