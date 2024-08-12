@@ -124,17 +124,10 @@ Reai* reai_deinit_conn (Reai* reai) {
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
 
+    reai->db     = Null;
+    reai->logger = Null;
+
     reai_deinit_conn (reai);
-
-    if (reai->db) {
-        reai_db_destroy (reai->db);
-        reai->db = Null;
-    }
-
-    if (reai->logger) {
-        reai_log_destroy (reai->logger);
-        reai->logger = Null;
-    }
 
     if (reai->host) {
         FREE (reai->host);
@@ -301,7 +294,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* POST : api.local/v1/analyse */
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse", reai->host);
+            SET_ENDPOINT ("%s/analyse/", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (201, REAI_RESPONSE_TYPE_CREATE_ANALYSIS);
             break;
@@ -406,9 +399,6 @@ REQUEST_FAILED:
  * @b Set a database in Reai. This will make sure that database
  * is automatically updated in case of file upload or analysis creation.
  *
- * The given DB object is now owned by Reai and will automatically be
- * destroyed when given Reai object is destroyed.
- *
  * @param reai
  * @param db
  *
@@ -426,9 +416,6 @@ Reai* reai_set_db (Reai* reai, ReaiDb* db) {
 /**
  * @b Set a logger in Reai. This will increase verbosity in the logger.
  * Every request and respose will be dumped into the log file.
- *
- * The given Log object is now owned by Reai and will automatically be
- * destroyed when given Reai object is destroyed.
  *
  * @param reai
  * @param logger
