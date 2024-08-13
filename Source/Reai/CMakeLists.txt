@@ -1,10 +1,13 @@
+find_package(SQLite3)
+find_package(CURL)
+
 file(GLOB_RECURSE CREAIT_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.c)
 
 # Dependencies
 # Libraries dependents need to link to to use REAI
 set(
   CREAIT_LINK_LIBRARIES
-  cjson CURL::libcurl tomlc99 SQLite::SQLite3
+  cjson CURL::libcurl toml SQLite::SQLite3
   CACHE STRING "Libraries to link to in order to use creait"
 )
 
@@ -16,8 +19,8 @@ target_include_directories(
   reai
   PUBLIC
   ${PROJECT_SOURCE_DIR}/Include
-  ${PROJECT_SOURCE_DIR}/Deps/cJSON
-  ${PROJECT_SOURCE_DIR}/Deps/tomlc99
+  ${CJSON_INCLUDE_DIRS}
+  ${TOML_INCLUDE_DIRS}
 )
 set_target_properties(
   reai

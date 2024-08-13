@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
 
-project(CREAIT LANGUAGES C VERSION 0)
+project(CREAIT LANGUAGES C VERSION 0.1.1)
+include(FetchContent)
+include(ExternalProject)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
@@ -34,13 +36,12 @@ else()
 	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
 endif()
 
-
 # generate a compile_commands.json for LSP clients
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# dependencies
-add_subdirectory(Deps/cJSON)
-add_subdirectory(Deps/tomlc99)
+# Add dependencies to project
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
+include(Dependencies)
 find_package(CURL REQUIRED)
 find_package(SQLite3 REQUIRED)
 

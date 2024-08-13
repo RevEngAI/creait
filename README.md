@@ -5,22 +5,23 @@ creait is currently under development.
 
 ## Installation
 
-> ⚠️ **Warning:**
->
-> This library is not meant to be used by non-developers. Please contact a developer
-> If you want to test this library.
-
 ``` sh
-git clone git@github.com:RevEngAI/creait.git
-cd creait
-git submodule update --init
-mkdir Build
-cd Build
-cmake .. -G Ninja -D CMAKE_BUILD_TYPE=Debug
-ninja
-bin/main # This is the test binary I'm using for now, will not be present in future
-ninja install # Prepent "sudo" if required, or change prefix path using -D CMAKE_INSTALL_PREFIX=/to/install/path in configure step
+# Clone this repo and cd into it
+git clone git@github.com:RevEngAI/creait.git && cd creait
+
+# Configre the build using ninja. Remove -G Ninja if you prefer usign GNU Makefiles (make required)
+cmake -B Build -G Ninja
+
+# Build and install creait.
+ninja -C Build && sudo ninja -C Build install
 ```
+
+You can just copy paste this directly in your terminal and it will do everyting for you,
+given the following dependencies are installed already.
+
+## Dependencies
+
+Before building, user/developer must have libcurl (development package), git, cmake, make, ninja and pkg-config installed on host system. The package names differ from OS to OS.
 
 ## Usage
 

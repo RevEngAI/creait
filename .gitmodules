@@ -1,6 +1,0 @@
-[submodule "Deps/cJSON"]
-	path = Deps/cJSON
-	url = git@github.com:DaveGamble/cJSON.git
-[submodule "Deps/tomlc99"]
-	path = Deps/tomlc99
-	url = git@github.com:brightprogrammer/tomlc99.git
