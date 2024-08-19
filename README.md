@@ -6,8 +6,13 @@ creait is currently under development.
 ## Installation
 
 ``` sh
+# first install libtoml (https://github.com/brightprogrammer/tomlc99)
+
 # Clone this repo and cd into it
 git clone git@github.com:RevEngAI/creait.git && cd creait
+
+# Add the install path of libtoml
+# export LIBRARY_PATH=$LIBRARY_PATH:/usr/local/lib
 
 # Configre the build using ninja. Remove -G Ninja if you prefer usign GNU Makefiles (make required)
 cmake -B Build -G Ninja
