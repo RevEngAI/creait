@@ -14,6 +14,10 @@
 #ifndef REAI_UTIL_VEC_H
 #define REAI_UTIL_VEC_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 
@@ -24,8 +28,8 @@
 #    define REAI_VEC_INITIAL_ITEM_CAPACITY 32
 #endif
 
-typedef void* (*ReaiGenericCloneInit) (void* dst, void* src);
-typedef void* (*ReaiGenericCloneDeinit) (void* clone);
+    typedef void* (*ReaiGenericCloneInit) (void* dst, void* src);
+    typedef void* (*ReaiGenericCloneDeinit) (void* clone);
 
 #define REAI_VEC_FOREACH(vec, iter, body)                                                          \
     do {                                                                                           \
@@ -33,7 +37,7 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
             break;                                                                                 \
         }                                                                                          \
                                                                                                    \
-        typeof (vec->items) iter = Null;                                                           \
+        typeof (vec->items) iter = (typeof (vec->items))Null;                                      \
         for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
             iter = vec->items + ___idx;                                                            \
             { body; };                                                                             \
@@ -65,7 +69,7 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
     PRIVATE vec_tname* reai_##fn_infix##_vec_append (vec_tname* vec, vec_itype* item);             \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_create() {                                            \
-        vec_tname* vec = Null;                                                                     \
+        vec_tname* vec = (vec_tname*)Null;                                                         \
         if (!(vec = reai_##fn_infix##_vec_init (NEW (vec_tname)))) {                               \
             PRINT_ERR (ERR_OBJECT_INITIALIZATION_FAILED);                                          \
             reai_##fn_infix##_vec_destroy (vec);                                                   \
@@ -80,11 +84,11 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_init (vec_tname* vec) {                               \
-        RETURN_VALUE_IF (!vec, Null, ERR_INVALID_ARGUMENTS);                                       \
+        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         Size cap   = REAI_VEC_INITIAL_ITEM_CAPACITY;                                               \
         vec->items = ALLOCATE (vec_itype, cap);                                                    \
-        RETURN_VALUE_IF (!vec->items, Null, ERR_OUT_OF_MEMORY);                                    \
+        RETURN_VALUE_IF (!vec->items, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                        \
         vec->count    = 0;                                                                         \
         vec->capacity = cap;                                                                       \
                                                                                                    \
@@ -92,10 +96,10 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_deinit (vec_tname* vec) {                             \
-        RETURN_VALUE_IF (!vec, Null, ERR_INVALID_ARGUMENTS);                                       \
+        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         ReaiGenericCloneDeinit deiniter = (ReaiGenericCloneDeinit)vec_iclone_deinit;               \
-        if (deiniter != Null) {                                                                    \
+        if (deiniter) {                                                                            \
             for (Size s = 0; s < vec->count; s++) {                                                \
                 deiniter (vec->items + s);                                                         \
             }                                                                                      \
@@ -110,22 +114,22 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_append (vec_tname* vec, vec_itype* item) {            \
-        RETURN_VALUE_IF (!vec || !item, Null, ERR_INVALID_ARGUMENTS);                              \
+        RETURN_VALUE_IF (!vec || !item, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                  \
                                                                                                    \
         if (vec->count >= vec->capacity) {                                                         \
             Size       newcap = vec->count ? vec->count * 2 : REAI_VEC_INITIAL_ITEM_CAPACITY;      \
             vec_itype* temp   = REALLOCATE (vec->items, vec_itype, newcap);                        \
-            RETURN_VALUE_IF (!temp, Null, ERR_OUT_OF_MEMORY);                                      \
+            RETURN_VALUE_IF (!temp, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                          \
                                                                                                    \
             vec->items    = temp;                                                                  \
             vec->capacity = newcap;                                                                \
         }                                                                                          \
                                                                                                    \
         ReaiGenericCloneInit initer = (ReaiGenericCloneInit)vec_iclone_init;                       \
-        if (initer != Null) {                                                                      \
+        if (initer) {                                                                              \
             RETURN_VALUE_IF (                                                                      \
                 !initer (vec->items + vec->count++, item),                                         \
-                Null,                                                                              \
+                (vec_tname*)Null,                                                                  \
                 "Failed to make item clone"                                                        \
             );                                                                                     \
         } else {                                                                                   \
@@ -136,19 +140,19 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_clone_create (vec_tname* vec) {                       \
-        RETURN_VALUE_IF (!vec, Null, ERR_INVALID_ARGUMENTS);                                       \
+        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         vec_tname* clone_vec = reai_##fn_infix##_vec_create();                                     \
         RETURN_VALUE_IF (                                                                          \
             !clone_vec,                                                                            \
-            Null,                                                                                  \
+            (vec_tname*)Null,                                                                      \
             "Failed to create new '%s' vector to create clone",                                    \
             #vec_tname                                                                             \
         );                                                                                         \
                                                                                                    \
         if (vec->capacity > clone_vec->capacity) {                                                 \
             vec_itype* temp = REALLOCATE (clone_vec->items, vec_itype, vec->capacity);             \
-            RETURN_VALUE_IF (!temp, Null, ERR_OUT_OF_MEMORY);                                      \
+            RETURN_VALUE_IF (!temp, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                          \
                                                                                                    \
             clone_vec->items    = temp;                                                            \
             clone_vec->capacity = vec->capacity;                                                   \
@@ -173,7 +177,11 @@ typedef void* (*ReaiGenericCloneDeinit) (void* clone);
                                                                                                    \
 CLONE_FAILED:                                                                                      \
         reai_##fn_infix##_vec_destroy (clone_vec);                                                 \
-        return Null;                                                                               \
+        return (vec_tname*)Null;                                                                   \
     }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

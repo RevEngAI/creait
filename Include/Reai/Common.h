@@ -14,15 +14,22 @@
 /********************************** CONVINIENT WRAPPER MACROS *************************************/
 
 
-#define CONSTRUCTOR              __attribute__ ((constructor))
-#define DESTRUCTOR               __attribute__ ((destructor))
-#define FORCE_INLINE             __attribute__ ((always_inline))
-#define UNUSED(x)                ((void)(x))
-#define NEW(type)                (type *)calloc (1, sizeof (type))
-#define ALLOCATE(type, n)        (type *)calloc (n, sizeof (type))
-#define REALLOCATE(ptr, type, n) (type *)realloc (ptr, n * sizeof (type));
-#define FREE(x)                  free ((void *)(x))
-#define PACKED                   __attribute__ ((packed))
+#define CONSTRUCTOR  __attribute__ ((constructor))
+#define DESTRUCTOR   __attribute__ ((destructor))
+#define FORCE_INLINE __attribute__ ((always_inline))
+#define UNUSED(x)    ((void)(x))
+#ifdef __cplusplus
+#    define NEW(type)                reinterpret_cast<type *> (calloc (1, sizeof (type)))
+#    define ALLOCATE(type, n)        reinterpret_cast<type *> (calloc (n, sizeof (type)))
+#    define REALLOCATE(ptr, type, n) reinterpret_cast<type *> (realloc (ptr, n * sizeof (type)))
+#    define FREE(x)                  free (const_cast<void *> (reinterpret_cast<const void *> (x)))
+#else
+#    define NEW(type)                (type *)calloc (1, sizeof (type))
+#    define ALLOCATE(type, n)        (type *)calloc (n, sizeof (type))
+#    define REALLOCATE(ptr, type, n) (type *)realloc (ptr, n * sizeof (type));
+#    define FREE(x)                  free ((void *)(x))
+#endif
+#define PACKED __attribute__ ((packed))
 
 #define ALIGN_UP(x, y) (x + (y - (x % y)))
 #define ALIGN_DOWN(x, y) (x - (x % y)))
