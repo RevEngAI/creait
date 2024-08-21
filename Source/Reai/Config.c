@@ -41,7 +41,7 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     FILE *fp;
     char  errbuf[200];
 
-    fp = fopen ("/home/misra/.reait.toml", "r");
+    fp = fopen (path, "r");
     RETURN_VALUE_IF (!fp, Null, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
 
     toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
