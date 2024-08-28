@@ -14,6 +14,21 @@
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 
+/**
+ * Get directory path where config file must be stored, depending
+ * on operating system.
+ * */
+
+#if defined(_WIN32) || defined(_WIN64)
+#    define REAI_CONFIG_DIR_PATH getenv ("USERPROFILE")
+#elif defined(__linux__) || defined(__APPLE__)
+#    define REAI_CONFIG_DIR_PATH getenv ("HOME")
+#else
+#    error "Unsupported OS"
+#endif
+
+#define REAI_CONFIG_FILE_NAME ".reai-rz.toml"
+
 #ifdef __cplusplus
 extern "C" {
 #endif

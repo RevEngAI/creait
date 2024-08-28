@@ -19,7 +19,7 @@
  * */
 PRIVATE Char *reai_config_get_default_path (Char *buf, Size buf_cap) {
     RETURN_VALUE_IF (!buf || !buf_cap, Null, ERR_INVALID_ARGUMENTS);
-    snprintf (buf, buf_cap, "%s/%s", getenv ("HOME"), ".reait.toml");
+    snprintf (buf, buf_cap, "%s/%s", REAI_CONFIG_DIR_PATH, REAI_CONFIG_FILE_NAME);
     return buf;
 }
 

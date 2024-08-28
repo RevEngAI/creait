@@ -43,15 +43,15 @@ There are three main objects you need to interact with.
 ### Configurations 
 
 To connect with RevEng.AI servers, you first need to load a config file. The config file must
-usually be present in your home directory and must have name `~/.reait.toml`. This means, it's
-a config file for RevEng.AI Toolkit (reait). A very basic config is 
+usually be present in your home directory and must have name `~/.reai-rz.toml`. When using a 
+plugin, this file can be auto-generated using one of the commands. A very basic config is 
 
 ``` toml
-apikey = "l1br3"
-host = "https://api.reveng.ai/v1"
-model = "binnet-0.3-x86"
-db_dir_path = "~/.reai"
-log_dir_path = "/tmp"
+apikey = "libr3"                   # Replace this with your own API key
+host = "https://api.reveng.ai/v1"  # API version and base endpoint
+model = "binnet-0.3-x86"           # Set the latest AI model here.
+db_dir_path = "/home/<user>/.reai" # This path may change depending on your OS
+log_dir_path = "/tmp"              # This path may change depending on your OS
 ```
 
 To load the config, you must create a `ReaiConfig` object that parses this toml file and stores
