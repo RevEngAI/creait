@@ -5,7 +5,6 @@
 
 /* libc  */
 #include <errno.h>
-#include <stdlib.h>
 #include <string.h>
 
 /**
@@ -17,9 +16,17 @@
  * @return @c buf on success
  * @return @c Null otherwise.
  * */
-PRIVATE Char *reai_config_get_default_path (Char *buf, Size buf_cap) {
-    RETURN_VALUE_IF (!buf || !buf_cap, Null, ERR_INVALID_ARGUMENTS);
-    snprintf (buf, buf_cap, "%s/%s", REAI_CONFIG_DIR_PATH, REAI_CONFIG_FILE_NAME);
+CString reai_config_get_default_path() {
+    static Char buf[1024]        = {0};
+    static Bool default_path_set = False;
+
+    if (default_path_set) {
+        return buf;
+    }
+
+    snprintf (buf, sizeof (buf), "%s/%s", REAI_CONFIG_DIR_PATH, REAI_CONFIG_FILE_NAME);
+    default_path_set = True;
+
     return buf;
 }
 
@@ -31,9 +38,8 @@ PRIVATE Char *reai_config_get_default_path (Char *buf, Size buf_cap) {
  * @return ReaiConfig
  * */
 PUBLIC ReaiConfig *reai_config_load (CString path) {
-    Char tmpbuf[128];
     if (!path) {
-        path = reai_config_get_default_path (tmpbuf, sizeof (tmpbuf));
+        path = reai_config_get_default_path();
     }
 
     ReaiConfig *cfg = NEW (ReaiConfig);
@@ -127,4 +133,42 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
 
     memset (cfg, 0, sizeof (ReaiConfig));
     FREE (cfg);
+}
+
+/**
+ * @b Check whether or not the API key is in correct format.
+ *
+ * @param apikey
+ *
+ * @return @c True if given API key is correct.
+ * @return @c False otherwise.
+ * */
+Bool reai_config_check_api_key (CString apikey) {
+    CString iter = Null;
+
+    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 8)) {
+        return False;
+    }
+    apikey = iter + 1;
+
+    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
+        return False;
+    }
+    apikey = iter + 1;
+
+    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
+        return False;
+    }
+    apikey = iter + 1;
+
+    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
+        return False;
+    }
+    apikey = iter + 1;
+
+    if (!(iter = strchr (apikey, 0)) || ((iter - apikey) != 12)) {
+        return False;
+    }
+
+    return True;
 }
