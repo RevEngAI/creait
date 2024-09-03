@@ -82,10 +82,10 @@ static CString reai_file_opt_to_str[] = {
  * @param[in] request
  *
  * @return @c CString containing request data in json format.
- * @return @c Null if json is empty or on failure.
+ * @return @c NULL if json is empty or on failure.
  * */
 HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
-    RETURN_VALUE_IF (!request || !model, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!request || !model, NULL, ERR_INVALID_ARGUMENTS);
 
     cJSON* json = cJSON_CreateObject();
     GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");
@@ -226,7 +226,7 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
             if (request->recent_analysis.status) {
                 RETURN_VALUE_IF (
                     request->recent_analysis.status >= REAI_ANALYSIS_STATUS_MAX,
-                    Null,
+                    NULL,
                     "Invalid analysis status\n"
                 );
 
@@ -365,5 +365,5 @@ CONVERSION_FAILED:
     if (json) {
         cJSON_Delete (json);
     }
-    return Null;
+    return NULL;
 }

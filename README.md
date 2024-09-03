@@ -61,14 +61,14 @@ the data in it for you to use easily.
 #include <Reai/Config.h>
 
 int main() {
-    ReaiConfig *cfg = reai_config_load (Null);
+    ReaiConfig *cfg = reai_config_load (NULL);
     RETURN_VALUE_IF(!cfg, EXIT_FAILURE, "Failed to load configuration.");
     
     return EXIT_SUCCESS;
 }
 ```
 
-Note that `Null` is passed to `reai_config_load`. This means the config will be loaded from it's
+Note that `NULL` is passed to `reai_config_load`. This means the config will be loaded from it's
 default expected path. Alternatively, you can load the config from your given path as well.
 
 ### Making Contact

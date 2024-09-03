@@ -36,9 +36,7 @@ typedef Uint64 ReaiFunctionId;
 
 // clang-format on
 
-#define True  ((Bool)1)
-#define False ((Bool)0)
-#define Null  ((void *)0)
+#include <stdbool.h>
 
 #ifndef SIZE_MAX
 #    define SIZE_MAX ((Size)1 << (sizeof (Size) * 8 - 1))

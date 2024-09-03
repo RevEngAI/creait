@@ -31,13 +31,13 @@ PRIVATE ReaiDb* init_tables (ReaiDb* db);
  * @param name Database name
  *
  * @return @c ReaiDb on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiDb* reai_db_create (CString name) {
-    RETURN_VALUE_IF (!name, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!name, NULL, ERR_INVALID_ARGUMENTS);
 
     ReaiDb* db = NEW (ReaiDb);
-    RETURN_VALUE_IF (!db, Null, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!db, NULL, ERR_OUT_OF_MEMORY);
 
     db->db_name = strdup (name);
     GOTO_HANDLER_IF (!db->db_name, CREATE_NEW_DB_FAILED, ERR_OUT_OF_MEMORY);
@@ -61,7 +61,7 @@ ReaiDb* reai_db_create (CString name) {
 
 CREATE_NEW_DB_FAILED:
     reai_db_destroy (db);
-    return Null;
+    return NULL;
 }
 
 /**
@@ -88,10 +88,10 @@ void reai_db_destroy (ReaiDb* db) {
 }
 
 #define PREPARE_SQL_QUERY(stmt, query_fmtstr, ...)                                                 \
-    stmt = Null;                                                                                   \
+    stmt = NULL;                                                                                   \
     do {                                                                                           \
         /* generate query */                                                                       \
-        Size buf_size = snprintf (Null, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
+        Size buf_size = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
         Char sql_query_buf[buf_size];                                                              \
         memset (sql_query_buf, 0, buf_size);                                                       \
         snprintf (sql_query_buf, buf_size, query_fmtstr, __VA_ARGS__);                             \
@@ -99,7 +99,7 @@ void reai_db_destroy (ReaiDb* db) {
         /* compile sql */                                                                          \
         /* REF : https://www.sqlite.org/c3ref/prepare.html */                                      \
         RETURN_VALUE_IF (                                                                          \
-            sqlite3_prepare_v2 (db->db_conn, sql_query_buf, buf_size, &stmt, Null) != SQLITE_OK,   \
+            sqlite3_prepare_v2 (db->db_conn, sql_query_buf, buf_size, &stmt, NULL) != SQLITE_OK,   \
             0,                                                                                     \
             SQL_ERROR ("Failed to prepare query for execution", sql_query_buf, db)                 \
         );                                                                                         \
@@ -107,13 +107,13 @@ void reai_db_destroy (ReaiDb* db) {
 
 #define EXEC_SQL_QUERY(query_fmtstr, ...)                                                          \
     do {                                                                                           \
-        Size buf_size = snprintf (Null, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
+        Size buf_size = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
         Char sql_query_buf[buf_size];                                                              \
         memset (sql_query_buf, 0, buf_size);                                                       \
         snprintf (sql_query_buf, buf_size, query_fmtstr, __VA_ARGS__);                             \
                                                                                                    \
         RETURN_VALUE_IF (                                                                          \
-            sqlite3_exec (db->db_conn, sql_query_buf, Null, Null, Null) != SQLITE_OK,              \
+            sqlite3_exec (db->db_conn, sql_query_buf, NULL, NULL, NULL) != SQLITE_OK,              \
             0,                                                                                     \
             SQL_ERROR ("Failed to exec query", sql_query_buf, db)                                  \
         );                                                                                         \
@@ -132,13 +132,13 @@ void reai_db_destroy (ReaiDb* db) {
  *
  * @param db
  *
- * @return @c True if db requires an update.
- * @return @c False otherwise.
+ * @return @c true if db requires an update.
+ * @return @c false otherwise.
  * */
 Bool reai_db_require_analysis_status_update (ReaiDb* db) {
-    RETURN_VALUE_IF (!db, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, false, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT COUNT(*) "
@@ -157,7 +157,7 @@ Bool reai_db_require_analysis_status_update (ReaiDb* db) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return False;
+            return false;
         }
 
         default : {
@@ -168,10 +168,10 @@ Bool reai_db_require_analysis_status_update (ReaiDb* db) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return False;
+            return false;
         }
     }
-    return False;
+    return false;
 }
 
 /**
@@ -191,15 +191,15 @@ Bool reai_db_require_analysis_status_update (ReaiDb* db) {
  *
  * @return @c CString containing SHA-256 hash on success and if the binary
  *         file was uploaded before (meaning present in db).
- * @return @c Null on error or if file was not uploaded previously.
+ * @return @c NULL on error or if file was not uploaded previously.
  * */
 CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path) {
-    RETURN_VALUE_IF (!db || !file_path, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !file_path, NULL, ERR_INVALID_ARGUMENTS);
 
     CStrVec* vec = reai_cstr_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create cstring vector.");
+    RETURN_VALUE_IF (!vec, NULL, "Failed to create cstring vector.");
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT sha_256_hash FROM uploaded_file WHERE file_path = ?"
@@ -232,7 +232,7 @@ CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path) {
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
-                return Null;
+                return NULL;
             }
         }
     }
@@ -249,12 +249,12 @@ CStrVec* reai_db_get_hashes_for_file_path (ReaiDb* db, CString file_path) {
  *
  * @return @c CString containing SHA-256 hash on success and if the binary
  *         file was uploaded before (meaning present in db).
- * @return @c Null on error or if file was not uploaded previously.
+ * @return @c NULL on error or if file was not uploaded previously.
  * */
 CString reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path) {
-    RETURN_VALUE_IF (!db || !file_path, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !file_path, NULL, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT sha_256_hash FROM uploaded_file WHERE file_path = '%s' "
@@ -273,7 +273,7 @@ CString reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return Null;
+            return NULL;
         }
 
         default : {
@@ -284,7 +284,7 @@ CString reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return Null;
+            return NULL;
         }
     }
 }
@@ -298,12 +298,12 @@ CString reai_db_get_latest_hash_for_file_path (ReaiDb* db, CString file_path) {
  * @param sha_256_hash
  *
  * @return @c CString containing upload time on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 CString reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash) {
-    RETURN_VALUE_IF (!db || !sha_256_hash, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !sha_256_hash, NULL, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT upload_date_time FROM uploaded_file WHERE sha_256_hash = '%s'",
@@ -320,7 +320,7 @@ CString reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return Null;
+            return NULL;
         }
 
         default : {
@@ -331,7 +331,7 @@ CString reai_db_get_upload_time (ReaiDb* db, CString sha_256_hash) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return Null;
+            return NULL;
         }
     }
 }
@@ -354,7 +354,7 @@ ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path
         return 0;
     }
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis WHERE sha_256_hash = '%s' "
@@ -397,13 +397,13 @@ ReaiBinaryId reai_db_get_latest_analysis_for_file (ReaiDb* db, CString file_path
  * @parma db
  * @param id
  *
- * @return @c True if analysis already exists on success.
- * @return @c False otherwise.
+ * @return @c true if analysis already exists on success.
+ * @return @c false otherwise.
  * */
 Bool reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id) {
-    RETURN_VALUE_IF (!db || !id, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !id, false, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT COUNT(binary_id) FROM created_analysis WHERE binary_id = %llu",
@@ -420,7 +420,7 @@ Bool reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return False;
+            return false;
         }
 
         default : {
@@ -431,7 +431,7 @@ Bool reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return False;
+            return false;
         }
     }
 }
@@ -446,22 +446,22 @@ Bool reai_db_check_analysis_exists (ReaiDb* db, ReaiBinaryId id) {
  *
  * @return @c ReaiBinaryId array on success and if analysis were previously
  *         created and added.
- * @return @c Null otherwise on failure or if no analysis is present.
+ * @return @c NULL otherwise on failure or if no analysis is present.
  * */
 U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_256_hash) {
-    RETURN_VALUE_IF (!db || !binary_sha_256_hash, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !binary_sha_256_hash, NULL, ERR_INVALID_ARGUMENTS);
 
     U64Vec* vec = reai_u64_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
+    RETURN_VALUE_IF (!vec, NULL, "Failed to create uint64 vector.");
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis WHERE sha_256_hash = '%s';",
         binary_sha_256_hash
     );
 
-    while (True) {
+    while (true) {
         switch (sqlite3_step (stmt)) {
             case SQLITE_ROW : {
                 Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
@@ -483,7 +483,7 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
-                return Null;
+                return NULL;
             }
         }
     }
@@ -495,15 +495,15 @@ U64Vec* reai_db_get_analyses_created_for_binary (ReaiDb* db, CString binary_sha_
  * @param db
  *
  * @return @c U64Vec containing binary ids for all created analyses on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
-    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, NULL, ERR_INVALID_ARGUMENTS);
 
     U64Vec* vec = reai_u64_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
+    RETURN_VALUE_IF (!vec, NULL, "Failed to create uint64 vector.");
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis "
@@ -511,7 +511,7 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
         ""
     );
 
-    while (True) {
+    while (true) {
         switch (sqlite3_step (stmt)) {
             case SQLITE_ROW : {
                 Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
@@ -533,7 +533,7 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
-                return Null;
+                return NULL;
             }
         }
     }
@@ -546,22 +546,22 @@ U64Vec* reai_db_get_all_created_analyses (ReaiDb* db) {
  * @param status
  *
  * @return @c U64Vec containing binary id of all analyses with given status on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status) {
-    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, NULL, ERR_INVALID_ARGUMENTS);
 
     U64Vec* vec = reai_u64_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create uint64 vector.");
+    RETURN_VALUE_IF (!vec, NULL, "Failed to create uint64 vector.");
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT binary_id FROM created_analysis WHERE status = '%s';",
         reai_analysis_status_to_cstr (status)
     );
 
-    while (True) {
+    while (true) {
         switch (sqlite3_step (stmt)) {
             case SQLITE_ROW : {
                 Uint64 binary_id = sqlite3_column_int64 (stmt, 0);
@@ -583,7 +583,7 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
                     sqlite3_errmsg (db->db_conn),
                     sqlite3_error_offset (db->db_conn)
                 );
-                return Null;
+                return NULL;
             }
         }
     }
@@ -598,13 +598,13 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
  * @param id Binary Id provided after creating analysis.
  *
  * @return @c CString on success.
- * @return @c Null otherwise
+ * @return @c NULL otherwise
  * */
 #define GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE(fn_suffix, field_name)                                 \
     CString reai_db_get_analysis_##fn_suffix (ReaiDb* db, ReaiBinaryId bin_id) {                   \
-        RETURN_VALUE_IF (!db || !bin_id, Null, ERR_INVALID_ARGUMENTS);                             \
+        RETURN_VALUE_IF (!db || !bin_id, NULL, ERR_INVALID_ARGUMENTS);                             \
                                                                                                    \
-        sqlite3_stmt* stmt = Null;                                                                 \
+        sqlite3_stmt* stmt = NULL;                                                                 \
         PREPARE_SQL_QUERY (                                                                        \
             stmt,                                                                                  \
             "SELECT " #field_name " FROM created_analysis WHERE binary_id = %llu;",                \
@@ -612,17 +612,17 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
         );                                                                                         \
                                                                                                    \
         /* only one result so we execute only once */                                              \
-        CString val = Null;                                                                        \
+        CString val = NULL;                                                                        \
         switch (sqlite3_step (stmt)) {                                                             \
             case SQLITE_ROW : {                                                                    \
                 val = (CString)sqlite3_column_text (stmt, 0);                                      \
                 sqlite3_finalize (stmt);                                                           \
-                return val ? strdup (val) : Null;                                                  \
+                return val ? strdup (val) : NULL;                                                  \
             }                                                                                      \
                                                                                                    \
             case SQLITE_DONE : {                                                                   \
                 sqlite3_finalize (stmt);                                                           \
-                return Null;                                                                       \
+                return NULL;                                                                       \
             }                                                                                      \
                                                                                                    \
             default : {                                                                            \
@@ -632,7 +632,7 @@ U64Vec* reai_db_get_analyses_with_status (ReaiDb* db, ReaiAnalysisStatus status)
                     sqlite3_errmsg (db->db_conn),                                                  \
                     sqlite3_error_offset (db->db_conn)                                             \
                 );                                                                                 \
-                return Null;                                                                       \
+                return NULL;                                                                       \
             }                                                                                      \
         }                                                                                          \
                                                                                                    \
@@ -655,7 +655,7 @@ GEN_TEXT_GETTER_FROM_ANALYSIS_TABLE (cmdline_args, cmdline_args);
 ReaiAnalysisStatus reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId bin_id) {
     RETURN_VALUE_IF (!db || !bin_id, REAI_ANALYSIS_STATUS_INVALID, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (stmt, "SELECT status FROM created_analysis WHERE binary_id = %llu;", bin_id);
 
     /* only one result so we execute only once */
@@ -693,12 +693,12 @@ ReaiAnalysisStatus reai_db_get_analysis_status (ReaiDb* db, ReaiBinaryId bin_id)
  * @param bin_id
  *
  * @return @c CString containing model name on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 CString reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId bin_id) {
-    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, NULL, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "SELECT model_id FROM created_analysis WHERE binary_id = %llu",
@@ -715,7 +715,7 @@ CString reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId bin_id) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return Null;
+            return NULL;
         }
 
         default : {
@@ -726,7 +726,7 @@ CString reai_db_get_analysis_model_name (ReaiDb* db, ReaiBinaryId bin_id) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return Null;
+            return NULL;
         }
     }
 }
@@ -746,16 +746,16 @@ Uint32 reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name) {
     static const CString query_fmtstr = "SELECT model_id FROM ai_model WHERE model_name = '%s';";
 
     /* generate query */
-    Size buf_size = snprintf (Null, 0, query_fmtstr, model_name);
+    Size buf_size = snprintf (NULL, 0, query_fmtstr, model_name);
     Char query_buf[buf_size + 1];
     memset (query_buf, 0, buf_size + 1);
     snprintf (query_buf, buf_size, query_fmtstr, model_name);
 
     /* compile sql */
     /* REF : https://www.sqlite.org/c3ref/prepare.html */
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     RETURN_VALUE_IF (
-        sqlite3_prepare_v2 (db->db_conn, query_buf, buf_size, &stmt, Null) != SQLITE_OK,
+        sqlite3_prepare_v2 (db->db_conn, query_buf, buf_size, &stmt, NULL) != SQLITE_OK,
         0,
         "Failed to prepare query for execution."
     );
@@ -794,12 +794,12 @@ Uint32 reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name) {
  * @param model_id
  *
  * @return @c CString on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
-    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, NULL, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (stmt, "SELECT model_name FROM ai_model WHERE model_id = %u;", model_id);
 
     /* execute once because we expect only one result */
@@ -812,7 +812,7 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
 
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return Null;
+            return NULL;
         }
 
         default : {
@@ -822,7 +822,7 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
                 sqlite3_errmsg (db->db_conn),
                 sqlite3_error_offset (db->db_conn)
             );
-            return Null;
+            return NULL;
         }
     }
 }
@@ -836,9 +836,9 @@ CString reai_db_get_model_name_for_model_id (ReaiDb* db, Uint32 model_id) {
  * @param sha_256_hash
  * */
 Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash) {
-    RETURN_VALUE_IF (!db || !file_path || !sha_256_hash, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !file_path || !sha_256_hash, false, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "INSERT  INTO uploaded_file "
@@ -853,12 +853,12 @@ Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash) {
         case SQLITE_ROW :
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return True;
+            return true;
         }
         default : {
             sqlite3_finalize (stmt);
             RETURN_VALUE_IF_REACHED (
-                False,
+                false,
                 "Failed to execute sql query. : %s",
                 sqlite3_errmsg (db->db_conn)
             );
@@ -874,8 +874,8 @@ Bool reai_db_add_upload (ReaiDb* db, CString file_path, CString sha_256_hash) {
  * @param sha_256_hash Hash value returned in response after uploading binary file.
  * @param binary_id Binary Id returned in response after creating analysis.
  *
- * @return @c True on successful insertion to database.
- * @return @c False otherwise.
+ * @return @c true on successful insertion to database.
+ * @return @c false otherwise.
  * */
 Bool reai_db_add_analysis (
     ReaiDb*      db,
@@ -885,9 +885,9 @@ Bool reai_db_add_analysis (
     CString      file_name,
     CString      cmdline_args
 ) {
-    RETURN_VALUE_IF (!db || !sha_256_hash || !file_name, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !sha_256_hash || !file_name, false, ERR_INVALID_ARGUMENTS);
 
-    sqlite3_stmt* stmt = Null;
+    sqlite3_stmt* stmt = NULL;
     PREPARE_SQL_QUERY (
         stmt,
         "INSERT INTO created_analysis "
@@ -905,11 +905,11 @@ Bool reai_db_add_analysis (
         case SQLITE_ROW :
         case SQLITE_DONE : {
             sqlite3_finalize (stmt);
-            return True;
+            return true;
         }
         default : {
             sqlite3_finalize (stmt);
-            RETURN_VALUE_IF_REACHED (False, "Failed to execute sql query.");
+            RETURN_VALUE_IF_REACHED (false, "Failed to execute sql query.");
         }
     }
 }
@@ -921,8 +921,8 @@ Bool reai_db_add_analysis (
  * @param binary_id Unique binary id assigned to each analysis.
  * @param new_status
  *
- * @return @c True on success.
- * @return @c False otherwise.
+ * @return @c true on success.
+ * @return @c false otherwise.
  * */
 Bool reai_db_set_analysis_status (
     ReaiDb*            db,
@@ -931,7 +931,7 @@ Bool reai_db_set_analysis_status (
 ) {
     RETURN_VALUE_IF (
         !db || !binary_id || !new_status || (new_status >= REAI_ANALYSIS_STATUS_MAX),
-        False,
+        false,
         ERR_INVALID_ARGUMENTS
     );
 
@@ -941,7 +941,7 @@ Bool reai_db_set_analysis_status (
         binary_id
     );
 
-    return True;
+    return true;
 }
 
 /**
@@ -951,11 +951,11 @@ Bool reai_db_set_analysis_status (
  * @param model_name
  * @param model_id
  *
- * @return @c True on success.
- * @return @c False otherwise.
+ * @return @c true on success.
+ * @return @c false otherwise.
  * */
 Bool reai_db_add_ai_model (ReaiDb* db, CString model_name, Uint32 model_id) {
-    RETURN_VALUE_IF (!db || !model_name, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db || !model_name, false, ERR_INVALID_ARGUMENTS);
 
     EXEC_SQL_QUERY (
         "INSERT INTO ai_model "
@@ -965,11 +965,11 @@ Bool reai_db_add_ai_model (ReaiDb* db, CString model_name, Uint32 model_id) {
         model_name
     );
 
-    return True;
+    return true;
 }
 
 PRIVATE ReaiDb* init_tables (ReaiDb* db) {
-    RETURN_VALUE_IF (!db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!db, NULL, ERR_INVALID_ARGUMENTS);
 
     // Schema diagram : https://dbdiagram.io/d/RevEng-AI-Local-DB-66a8ba118b4bb5230ebb81a0
     // Many analysis can be created from same uploaded binary file

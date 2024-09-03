@@ -26,10 +26,10 @@
  * @param clone.
  *
  * @return @c clone on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiAnalysisInfo* reai_analysis_info_clone_deinit (ReaiAnalysisInfo* clone) {
-    RETURN_VALUE_IF (!clone, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!clone, NULL, ERR_INVALID_ARGUMENTS);
 
     DESTROY_CSTR_CLONE (clone->binary_name);
     DESTROY_CSTR_CLONE (clone->model_name);
@@ -47,11 +47,11 @@ PUBLIC ReaiAnalysisInfo* reai_analysis_info_clone_deinit (ReaiAnalysisInfo* clon
  * @param src Memory pointer where source data is stored.
  *
  * @return @c dst on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiAnalysisInfo*
     reai_analysis_info_clone_init (ReaiAnalysisInfo* dst, ReaiAnalysisInfo* src) {
-    RETURN_VALUE_IF (!dst || !src, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!dst || !src, NULL, ERR_INVALID_ARGUMENTS);
 
     CREATE_CSTR_CLONE (dst->binary_name, src->binary_name);
     CREATE_CSTR_CLONE (dst->creation, src->creation);
@@ -66,7 +66,7 @@ PUBLIC ReaiAnalysisInfo*
 
 CLONE_FAILED:
     reai_analysis_info_clone_deinit (dst);
-    return Null;
+    return NULL;
 }
 
 /**
@@ -74,10 +74,10 @@ CLONE_FAILED:
  *
  * @param status
  * @return static @c CString value. Must not be freed by caller.
- * @return @c Null if status is invalid
+ * @return @c NULL if status is invalid
  * */
 CString reai_analysis_status_to_cstr (ReaiAnalysisStatus status) {
-    RETURN_VALUE_IF (!status || status >= REAI_ANALYSIS_STATUS_MAX, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!status || status >= REAI_ANALYSIS_STATUS_MAX, NULL, ERR_INVALID_ARGUMENTS);
 
     static const CString status_strings[] = {
         [REAI_ANALYSIS_STATUS_QUEUED]     = "Queued",

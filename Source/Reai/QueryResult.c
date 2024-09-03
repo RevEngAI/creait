@@ -23,10 +23,10 @@
  * @param clone.
  *
  * @return @c clone on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiQueryResult* reai_query_result_clone_deinit (ReaiQueryResult* clone) {
-    RETURN_VALUE_IF (!clone, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!clone, NULL, ERR_INVALID_ARGUMENTS);
 
     DESTROY_CSTR_CLONE (clone->binary_name);
     reai_cstr_vec_destroy (clone->collections);
@@ -46,10 +46,10 @@ PUBLIC ReaiQueryResult* reai_query_result_clone_deinit (ReaiQueryResult* clone) 
  * @param src Memory pointer where source data is stored.
  *
  * @return @c dst on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, ReaiQueryResult* src) {
-    RETURN_VALUE_IF (!dst || !src, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!dst || !src, NULL, ERR_INVALID_ARGUMENTS);
 
     CREATE_CSTR_CLONE (dst->binary_name, src->binary_name);
 
@@ -77,5 +77,5 @@ PUBLIC ReaiQueryResult* reai_query_result_clone_init (ReaiQueryResult* dst, Reai
 
 CLONE_FAILED:
     reai_query_result_clone_deinit (dst);
-    return Null;
+    return NULL;
 }

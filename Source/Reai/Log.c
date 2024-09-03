@@ -55,16 +55,16 @@ void reai_log_destroy (ReaiLog* logger) {
 /**
  * @b Create a new logger
  *
- * @param file_name Name/Path of file to log to. If Null is provided, then
+ * @param file_name Name/Path of file to log to. If NULL is provided, then
  *        a new file name will automatically be generated and be stored in
  *        platform's temp directory.
  *
  * @return @c ReaiLog on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiLog* reai_log_create (CString file_name) {
     ReaiLog* log = NEW (ReaiLog);
-    RETURN_VALUE_IF (!log, Null, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!log, NULL, ERR_OUT_OF_MEMORY);
 
     log->log_file = file_name ? strdup (file_name) : generate_new_log_file_name();
     GOTO_HANDLER_IF (!log->log_file, CREATE_FAILED, ERR_OUT_OF_MEMORY);
@@ -82,7 +82,7 @@ ReaiLog* reai_log_create (CString file_name) {
 
 CREATE_FAILED:
     reai_log_destroy (log);
-    return Null;
+    return NULL;
 }
 
 /**
@@ -92,10 +92,10 @@ CREATE_FAILED:
  * @parma level
  *
  * @return @c log on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiLog* reai_log_set_level (ReaiLog* log, ReaiLogLevel level) {
-    RETURN_VALUE_IF (!log || (level >= REAI_LOG_LEVEL_MAX), Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!log || (level >= REAI_LOG_LEVEL_MAX), NULL, ERR_INVALID_ARGUMENTS);
 
     log->min_log_level = level;
 
@@ -188,7 +188,7 @@ PRIVATE CString generate_new_log_file_name() {
     strftime (time_str, sizeof (time_str), "%Y%m%d_%H%M%S", timeinfo);
 
     // Get temporary directory path
-    const char* tmp_dir = Null;
+    const char* tmp_dir = NULL;
 #ifdef _WIN32
     tmp_dir = getenv ("TEMP");
     if (tmp_dir == NULL) {

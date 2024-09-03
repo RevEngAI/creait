@@ -24,13 +24,13 @@ extern "C" {
      * @param src Pointer to CString variable to-be-cloned is stored.
      *
      * @return @c dst on success.
-     * @return @c Null otherwise.
+     * @return @c NULL otherwise.
      * */
     PRIVATE CString *cstr_clone_init (CString *dst, CString *src) {
-        RETURN_VALUE_IF (!dst || !src || !*src, (CString *)Null, ERR_INVALID_ARGUMENTS);
+        RETURN_VALUE_IF (!dst || !src || !*src, (CString *)NULL, ERR_INVALID_ARGUMENTS);
 
         CString clone = strdup (*src);
-        RETURN_VALUE_IF (!clone, (CString *)Null, ERR_INVALID_ARGUMENTS);
+        RETURN_VALUE_IF (!clone, (CString *)NULL, ERR_INVALID_ARGUMENTS);
 
         *dst = clone;
 
@@ -43,13 +43,13 @@ extern "C" {
      * @param clone Pointer to cloned string to be destroyed.
      *
      * @return @c clone on success.
-     * @return @c Null otherwise.
+     * @return @c NULL otherwise.
      * */
     PRIVATE CString *cstr_clone_deinit (CString *clone) {
-        RETURN_VALUE_IF (!clone || !*clone, (CString *)Null, ERR_INVALID_ARGUMENTS);
+        RETURN_VALUE_IF (!clone || !*clone, (CString *)NULL, ERR_INVALID_ARGUMENTS);
 
         FREE (*clone);
-        *clone = (CString)Null;
+        *clone = (CString)NULL;
 
         return clone;
     }

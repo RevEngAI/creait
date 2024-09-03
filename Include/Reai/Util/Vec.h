@@ -37,7 +37,7 @@ extern "C" {
             break;                                                                                 \
         }                                                                                          \
                                                                                                    \
-        typeof (vec->items) iter = (typeof (vec->items))Null;                                      \
+        typeof (vec->items) iter = (typeof (vec->items))NULL;                                      \
         for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
             iter = vec->items + ___idx;                                                            \
             { body; };                                                                             \
@@ -50,8 +50,8 @@ extern "C" {
  * @param vec_tname Name of new vector type.
  * @param fn_infix Function name to place in between "reai" and "_vec_<op>"
  * @param vec_itype Vector item type.
- * @param vec_iclone_init Vector item clone method (can be Null)
- * @param vec_iclone_deinit Vector item clone deinit method (can be Null)
+ * @param vec_iclone_init Vector item clone method (can be NULL)
+ * @param vec_iclone_deinit Vector item clone deinit method (can be NULL)
  * */
 #define REAI_MAKE_VEC(vec_tname, fn_infix, vec_itype, vec_iclone_init, vec_iclone_deinit)          \
     /* separate typedefs make sure different vector types don't mix */                             \
@@ -69,7 +69,7 @@ extern "C" {
     PRIVATE vec_tname* reai_##fn_infix##_vec_append (vec_tname* vec, vec_itype* item);             \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_create() {                                            \
-        vec_tname* vec = (vec_tname*)Null;                                                         \
+        vec_tname* vec = (vec_tname*)NULL;                                                         \
         if (!(vec = reai_##fn_infix##_vec_init (NEW (vec_tname)))) {                               \
             PRINT_ERR (ERR_OBJECT_INITIALIZATION_FAILED);                                          \
             reai_##fn_infix##_vec_destroy (vec);                                                   \
@@ -84,11 +84,11 @@ extern "C" {
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_init (vec_tname* vec) {                               \
-        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
+        RETURN_VALUE_IF (!vec, (vec_tname*)NULL, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         Size cap   = REAI_VEC_INITIAL_ITEM_CAPACITY;                                               \
         vec->items = ALLOCATE (vec_itype, cap);                                                    \
-        RETURN_VALUE_IF (!vec->items, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                        \
+        RETURN_VALUE_IF (!vec->items, (vec_tname*)NULL, ERR_OUT_OF_MEMORY);                        \
         vec->count    = 0;                                                                         \
         vec->capacity = cap;                                                                       \
                                                                                                    \
@@ -96,7 +96,7 @@ extern "C" {
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_deinit (vec_tname* vec) {                             \
-        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
+        RETURN_VALUE_IF (!vec, (vec_tname*)NULL, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         ReaiGenericCloneDeinit deiniter = (ReaiGenericCloneDeinit)vec_iclone_deinit;               \
         if (deiniter) {                                                                            \
@@ -114,12 +114,12 @@ extern "C" {
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_append (vec_tname* vec, vec_itype* item) {            \
-        RETURN_VALUE_IF (!vec || !item, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                  \
+        RETURN_VALUE_IF (!vec || !item, (vec_tname*)NULL, ERR_INVALID_ARGUMENTS);                  \
                                                                                                    \
         if (vec->count >= vec->capacity) {                                                         \
             Size       newcap = vec->count ? vec->count * 2 : REAI_VEC_INITIAL_ITEM_CAPACITY;      \
             vec_itype* temp   = REALLOCATE (vec->items, vec_itype, newcap);                        \
-            RETURN_VALUE_IF (!temp, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                          \
+            RETURN_VALUE_IF (!temp, (vec_tname*)NULL, ERR_OUT_OF_MEMORY);                          \
                                                                                                    \
             vec->items    = temp;                                                                  \
             vec->capacity = newcap;                                                                \
@@ -129,7 +129,7 @@ extern "C" {
         if (initer) {                                                                              \
             RETURN_VALUE_IF (                                                                      \
                 !initer (vec->items + vec->count++, item),                                         \
-                (vec_tname*)Null,                                                                  \
+                (vec_tname*)NULL,                                                                  \
                 "Failed to make item clone"                                                        \
             );                                                                                     \
         } else {                                                                                   \
@@ -140,19 +140,19 @@ extern "C" {
     }                                                                                              \
                                                                                                    \
     PRIVATE vec_tname* reai_##fn_infix##_vec_clone_create (vec_tname* vec) {                       \
-        RETURN_VALUE_IF (!vec, (vec_tname*)Null, ERR_INVALID_ARGUMENTS);                           \
+        RETURN_VALUE_IF (!vec, (vec_tname*)NULL, ERR_INVALID_ARGUMENTS);                           \
                                                                                                    \
         vec_tname* clone_vec = reai_##fn_infix##_vec_create();                                     \
         RETURN_VALUE_IF (                                                                          \
             !clone_vec,                                                                            \
-            (vec_tname*)Null,                                                                      \
+            (vec_tname*)NULL,                                                                      \
             "Failed to create new '%s' vector to create clone",                                    \
             #vec_tname                                                                             \
         );                                                                                         \
                                                                                                    \
         if (vec->capacity > clone_vec->capacity) {                                                 \
             vec_itype* temp = REALLOCATE (clone_vec->items, vec_itype, vec->capacity);             \
-            RETURN_VALUE_IF (!temp, (vec_tname*)Null, ERR_OUT_OF_MEMORY);                          \
+            RETURN_VALUE_IF (!temp, (vec_tname*)NULL, ERR_OUT_OF_MEMORY);                          \
                                                                                                    \
             clone_vec->items    = temp;                                                            \
             clone_vec->capacity = vec->capacity;                                                   \
@@ -177,7 +177,7 @@ extern "C" {
                                                                                                    \
 CLONE_FAILED:                                                                                      \
         reai_##fn_infix##_vec_destroy (clone_vec);                                                 \
-        return (vec_tname*)Null;                                                                   \
+        return (vec_tname*)NULL;                                                                   \
     }
 
 #ifdef __cplusplus

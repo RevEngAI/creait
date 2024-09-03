@@ -50,10 +50,10 @@ Reai*                reai_deinit_conn (Reai* reai);
  * @return @c Reai.
  * */
 Reai* reai_create (CString host, CString api_key, CString model) {
-    RETURN_VALUE_IF (!host || !api_key || !model, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!host || !api_key || !model, NULL, ERR_INVALID_ARGUMENTS);
 
     Reai* reai = NEW (Reai);
-    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     GOTO_HANDLER_IF (
         !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)) ||
@@ -68,18 +68,18 @@ Reai* reai_create (CString host, CString api_key, CString model) {
 
 CREATE_FAILED:
     reai_destroy (reai);
-    return Null;
+    return NULL;
 }
 
 /**
  * Initialize the curl handle as if it was created recently.
  * */
 Reai* reai_init_conn (Reai* reai) {
-    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     /* initialize curl isntance and set url */
     reai->curl = curl_easy_init();
-    RETURN_VALUE_IF (!reai->curl, Null, "Failed to easy init curl");
+    RETURN_VALUE_IF (!reai->curl, NULL, "Failed to easy init curl");
 
     curl_easy_setopt (reai->curl, CURLOPT_WRITEFUNCTION, reai_response_write_callback);
     curl_easy_setopt (reai->curl, CURLOPT_FOLLOWLOCATION, 1);
@@ -95,7 +95,7 @@ Reai* reai_init_conn (Reai* reai) {
     reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
 
     /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
-    RETURN_VALUE_IF (!reai->headers, Null, "Failed to prepare initial headers");
+    RETURN_VALUE_IF (!reai->headers, NULL, "Failed to prepare initial headers");
 
     /* set headers */
     curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
@@ -104,15 +104,15 @@ Reai* reai_init_conn (Reai* reai) {
 }
 
 Reai* reai_deinit_conn (Reai* reai) {
-    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     if (reai->headers) {
         curl_slist_free_all (reai->headers);
-        reai->headers = Null;
+        reai->headers = NULL;
     }
     if (reai->curl) {
         curl_easy_cleanup (reai->curl);
-        reai->curl = Null;
+        reai->curl = NULL;
     }
 
     return reai;
@@ -126,24 +126,24 @@ Reai* reai_deinit_conn (Reai* reai) {
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
 
-    reai->db     = Null;
-    reai->logger = Null;
+    reai->db     = NULL;
+    reai->logger = NULL;
 
     reai_deinit_conn (reai);
 
     if (reai->host) {
         FREE (reai->host);
-        reai->host = Null;
+        reai->host = NULL;
     }
 
     if (reai->api_key) {
         FREE (reai->api_key);
-        reai->api_key = Null;
+        reai->api_key = NULL;
     }
 
     if (reai->model) {
         FREE (reai->model);
-        reai->model = Null;
+        reai->model = NULL;
     }
 
     FREE (reai);
@@ -157,10 +157,10 @@ void reai_destroy (Reai* reai) {
  * @param[out] response
  *
  * @return @c response on successful request and response.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* response) {
-    RETURN_VALUE_IF (!reai || !request || !response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !request || !response, NULL, ERR_INVALID_ARGUMENTS);
 
     // BUG: Not able to properly reuse the curl handle.
     // HACK: Fixed this for now by recreating it one every connection
@@ -176,8 +176,8 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     Char endpoint_str[ENDPOINT_URL_STR_SIZE];
 
     /* from data for uploading file */
-    struct curl_mime*     mime     = Null;
-    struct curl_mimepart* mimepart = Null;
+    struct curl_mime*     mime     = NULL;
+    struct curl_mimepart* mimepart = NULL;
 
 #define SET_ENDPOINT(fmtstr, ...)                                                                  \
     do {                                                                                           \
@@ -245,7 +245,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         FREE (json);                                                                               \
                                                                                                    \
         /* unset json data */                                                                      \
-        curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, Null);                                   \
+        curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, NULL);                                   \
     } while (0)
 
 #define MAKE_UPLOAD_REQUEST(expected_retcode, expected_response)                                   \
@@ -271,7 +271,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         MAKE_REQUEST (200, REAI_RESPONSE_TYPE_UPLOAD_FILE);                                        \
                                                                                                    \
         /* remove mime data */                                                                     \
-        curl_easy_setopt (reai->curl, CURLOPT_MIMEPOST, Null);                                     \
+        curl_easy_setopt (reai->curl, CURLOPT_MIMEPOST, NULL);                                     \
     } while (0)
 
     switch (request->type) {
@@ -398,7 +398,7 @@ DEFAULT_RETURN:
     return response;
 
 REQUEST_FAILED:
-    response = Null;
+    response = NULL;
     goto DEFAULT_RETURN;
 };
 
@@ -410,10 +410,10 @@ REQUEST_FAILED:
  * @param db
  *
  * @return @c reai On success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 Reai* reai_set_db (Reai* reai, ReaiDb* db) {
-    RETURN_VALUE_IF (!reai || !db, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !db, NULL, ERR_INVALID_ARGUMENTS);
 
     reai->db = db;
 
@@ -428,10 +428,10 @@ Reai* reai_set_db (Reai* reai, ReaiDb* db) {
  * @param logger
  *
  * @return @c reai On success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
-    RETURN_VALUE_IF (!reai || !logger, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !logger, NULL, ERR_INVALID_ARGUMENTS);
 
     reai->logger = logger;
 
@@ -446,10 +446,10 @@ Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
  * @param reai
  *
  * @return @c reai On success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
-    RETURN_VALUE_IF (!reai, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     /* no need to continue if we don't need an update */
     if (!reai_db_require_analysis_status_update (reai->db)) {
@@ -460,7 +460,7 @@ Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
         reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_PROCESSING);
     U64Vec* bin_ids_in_queue =
         reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_QUEUED);
-    RETURN_VALUE_IF (!bin_ids_in_processing, Null, "Failed to get all created analyses from DB.");
+    RETURN_VALUE_IF (!bin_ids_in_processing, NULL, "Failed to get all created analyses from DB.");
 
     ReaiResponse response;
     GOTO_HANDLER_IF (
@@ -507,7 +507,7 @@ DEFAULT_RETURN:
     return reai;
 
 STATUS_UPDATE_FAILED:
-    reai = Null;
+    reai = NULL;
     goto DEFAULT_RETURN;
 }
 
@@ -522,10 +522,10 @@ STATUS_UPDATE_FAILED:
  * @param file_path
  *
  * @return @c CString containing returned sh256 hash value in response.
- * @return @c Null on failure.
+ * @return @c NULL on failure.
  * */
 CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path) {
-    RETURN_VALUE_IF (!reai || !file_path, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !file_path, NULL, ERR_INVALID_ARGUMENTS);
 
     /* prepare request */
     ReaiRequest request           = {0};
@@ -549,14 +549,14 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
                 return response->upload_file.sha_256_hash;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return Null;
+                return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected type.");
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected type.");
             }
         }
     } else {
-        return Null;
+        return NULL;
     }
 }
 
@@ -567,7 +567,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
  * @param response
  * @param model
  * @param fn_info_vec Must be provided if functions don't have default boundaries.
- * @param is_private @c True if new analysis created will be private.
+ * @param is_private @c true if new analysis created will be private.
  * @param sha_256_hash SHA-256 hash value for previously uploaded binary.
  * @param file_name Name of file (will be name of analysis as well)
  * @param size_in_bytes Size of file in bytes.
@@ -598,11 +598,11 @@ ReaiBinaryId reai_create_analysis (
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
 
     request.create_analysis.model        = model;
-    request.create_analysis.platform_opt = Null;
-    request.create_analysis.isa_opt      = Null;
+    request.create_analysis.platform_opt = NULL;
+    request.create_analysis.isa_opt      = NULL;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
-    request.create_analysis.dyn_exec     = False;
-    request.create_analysis.tags         = Null;
+    request.create_analysis.dyn_exec     = false;
+    request.create_analysis.tags         = NULL;
     request.create_analysis.tags_count   = 0;
     request.create_analysis.base_addr    = base_addr;
     request.create_analysis.functions    = fn_info_vec;
@@ -612,7 +612,7 @@ ReaiBinaryId reai_create_analysis (
     request.create_analysis.cmdline_args  = cmdline_args;
     request.create_analysis.priority      = 0;
     request.create_analysis.sha_256_hash  = sha_256_hash;
-    request.create_analysis.debug_hash    = Null;
+    request.create_analysis.debug_hash    = NULL;
     request.create_analysis.size_in_bytes = size_in_bytes;
 
     if ((response = reai_request (reai, &request, response))) {
@@ -656,11 +656,11 @@ ReaiBinaryId reai_create_analysis (
  * @parma bin_id
  *
  * @return @c ReaiFnInfoVec* on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiFnInfoVec*
     reai_get_basic_function_info (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id) {
-    RETURN_VALUE_IF (!reai || !response || !bin_id, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !response || !bin_id, NULL, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to get function info list for given binary id */
     ReaiRequest request = {0};
@@ -674,14 +674,14 @@ ReaiFnInfoVec*
                 return response->basic_function_info.fn_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return Null;
+                return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
             }
         }
     } else {
-        return Null;
+        return NULL;
     }
 }
 
@@ -699,7 +699,7 @@ ReaiFnInfoVec*
  * @param count Default value is 10 (if zero is provided).
  *
  * @return @c ReaiAnalysisInfoVec reference on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiAnalysisInfoVec* reai_get_recent_analyses (
     Reai*              reai,
@@ -708,7 +708,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
     ReaiBinaryScope    scope,
     Size               count
 ) {
-    RETURN_VALUE_IF (!reai || !response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to get recent analysis */
     ReaiRequest request = {0};
@@ -724,14 +724,14 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
                 return response->recent_analysis.analysis_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return Null;
+                return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
             }
         }
     } else {
-        return Null;
+        return NULL;
     }
 }
 
@@ -745,16 +745,16 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
  * @param response
  * @param new_name_mapping
  *
- * @return @c True if response type is same as request type.
+ * @return @c true if response type is same as request type.
  *         Note that this does not mean all functions are renamed correctly.
- * @return @c False otherwise.
+ * @return @c false otherwise.
  * */
 Bool reai_batch_renames_functions (
     Reai*          reai,
     ReaiResponse*  response,
     ReaiFnInfoVec* new_name_mapping
 ) {
-    RETURN_VALUE_IF (!reai || !response || !new_name_mapping, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !response || !new_name_mapping, false, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to rename functions in batch */
     ReaiRequest request = {0};
@@ -765,17 +765,17 @@ Bool reai_batch_renames_functions (
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS : {
-                return True;
+                return true;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return False;
+                return false;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.");
+                RETURN_VALUE_IF_REACHED (false, "Unexpected response type.");
             }
         }
     } else {
-        return False;
+        return false;
     }
 }
 
@@ -787,8 +787,8 @@ Bool reai_batch_renames_functions (
  * @param fn_id
  * @param new_name
  *
- * @return @c True on success.
- * @return @c False otherwise.
+ * @return @c true on success.
+ * @return @c false otherwise.
  * */
 Bool reai_rename_function (
     Reai*          reai,
@@ -796,7 +796,7 @@ Bool reai_rename_function (
     ReaiFunctionId fn_id,
     CString        new_name
 ) {
-    RETURN_VALUE_IF (!reai || !response || !fn_id || !new_name, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !response || !fn_id || !new_name, false, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to rename functions in batch */
     ReaiRequest request = {0};
@@ -811,14 +811,14 @@ Bool reai_rename_function (
                 return response->rename_function.success;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return False;
+                return false;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (False, "Unexpected response type.");
+                RETURN_VALUE_IF_REACHED (false, "Unexpected response type.");
             }
         }
     } else {
-        return False;
+        return false;
     }
 }
 
@@ -835,10 +835,10 @@ Bool reai_rename_function (
  * @param bin_id
  * @param max_results_per_function
  * @param min_distance
- * @param collection Can be @c Null.
+ * @param collection Can be @c NULL.
  *
  * @return @c ReaiAnnFnMatch on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     Reai*         reai,
@@ -848,14 +848,14 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     Float64       max_distance,
     CStrVec*      collection
 ) {
-    RETURN_VALUE_IF (!reai || !response || !bin_id, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!reai || !response || !bin_id, NULL, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to rename functions in batch */
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN;
 
     request.batch_binary_symbol_ann.binary_id            = bin_id;
-    request.batch_binary_symbol_ann.collection           = collection ? collection->items : Null;
+    request.batch_binary_symbol_ann.collection           = collection ? collection->items : NULL;
     request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
     request.batch_binary_symbol_ann.distance             = max_distance;
@@ -865,19 +865,19 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
                 return response->batch_binary_symbol_ann.success ?
                            response->batch_binary_symbol_ann.function_matches :
-                           Null;
+                           NULL;
             }
 
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
-                return Null;
+                return NULL;
             }
 
             default : {
-                RETURN_VALUE_IF_REACHED (Null, "Unexpected response type.");
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
             }
         }
     } else {
-        return Null;
+        return NULL;
     }
 }
 

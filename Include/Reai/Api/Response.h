@@ -116,12 +116,12 @@ extern "C" {
             } upload_file;
 
             struct {
-                Bool         success;   /**< @b True when analysis created successfully */
+                Bool         success;   /**< @b true when analysis created successfully */
                 ReaiBinaryId binary_id; /**< @b Binary id returned in response */
             } create_analysis;
 
             struct {
-                Bool success; /**< @b True on success */
+                Bool success; /**< @b true on success */
                 ReaiFnInfoVec*
                     fn_infos; /**< @b Contains array of (id, name, vaddr, size) records */
             } basic_function_info;

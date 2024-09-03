@@ -34,10 +34,10 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response);
  * @param reai_response
  *
  * @return @c reai_response on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
-    RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!response, NULL, ERR_INVALID_ARGUMENTS);
 
     /* invalidate all fields */
     memset (response, 0, sizeof (ReaiResponse));
@@ -47,7 +47,7 @@ PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
 
     /* allocate a significantly large memory block for getting raw responses */
     response->raw.data = ALLOCATE (Char, RESPONSE_RAW_BUF_INITIAL_CAP);
-    RETURN_VALUE_IF (!response->raw.data, Null, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!response->raw.data, NULL, ERR_OUT_OF_MEMORY);
     response->raw.capacity = RESPONSE_RAW_BUF_INITIAL_CAP;
 
     return response;
@@ -59,10 +59,10 @@ PUBLIC ReaiResponse* reai_response_init (ReaiResponse* response) {
  * @param reai_response
  *
  * @return @c reai_response on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
-    RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!response, NULL, ERR_INVALID_ARGUMENTS);
 
     reai_response_reset (response);
 
@@ -73,7 +73,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 
     if (response->validation_error.locations) {
         reai_cstr_vec_destroy (response->validation_error.locations);
-        response->validation_error.locations = Null;
+        response->validation_error.locations = NULL;
     }
 
     memset (response, 0, sizeof (ReaiResponse));
@@ -112,7 +112,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
 /* retrieved string must be freed after use */
 #define GET_JSON_STRING(json, name, var)                                                           \
     {                                                                                              \
-        CString str = Null;                                                                        \
+        CString str = NULL;                                                                        \
         GOTO_HANDLER_IF (                                                                          \
             !(str = json_response_get_string (json, name)),                                        \
             INIT_FAILED,                                                                           \
@@ -139,7 +139,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
     if (success) {                                                                                 \
         GET_JSON_STRING (json, name, var);                                                         \
     } else {                                                                                       \
-        var = Null;                                                                                \
+        var = NULL;                                                                                \
     }
 
 #define GET_JSON_U64_ON_SUCCESS(json, name, var, success)                                          \
@@ -173,7 +173,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         GET_JSON_STRING (json, "model_name", ainfo.model_name);                                    \
         GET_JSON_STRING (json, "sha_256_hash", ainfo.sha_256_hash);                                \
                                                                                                    \
-        CString            status  = Null;                                                         \
+        CString            status  = NULL;                                                         \
         ReaiAnalysisStatus estatus = 0;                                                            \
         GET_JSON_STRING (json, "status", status);                                                  \
         if (!(estatus = reai_analysis_status_from_cstr (status))) {                                \
@@ -200,7 +200,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
         GET_JSON_STRING (json, "sha_256_hash", qres.sha_256_hash);                                 \
         GET_JSON_STRING_ARR (json, "tags", qres.tags);                                             \
                                                                                                    \
-        CString            status  = Null;                                                         \
+        CString            status  = NULL;                                                         \
         ReaiAnalysisStatus estatus = 0;                                                            \
         GET_JSON_STRING (json, "status", status);                                                  \
         if (!(qres.status = reai_analysis_status_from_cstr (status))) {                            \
@@ -243,7 +243,7 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
                 goto INIT_FAILED;                                                                  \
             }                                                                                      \
         } else {                                                                                   \
-            cJSON* arr_item = Null;                                                                \
+            cJSON* arr_item = NULL;                                                                \
             cJSON_ArrayForEach (arr_item, json) {                                                  \
                 type_name item = {0};                                                              \
                 reader (arr_item, item);                                                           \
@@ -269,10 +269,10 @@ PUBLIC ReaiResponse* reai_response_deinit (ReaiResponse* response) {
  * @param buf
  *
  * @return @c reai_response on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type) {
-    RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!response, NULL, ERR_INVALID_ARGUMENTS);
 
     /* convert from string to json */
     cJSON* json = cJSON_ParseWithLength (response->raw.data, response->raw.length);
@@ -406,7 +406,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
             GET_JSON_BOOL (json, "success", response->analysis_status.success);
 
-            CString status = Null;
+            CString status = NULL;
             GET_JSON_STRING_ON_SUCCESS (json, "status", status, response->analysis_status.success);
 
             if (!(response->analysis_status.status = reai_analysis_status_from_cstr (status))) {
@@ -560,7 +560,7 @@ DEFAULT_RETURN:
     return response;
 
 INIT_FAILED:
-    response = Null;
+    response = NULL;
     goto DEFAULT_RETURN;
 }
 
@@ -621,18 +621,18 @@ HIDDEN Size
  * @param json[in] JSON Object containing the boolean field.
  * @param name[in] Name of boolean field.
  * 
- * @return @c True if boolean is present and is true.
- * @return @c False otherwise.
+ * @return @c true if boolean is present and is true.
+ * @return @c false otherwise.
  * */
 PRIVATE Bool json_response_get_bool (cJSON* json, CString name) {
-    RETURN_VALUE_IF (!json || !name, False, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!json || !name, false, ERR_INVALID_ARGUMENTS);
 
     /* get boolean value */
     cJSON* bool_value = cJSON_GetObjectItemCaseSensitive (json, name);
-    RETURN_VALUE_IF (!bool_value, False, "Failed to get '%s' result", name);
+    RETURN_VALUE_IF (!bool_value, false, "Failed to get '%s' result", name);
     RETURN_VALUE_IF (
         !cJSON_IsBool (bool_value),
-        False,
+        false,
         "Given success value in response is not a boolean value\n"
     );
 
@@ -647,16 +647,16 @@ PRIVATE Bool json_response_get_bool (cJSON* json, CString name) {
  * @param num[in] Pointer to memory where value will be read.
  * 
  * @return @c num if field is present and loaded successful.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PRIVATE Uint64* json_response_get_u64 (cJSON* json, CString name, Uint64* num) {
-    RETURN_VALUE_IF (!json || !name || !num, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!json || !name || !num, NULL, ERR_INVALID_ARGUMENTS);
 
     /* get message */
     cJSON* flt_value = cJSON_GetObjectItemCaseSensitive (json, name);
     RETURN_VALUE_IF (
         !flt_value || !cJSON_IsNumber (flt_value),
-        Null,
+        NULL,
         "Failed to get string value for key '%s'\n",
         name
     );
@@ -674,16 +674,16 @@ PRIVATE Uint64* json_response_get_u64 (cJSON* json, CString name, Uint64* num) {
  * @param num[in]  Pointer to memory where value will be read.
  *
  * @return @c num if field is present and loaded successfull.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num) {
-    RETURN_VALUE_IF (!json || !name || !num, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!json || !name || !num, NULL, ERR_INVALID_ARGUMENTS);
 
     /* get message */
     cJSON* int_value = cJSON_GetObjectItemCaseSensitive (json, name);
     RETURN_VALUE_IF (
         !int_value || !cJSON_IsNumber (int_value),
-        Null,
+        NULL,
         "Failed to get string value for key '%s'\n",
         name
     );
@@ -704,23 +704,23 @@ PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num)
  * @param name[in] Name of string field.
  * 
  * @return @c CString if field is present.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PRIVATE CString json_response_get_string (cJSON* json, CString name) {
-    RETURN_VALUE_IF (!json || !name, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!json || !name, NULL, ERR_INVALID_ARGUMENTS);
 
     /* get message */
     cJSON* str_value = cJSON_GetObjectItemCaseSensitive (json, name);
     RETURN_VALUE_IF (
         !str_value || !cJSON_IsString (str_value),
-        Null,
+        NULL,
         "Failed to get string value for key '%s'\n",
         name
     );
 
     /* copy value */
-    CString str = Null;
-    RETURN_VALUE_IF (!(str = strdup (cJSON_GetStringValue (str_value))), Null, ERR_OUT_OF_MEMORY);
+    CString str = NULL;
+    RETURN_VALUE_IF (!(str = strdup (cJSON_GetStringValue (str_value))), NULL, ERR_OUT_OF_MEMORY);
 
     return str;
 }
@@ -734,25 +734,25 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
  * stored in this variable through this pointer.
  * 
  * @return @c buf if field is present.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
-    RETURN_VALUE_IF (!json || !name, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!json || !name, NULL, ERR_INVALID_ARGUMENTS);
 
     /* get array object*/
     cJSON* arr_value = cJSON_GetObjectItemCaseSensitive (json, name);
     RETURN_VALUE_IF (
         !arr_value || !cJSON_IsArray (arr_value),
-        Null,
+        NULL,
         "Failed to get string value for key '%s'\n",
         name
     );
 
     CStrVec* vec = reai_cstr_vec_create();
-    RETURN_VALUE_IF (!vec, Null, "Failed to create new CStrVec object.");
+    RETURN_VALUE_IF (!vec, NULL, "Failed to create new CStrVec object.");
 
     /* iterate over array and keep appending entries to a comma separated string list */
-    cJSON* location = Null;
+    cJSON* location = NULL;
     cJSON_ArrayForEach (location, arr_value) {
         /* if an entry is not string then just deallocated (if allocated) and exit */
         GOTO_HANDLER_IF (
@@ -765,14 +765,14 @@ PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
         if (!reai_cstr_vec_append (vec, &loc)) {
             PRINT_ERR ("Failed to append value to list.");
             reai_cstr_vec_destroy (vec);
-            return Null;
+            return NULL;
         }
     }
 
     return vec;
 
 PARSE_FAILED:
-    return Null;
+    return NULL;
 }
 
 /**
@@ -782,17 +782,17 @@ PARSE_FAILED:
  * @param[out] response
  *
  * @return @c response on success.
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
-    RETURN_VALUE_IF (!response, Null, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!response, NULL, ERR_INVALID_ARGUMENTS);
 
     memset (response->raw.data, 0, response->raw.length);
     response->raw.length = 0;
 
     if (response->validation_error.locations) {
         reai_cstr_vec_destroy (response->validation_error.locations);
-        response->validation_error.locations = Null;
+        response->validation_error.locations = NULL;
     }
 
     switch (response->type) {
@@ -800,7 +800,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
             if (response->health_check.message) {
                 FREE (response->health_check.message);
-                response->health_check.message = Null;
+                response->health_check.message = NULL;
             }
             break;
         }
@@ -808,11 +808,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
             if (response->upload_file.message) {
                 FREE (response->upload_file.message);
-                response->upload_file.message = Null;
+                response->upload_file.message = NULL;
             }
             if (response->upload_file.sha_256_hash) {
                 FREE (response->upload_file.sha_256_hash);
-                response->upload_file.sha_256_hash = Null;
+                response->upload_file.sha_256_hash = NULL;
             }
             break;
         }
@@ -820,7 +820,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO : {
             if (response->basic_function_info.fn_infos) {
                 reai_fn_info_vec_destroy (response->basic_function_info.fn_infos);
-                response->basic_function_info.fn_infos = Null;
+                response->basic_function_info.fn_infos = NULL;
             }
             break;
         }
@@ -828,7 +828,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
             if (response->recent_analysis.analysis_infos) {
                 reai_analysis_info_vec_destroy (response->recent_analysis.analysis_infos);
-                response->recent_analysis.analysis_infos = Null;
+                response->recent_analysis.analysis_infos = NULL;
             }
             break;
         }
@@ -836,7 +836,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_SEARCH : {
             if (response->search.query_results) {
                 reai_query_result_vec_destroy (response->search.query_results);
-                response->search.query_results = Null;
+                response->search.query_results = NULL;
             }
             break;
         }
@@ -844,12 +844,12 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
             if (response->batch_binary_symbol_ann.function_matches) {
                 reai_ann_fn_match_vec_destroy (response->batch_binary_symbol_ann.function_matches);
-                response->batch_binary_symbol_ann.function_matches = Null;
+                response->batch_binary_symbol_ann.function_matches = NULL;
             }
 
             if (response->batch_binary_symbol_ann.settings.collections) {
                 reai_cstr_vec_destroy (response->batch_binary_symbol_ann.settings.collections);
-                response->batch_binary_symbol_ann.settings.collections = Null;
+                response->batch_binary_symbol_ann.settings.collections = NULL;
             }
         }
 
@@ -857,5 +857,5 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             break;
     }
 
-    return Null;
+    return NULL;
 }

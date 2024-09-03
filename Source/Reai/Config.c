@@ -14,18 +14,18 @@
  * @param buf_cap Buffer capacity
  *
  * @return @c buf on success
- * @return @c Null otherwise.
+ * @return @c NULL otherwise.
  * */
 CString reai_config_get_default_path() {
     static Char buf[1024]        = {0};
-    static Bool default_path_set = False;
+    static Bool default_path_set = false;
 
     if (default_path_set) {
         return buf;
     }
 
     snprintf (buf, sizeof (buf), "%s/%s", REAI_CONFIG_DIR_PATH, REAI_CONFIG_FILE_NAME);
-    default_path_set = True;
+    default_path_set = true;
 
     return buf;
 }
@@ -33,7 +33,7 @@ CString reai_config_get_default_path() {
 /**
  * @b Load TOML config from given path.
  *
- * @param path If @c Null then default path is used.
+ * @param path If @c NULL then default path is used.
  *
  * @return ReaiConfig
  * */
@@ -48,11 +48,11 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     char  errbuf[200];
 
     fp = fopen (path, "r");
-    RETURN_VALUE_IF (!fp, Null, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
+    RETURN_VALUE_IF (!fp, NULL, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
 
     toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
     fclose (fp);
-    RETURN_VALUE_IF (!reai_conf, Null, "Failed to parse toml config file.");
+    RETURN_VALUE_IF (!reai_conf, NULL, "Failed to parse toml config file.");
 
     toml_datum_t apikey = toml_string_in (reai_conf, "apikey");
     GOTO_HANDLER_IF (
@@ -98,7 +98,7 @@ LOAD_FAILED:
     }
 
     reai_config_destroy (cfg);
-    return Null;
+    return NULL;
 }
 
 /**
@@ -140,35 +140,35 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
  *
  * @param apikey
  *
- * @return @c True if given API key is correct.
- * @return @c False otherwise.
+ * @return @c true if given API key is correct.
+ * @return @c false otherwise.
  * */
 Bool reai_config_check_api_key (CString apikey) {
-    CString iter = Null;
+    CString iter = NULL;
 
     if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 8)) {
-        return False;
+        return false;
     }
     apikey = iter + 1;
 
     if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return False;
+        return false;
     }
     apikey = iter + 1;
 
     if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return False;
+        return false;
     }
     apikey = iter + 1;
 
     if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return False;
+        return false;
     }
     apikey = iter + 1;
 
     if (!(iter = strchr (apikey, 0)) || ((iter - apikey) != 12)) {
-        return False;
+        return false;
     }
 
-    return True;
+    return true;
 }

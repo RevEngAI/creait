@@ -27,7 +27,7 @@ Size file_size (CString file_name) {
 int main (int argc, char **argv) {
     RETURN_VALUE_IF (!argc || !argv, EXIT_FAILURE, ERR_INVALID_ARGUMENTS);
 
-    ReaiConfig *cfg = reai_config_load (Null);
+    ReaiConfig *cfg = reai_config_load (NULL);
     RETURN_VALUE_IF (!cfg, EXIT_FAILURE, "Configuration load failure.");
 
     Reai *reai = reai_create (cfg->host, cfg->apikey, cfg->model);
