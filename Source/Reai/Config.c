@@ -1,3 +1,4 @@
+#include "Reai/Common.h"
 #include <Reai/Config.h>
 
 /* tomlc99 */
@@ -6,9 +7,10 @@
 /* libc  */
 #include <errno.h>
 #include <string.h>
+#include <ctype.h>
 
 /**
- * @b Get default path where .reait.toml is supposed to be present.
+ * @b Get default file path where .reait.toml is supposed to be present.
  *
  * @param buf Buffer to get full path into
  * @param buf_cap Buffer capacity
@@ -28,6 +30,19 @@ CString reai_config_get_default_path() {
     default_path_set = true;
 
     return buf;
+}
+
+/**
+ * @b Get default directory path where .reait.toml is supposed to be present.
+ *
+ * @param buf Buffer to get full path into
+ * @param buf_cap Buffer capacity
+ *
+ * @return @c buf on success
+ * @return @c NULL otherwise.
+ * */
+CString reai_config_get_default_dir_path() {
+    return REAI_CONFIG_DIR_PATH;
 }
 
 /**
@@ -144,31 +159,27 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
  * @return @c false otherwise.
  * */
 Bool reai_config_check_api_key (CString apikey) {
-    CString iter = NULL;
+    RETURN_VALUE_IF(!apikey, false, ERR_INVALID_ARGUMENTS);
 
-    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 8)) {
-        return false;
-    }
-    apikey = iter + 1;
-
-    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return false;
-    }
-    apikey = iter + 1;
-
-    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return false;
-    }
-    apikey = iter + 1;
-
-    if (!(iter = strchr (apikey, '-')) || ((iter - apikey) != 4)) {
-        return false;
-    }
-    apikey = iter + 1;
-
-    if (!(iter = strchr (apikey, 0)) || ((iter - apikey) != 12)) {
-        return false;
+    // Check the length of the string
+    if (strlen(apikey) != 36) {
+        return 0; // Invalid length
     }
 
-    return true;
+    // Check the format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
+    for (int i = 0; i < 36; i++) {
+        if (i == 8 || i == 13 || i == 18 || i == 23) {
+            // Check for dashes at the correct positions
+            if (apikey[i] != '-') {
+                return 0; // Incorrect character at dash position
+            }
+        } else {
+            // Check for hexadecimal characters
+            if (!isxdigit((Uint8)apikey[i])) {
+                return 0; // Non-hexadecimal character
+            }
+        }
+    }
+
+    return 1; // Valid UUID
 }

@@ -616,27 +616,27 @@ HIDDEN Size
 /**************************************************************************************************/
 
 /**
- * @b Helper method to extract a boolean field form given JSON.
+ * @b Helper method to extract a Boolean field form given JSON.
  * 
- * @param json[in] JSON Object containing the boolean field.
- * @param name[in] Name of boolean field.
+ * @param json[in] JSON Object containing the Boolean field.
+ * @param name[in] Name of Boolean field.
  * 
- * @return @c true if boolean is present and is true.
+ * @return @c true if Boolean is present and is true.
  * @return @c false otherwise.
  * */
 PRIVATE Bool json_response_get_bool (cJSON* json, CString name) {
     RETURN_VALUE_IF (!json || !name, false, ERR_INVALID_ARGUMENTS);
 
-    /* get boolean value */
-    cJSON* bool_value = cJSON_GetObjectItemCaseSensitive (json, name);
-    RETURN_VALUE_IF (!bool_value, false, "Failed to get '%s' result", name);
+    /* get Boolean value */
+    cJSON* Bool_value = cJSON_GetObjectItemCaseSensitive (json, name);
+    RETURN_VALUE_IF (!Bool_value, false, "Failed to get '%s' result", name);
     RETURN_VALUE_IF (
-        !cJSON_IsBool (bool_value),
+        !cJSON_IsBool (Bool_value),
         false,
-        "Given success value in response is not a boolean value\n"
+        "Given success value in response is not a Boolean value\n"
     );
 
-    return cJSON_IsTrue (bool_value);
+    return cJSON_IsTrue (Bool_value);
 }
 
 /**

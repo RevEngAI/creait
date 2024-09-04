@@ -44,6 +44,7 @@ extern "C" {
     ReaiConfig *reai_config_load (CString path);
     void        reai_config_destroy (ReaiConfig *cfg);
     CString     reai_config_get_default_path();
+    CString     reai_config_get_default_dir_path();
     Bool        reai_config_check_api_key (CString apikey);
 
 #ifdef __cplusplus
