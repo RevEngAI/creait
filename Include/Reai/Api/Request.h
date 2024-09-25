@@ -12,6 +12,7 @@
 #include <Reai/Common.h>
 #include <Reai/FnInfo.h>
 #include <Reai/Types.h>
+#include <Reai/Util/IntVec.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -69,6 +70,7 @@ extern "C" {
 
         /* ann api */
         REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
+        REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN,
 
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
@@ -149,11 +151,23 @@ extern "C" {
             struct {
                 ReaiBinaryId binary_id;
                 Size         results_per_function;
-                Bool         debug_mode; ///< IDK what this means
+                Bool         debug_mode; ///< Enabling this gives better names
                 Float32      distance;
                 CString*     collection;
                 Size         collection_count;
             } batch_binary_symbol_ann;
+
+            struct {
+                Size            results_per_function;
+                Bool            debug_mode; ///< Enabling this gives better names
+                Float32         distance;
+                CString*        collection;
+                Size            collection_count;
+                ReaiFunctionId* function_ids;
+                Size            function_id_count;
+                ReaiFunctionId* speculative_function_ids;
+                Size            speculative_function_id_count;
+            } batch_function_symbol_ann;
         };
     } ReaiRequest;
 

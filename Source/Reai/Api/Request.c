@@ -42,11 +42,7 @@ static CString reai_file_opt_to_str[] = {
 #define JSON_ADD_STRING_ARR(cj, item_name, values, value_count)                                    \
     {                                                                                              \
         cJSON* earr = cJSON_CreateArray();                                                         \
-        GOTO_HANDLER_IF (                                                                          \
-            !earr,                                                                                 \
-            CONVERSION_FAILED,                                                                     \
-            "Failed to create JSON array for strings array\n"                                      \
-        );                                                                                         \
+        GOTO_HANDLER_IF (!earr, CONVERSION_FAILED, "Failed to create JSON array");                 \
         cJSON_AddItemToObject (cj, item_name, earr);                                               \
                                                                                                    \
         for (Size s = 0; s < value_count; s++) {                                                   \
@@ -68,6 +64,19 @@ static CString reai_file_opt_to_str[] = {
         cJSON* e = cJSON_CreateNumber (value);                                                     \
         GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");        \
         cJSON_AddItemToObject (cj, item_name, e);                                                  \
+    }
+
+#define JSON_ADD_U64_ARR(cj, item_name, values, value_count)                                       \
+    {                                                                                              \
+        cJSON* earr = cJSON_CreateArray();                                                         \
+        GOTO_HANDLER_IF (!earr, CONVERSION_FAILED, "Failed to create JSON array");                 \
+        cJSON_AddItemToObject (cj, item_name, earr);                                               \
+                                                                                                   \
+        for (Size s = 0; s < value_count; s++) {                                                   \
+            cJSON* e = cJSON_CreateNumber (values[s]);                                             \
+            GOTO_HANDLER_IF (!e, CONVERSION_FAILED, "Failed to convert " item_name " to JSON");    \
+            cJSON_AddItemToArray (earr, e);                                                        \
+        }                                                                                          \
     }
 
 #define JSON_ADD_F64 JSON_ADD_U64
@@ -341,6 +350,54 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
                     "collection",
                     request->batch_binary_symbol_ann.collection,
                     request->batch_binary_symbol_ann.collection_count
+                );
+            }
+
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            if (request->batch_function_symbol_ann.results_per_function) {
+                JSON_ADD_U64 (
+                    json,
+                    "result_per_function",
+                    request->batch_function_symbol_ann.results_per_function
+                );
+            }
+
+            JSON_ADD_BOOL (json, "debug_mode", request->batch_function_symbol_ann.debug_mode);
+
+            if (request->batch_function_symbol_ann.distance) {
+                JSON_ADD_F64 (json, "distance", request->batch_function_symbol_ann.distance);
+            }
+
+            if (request->batch_function_symbol_ann.collection &&
+                request->batch_function_symbol_ann.collection_count) {
+                JSON_ADD_STRING_ARR (
+                    json,
+                    "collection",
+                    request->batch_function_symbol_ann.collection,
+                    request->batch_function_symbol_ann.collection_count
+                );
+            }
+
+            if (request->batch_function_symbol_ann.function_ids &&
+                request->batch_function_symbol_ann.function_id_count) {
+                JSON_ADD_U64_ARR (
+                    json,
+                    "function_id_list",
+                    request->batch_function_symbol_ann.function_ids,
+                    request->batch_function_symbol_ann.function_id_count
+                );
+            }
+
+            if (request->batch_function_symbol_ann.speculative_function_ids &&
+                request->batch_function_symbol_ann.speculative_function_id_count) {
+                JSON_ADD_U64_ARR (
+                    json,
+                    "speculative_function_ids",
+                    request->batch_function_symbol_ann.speculative_function_ids,
+                    request->batch_function_symbol_ann.speculative_function_id_count
                 );
             }
 

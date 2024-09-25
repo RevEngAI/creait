@@ -190,13 +190,12 @@ PRIVATE CString generate_new_log_file_name() {
     // Get temporary directory path
     const char* tmp_dir = NULL;
 #ifdef _WIN32
-    tmp_dir = getenv ("TEMP");
-    if (tmp_dir == NULL) {
-        tmp_dir = "C:\\TEMP";
-    }
+    tmp_dir = getenv ("TMP") ? getenv ("TMP") : getenv ("TEMP") ? getenv ("TEMP") : NULL;
 #else
-    tmp_dir = "/tmp";
+    tmp_dir = getenv ("TMPDIR") ? getenv ("TMPDIR") : NULL;
 #endif
+
+    RETURN_VALUE_IF (!tmp_dir, NULL, "Failed to get path to temporary directory.");
 
     /* generate filename with PID and time */
     Char filename[64] = {0};

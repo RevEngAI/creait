@@ -50,7 +50,8 @@ extern "C" {
         /* REAI_RESPONSE_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS = REAI_REQUEST_TYPE_GET_FUNCTION_DISASSEMBLY_DUMPS, */
 
         /* ann api */
-        REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
+        REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN   = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
+        REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN = REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN,
 
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
@@ -155,7 +156,7 @@ extern "C" {
                     Size     result_per_function;
                 } settings;
                 ReaiAnnFnMatchVec* function_matches;
-            } batch_binary_symbol_ann;
+            } batch_binary_symbol_ann, batch_function_symbol_ann;
         };
     } ReaiResponse;
 

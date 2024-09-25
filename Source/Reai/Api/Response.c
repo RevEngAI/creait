@@ -463,8 +463,9 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
-        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
-            response->type = REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN;
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN :
+        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            response->type = (ReaiResponseType)type;
 
             GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
             if (!response->batch_binary_symbol_ann.success) {
@@ -841,7 +842,8 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             break;
         }
 
-        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN :
+        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
             if (response->batch_binary_symbol_ann.function_matches) {
                 reai_ann_fn_match_vec_destroy (response->batch_binary_symbol_ann.function_matches);
                 response->batch_binary_symbol_ann.function_matches = NULL;

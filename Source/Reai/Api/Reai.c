@@ -203,6 +203,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             Uint32 http_code = 0;                                                                  \
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
                                                                                                    \
+            REAI_LOG_TRACE (reai->logger, "Response code : %u", http_code);                        \
+            PRINT_ERR ("Response code : %u", http_code);                                           \
+                                                                                                   \
             if (reai->logger) {                                                                    \
                 if (response->raw.data && response->raw.length) {                                  \
                     REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);     \
@@ -376,6 +379,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             );
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            SET_ENDPOINT ("%s/ann/symbol/batch", reai->host);
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN);
             break;
         }
 
@@ -859,12 +869,61 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
     request.batch_binary_symbol_ann.distance             = max_distance;
+    request.batch_binary_symbol_ann.debug_mode           = true;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
                 return response->batch_binary_symbol_ann.success ?
                            response->batch_binary_symbol_ann.function_matches :
+                           NULL;
+            }
+
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return NULL;
+            }
+
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        return NULL;
+    }
+}
+
+ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiFunctionId fn_id,
+    U64Vec*        speculative_fn_ids,
+    Size           max_results_per_function,
+    Float64        max_distance,
+    CStrVec*       collection
+) {
+    RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
+
+    /* prepare new request to rename functions in batch */
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN;
+
+    request.batch_function_symbol_ann.function_ids      = ((Uint64[]) {fn_id});
+    request.batch_function_symbol_ann.function_id_count = 1;
+    request.batch_function_symbol_ann.speculative_function_ids =
+        speculative_fn_ids ? speculative_fn_ids->items : NULL;
+    request.batch_function_symbol_ann.speculative_function_id_count =
+        speculative_fn_ids ? speculative_fn_ids->count : 0;
+    request.batch_function_symbol_ann.collection           = collection ? collection->items : NULL;
+    request.batch_function_symbol_ann.collection_count     = collection ? collection->count : 0;
+    request.batch_function_symbol_ann.results_per_function = max_results_per_function;
+    request.batch_function_symbol_ann.distance             = max_distance;
+    request.batch_function_symbol_ann.debug_mode           = true;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+                return response->batch_function_symbol_ann.success ?
+                           response->batch_function_symbol_ann.function_matches :
                            NULL;
             }
 

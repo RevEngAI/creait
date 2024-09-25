@@ -70,13 +70,24 @@ extern "C" {
     );
     ReaiAnalysisStatus
         reai_get_analysis_status (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id);
+
     ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
         Reai*         reai,
         ReaiResponse* response,
         ReaiBinaryId  bin_id,
         Size          max_results_per_function,
-        Float64       min_distance,
+        Float64       max_distance,
         CStrVec*      collection
+    );
+
+    ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiFunctionId fn_id,
+        U64Vec*        speculative_fn_ids,
+        Size           max_results_per_function,
+        Float64        max_distance,
+        CStrVec*       collection
     );
 
 #ifdef __cplusplus
