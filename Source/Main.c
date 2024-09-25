@@ -55,7 +55,7 @@ int main (int argc, char **argv) {
     request.batch_function_symbol_ann.function_ids = fn_ids;
     request.batch_function_symbol_ann.function_id_count    = ARRAY_SIZE (fn_ids);
     request.batch_function_symbol_ann.distance             = 0.25f;
-    request.batch_function_symbol_ann.results_per_function = 10;
+    request.batch_function_symbol_ann.results_per_function = 100;
     request.batch_function_symbol_ann.debug_mode           = true;
 
     RETURN_VALUE_IF (

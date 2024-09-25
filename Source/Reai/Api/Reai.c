@@ -203,8 +203,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             Uint32 http_code = 0;                                                                  \
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
                                                                                                    \
-            REAI_LOG_TRACE (reai->logger, "Response code : %u", http_code);                        \
-            PRINT_ERR ("Response code : %u", http_code);                                           \
+            if (reai->logger) {                                                                    \
+                REAI_LOG_TRACE (reai->logger, "Response code : %u", http_code);                    \
+            }                                                                                      \
                                                                                                    \
             if (reai->logger) {                                                                    \
                 if (response->raw.data && response->raw.length) {                                  \
