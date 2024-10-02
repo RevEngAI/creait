@@ -16,6 +16,7 @@ extern "C" {
 #endif
 
 #include <Reai/Util/Vec.h>
+#include <string.h>
 
     /**
      * Create another CString* from given one.

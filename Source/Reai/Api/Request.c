@@ -13,6 +13,7 @@
 
 /* libc */
 #include <memory.h>
+#include <string.h>
 
 #include "Reai/Util/Vec.h"
 

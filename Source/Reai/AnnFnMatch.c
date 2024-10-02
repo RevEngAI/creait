@@ -7,6 +7,9 @@
 
 #include <Reai/AnnFnMatch.h>
 
+/* libc */
+#include <string.h>
+
 /**
  * @b Deinitialize a cloned ReaiAnnFnMatch object.
  *

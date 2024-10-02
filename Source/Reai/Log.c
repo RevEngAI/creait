@@ -18,7 +18,7 @@
 /* platform specific */
 #ifdef _WIN32
 #    include <windows.h>
-#    define getpid _getpid
+#    define getpid GetCurrentProcessId
 #else
 #    include <unistd.h>
 #endif

@@ -15,26 +15,7 @@ set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
-# Build parameters.
-if(MSVC) # Windows
-	# Disable warnings (there are too many of them, including warnings from
-	# third-party libraries, which cannot be selectively disabled when using MSVC).
-	string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W0")
-
-	# Disable the min() and max() macros to prevent errors when using e.g.
-	# std::numeric_limits<...>::max()
-	# (http://stackoverflow.com/questions/1904635/warning-c4003-and-errors-c2589-and-c2059-on-x-stdnumeric-limitsintmax).
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /DNOMINMAX")
-elseif(UNIX) # Linux or macOS
-	# Common options.
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O2")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wall")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wextra")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
-else()
-	message(FATAL_ERROR "Unsupported system type: ${CMAKE_SYSTEM_NAME}")
-endif()
+add_compile_options(-Wno-error)
 
 # generate a compile_commands.json for LSP clients
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
