@@ -100,6 +100,8 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
     cJSON* json = cJSON_CreateObject();
     GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");
 
+    Char* model_name = NULL;
+
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
             GOTO_HANDLER_IF (
@@ -113,7 +115,12 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
             CString model_suffix_name = reai_model_to_name[request->create_analysis.model];
             CString model_prefix_name = model;
             Size    model_name_len    = strlen (model_suffix_name) + strlen (model_prefix_name) + 2;
-            Char    model_name[model_name_len];
+            model_name                = ALLOCATE (Char, model_name_len);
+
+            if (!model_name) {
+                PRINT_ERR (ERR_OUT_OF_MEMORY);
+            }
+
             snprintf (model_name, model_name_len, "%s-%s", model_prefix_name, model_suffix_name);
             JSON_ADD_STRING (json, "model_name", model_name);
 
@@ -228,6 +235,8 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
             );
 
             JSON_ADD_U64 (json, "size_in_bytes", request->create_analysis.size_in_bytes);
+
+            FREE (model_name);
 
             break;
         }
@@ -420,6 +429,10 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
     return json_str;
 
 CONVERSION_FAILED:
+    if (model_name) {
+        FREE (model_name);
+    }
+
     if (json) {
         cJSON_Delete (json);
     }

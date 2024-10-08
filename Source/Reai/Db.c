@@ -91,32 +91,38 @@ void reai_db_destroy (ReaiDb* db) {
     stmt = NULL;                                                                                   \
     do {                                                                                           \
         /* generate query */                                                                       \
-        Size buf_size = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
-        Char sql_query_buf[buf_size];                                                              \
-        memset (sql_query_buf, 0, buf_size);                                                       \
+        Size  buf_size      = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                   \
+        Char* sql_query_buf = ALLOCATE (Char, buf_size);                                           \
+        if (!sql_query_buf) {                                                                      \
+            PRINT_ERR (ERR_OUT_OF_MEMORY);                                                         \
+        }                                                                                          \
+                                                                                                   \
         snprintf (sql_query_buf, buf_size, query_fmtstr, __VA_ARGS__);                             \
                                                                                                    \
         /* compile sql */                                                                          \
         /* REF : https://www.sqlite.org/c3ref/prepare.html */                                      \
-        RETURN_VALUE_IF (                                                                          \
-            sqlite3_prepare_v2 (db->db_conn, sql_query_buf, buf_size, &stmt, NULL) != SQLITE_OK,   \
-            0,                                                                                     \
-            SQL_ERROR ("Failed to prepare query for execution", sql_query_buf, db)                 \
-        );                                                                                         \
+        if (sqlite3_prepare_v2 (db->db_conn, sql_query_buf, buf_size, &stmt, NULL) != SQLITE_OK) { \
+            FREE (sql_query_buf);                                                                  \
+            SQL_ERROR ("Failed to prepare query for execution", sql_query_buf, db);                \
+            return 0;                                                                              \
+        }                                                                                          \
     } while (0)
 
 #define EXEC_SQL_QUERY(query_fmtstr, ...)                                                          \
     do {                                                                                           \
-        Size buf_size = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                         \
-        Char sql_query_buf[buf_size];                                                              \
-        memset (sql_query_buf, 0, buf_size);                                                       \
+        Size  buf_size      = snprintf (NULL, 0, query_fmtstr, __VA_ARGS__) + 1;                   \
+        Char* sql_query_buf = ALLOCATE (Char, buf_size);                                           \
+        if (!sql_query_buf) {                                                                      \
+            PRINT_ERR (ERR_OUT_OF_MEMORY);                                                         \
+        }                                                                                          \
+                                                                                                   \
         snprintf (sql_query_buf, buf_size, query_fmtstr, __VA_ARGS__);                             \
                                                                                                    \
-        RETURN_VALUE_IF (                                                                          \
-            sqlite3_exec (db->db_conn, sql_query_buf, NULL, NULL, NULL) != SQLITE_OK,              \
-            0,                                                                                     \
-            SQL_ERROR ("Failed to exec query", sql_query_buf, db)                                  \
-        );                                                                                         \
+        if (sqlite3_exec (db->db_conn, sql_query_buf, NULL, NULL, NULL) != SQLITE_OK) {            \
+            FREE (sql_query_buf);                                                                  \
+            SQL_ERROR ("Failed to exec query", sql_query_buf, db);                                 \
+            return 0;                                                                              \
+        }                                                                                          \
     } while (0)
 
 #define SQL_ERROR(myreason, sql_query_buf, db)                                                     \
