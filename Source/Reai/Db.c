@@ -756,8 +756,13 @@ Uint32 reai_db_get_model_id_for_model_name (ReaiDb* db, CString model_name) {
 
     /* generate query */
     Size buf_size = snprintf (NULL, 0, query_fmtstr, model_name);
-    Char query_buf[buf_size + 1];
-    memset (query_buf, 0, buf_size + 1);
+    Char* query_buf = ALLOCATE(Char, buf_size+1);
+
+    if(!query_buf) {
+        PRINT_ERR(ERR_OUT_OF_MEMORY);
+        return 0;
+    }
+
     snprintf (query_buf, buf_size, query_fmtstr, model_name);
 
     /* compile sql */
