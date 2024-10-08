@@ -1,5 +1,14 @@
+/**
+ * @file FnInfo.h
+ * @date 20 August 2024
+ * @author Siddharth Mishra (admin@brightprogrammer.in)
+ * @copyright Copyright (c) RevEngAI. All Rights Reserved.
+ * */
+
 #include <Reai/FnInfo.h>
 
+/* libc */
+#include <string.h>
 
 /**
  * @b Method to clone function info items.

@@ -1,4 +1,3 @@
-find_package(SQLite3)
 find_package(CURL)
 
 file(GLOB_RECURSE CREAIT_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.c)
@@ -7,7 +6,7 @@ file(GLOB_RECURSE CREAIT_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.c)
 # Libraries dependents need to link to to use REAI
 set(
   CREAIT_LINK_LIBRARIES
-  cjson CURL::libcurl toml SQLite::SQLite3
+  cjson CURL::libcurl toml
   CACHE STRING "Libraries to link to in order to use creait"
 )
 

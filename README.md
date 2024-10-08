@@ -28,6 +28,12 @@ given the following dependencies are installed already.
 
 Before building, user/developer must have libcurl (development package), git, cmake, make, ninja and pkg-config installed on host system. The package names differ from OS to OS.
 
+On Windows 
+- You need Visual Studio.
+- Git can be manually installed by downloading the installation setup. 
+- Python must be installed and then use `pip install meson` to install meson.
+- pkg-config can be installed by running `choco install pkgconfiglite` after installing chocolatey package manager for windows.
+
 ## Usage
 
 All struct type names start with `Reai` and all function name starts with `reai_`.

@@ -13,7 +13,7 @@
 #include <string.h>
 
 /* sqlite3 */
-#include <sqlite3.h>
+#include <Reai/SQLite3/sqlite3.h>
 
 #include "Reai/AnalysisInfo.h"
 #include "Reai/Api/Request.h"
