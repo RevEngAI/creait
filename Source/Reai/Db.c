@@ -126,9 +126,12 @@ void reai_db_destroy (ReaiDb* db) {
     } while (0)
 
 #define SQL_ERROR(myreason, sql_query_buf, db)                                                     \
-    myreason " : %s. NEAR : \"%.30s\".\n", sqlite3_errmsg (db->db_conn),                           \
+    PRINT_ERR (                                                                                    \
+        myreason " : %s. NEAR : \"%.30s\".\n",                                                     \
+        sqlite3_errmsg (db->db_conn),                                                              \
         sql_query_buf +                                                                            \
-            MAX (sqlite3_error_offset (db->db_conn), sqlite3_error_offset (db->db_conn) - 10)
+            MAX (sqlite3_error_offset (db->db_conn), sqlite3_error_offset (db->db_conn) - 10)      \
+    )
 
 /**
  * @b Check whether or not given database requires to a analysis
