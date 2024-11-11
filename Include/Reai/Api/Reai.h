@@ -77,7 +77,8 @@ extern "C" {
         ReaiBinaryId  bin_id,
         Size          max_results_per_function,
         Float64       max_distance,
-        CStrVec*      collection
+        CStrVec*      collection,
+        Bool          debug_mode
     );
 
     ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
@@ -87,7 +88,8 @@ extern "C" {
         U64Vec*        speculative_fn_ids,
         Size           max_results_per_function,
         Float64        max_distance,
-        CStrVec*       collection
+        CStrVec*       collection,
+        Bool           debug_mode
     );
 
 #ifdef __cplusplus

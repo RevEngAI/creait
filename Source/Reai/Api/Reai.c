@@ -639,6 +639,13 @@ ReaiBinaryId reai_create_analysis (
                             cmdline_args
                         )) {
                         PRINT_ERR ("Failed to add created analysis info to database.");
+                    } else {
+                        if (reai->logger) {
+                            REAI_LOG_TRACE (
+                                reai->logger,
+                                "Analysis information added to local database."
+                            );
+                        }
                     }
                 }
 
@@ -857,7 +864,8 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     ReaiBinaryId  bin_id,
     Size          max_results_per_function,
     Float64       max_distance,
-    CStrVec*      collection
+    CStrVec*      collection,
+    Bool          debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !bin_id, NULL, ERR_INVALID_ARGUMENTS);
 
@@ -870,7 +878,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
     request.batch_binary_symbol_ann.distance             = max_distance;
-    request.batch_binary_symbol_ann.debug_mode           = true;
+    request.batch_binary_symbol_ann.debug_mode           = debug_mode;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -900,7 +908,8 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     U64Vec*        speculative_fn_ids,
     Size           max_results_per_function,
     Float64        max_distance,
-    CStrVec*       collection
+    CStrVec*       collection,
+    Bool           debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
 
@@ -918,7 +927,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     request.batch_function_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_function_symbol_ann.results_per_function = max_results_per_function;
     request.batch_function_symbol_ann.distance             = max_distance;
-    request.batch_function_symbol_ann.debug_mode           = true;
+    request.batch_function_symbol_ann.debug_mode           = debug_mode;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
