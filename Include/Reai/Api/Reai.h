@@ -25,15 +25,12 @@ extern "C" {
     typedef struct Reai         Reai; /* opaque object */
     typedef struct ReaiResponse ReaiResponse;
     typedef struct ReaiRequest  ReaiRequest;
-    typedef struct ReaiDb       ReaiDb;
     typedef struct ReaiLog      ReaiLog;
 
     Reai*         reai_create (CString host, CString api_key, CString model);
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
-    Reai*         reai_set_db (Reai* reai, ReaiDb* db);
     Reai*         reai_set_logger (Reai* reai, ReaiLog* logger);
-    Reai*         reai_update_all_analyses_status_in_db (Reai* reai);
 
     CString      reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
     ReaiBinaryId reai_create_analysis (

@@ -12,7 +12,6 @@
 
 /* reai */
 #include <Reai/Api/Api.h>
-#include <Reai/Db.h>
 #include <Reai/Log.h>
 #include <Reai/Util/Vec.h>
 
@@ -27,7 +26,6 @@ struct Reai {
     CString api_key;
     CString model;
 
-    ReaiDb*  db;
     ReaiLog* logger;
 };
 
@@ -126,7 +124,6 @@ Reai* reai_deinit_conn (Reai* reai) {
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
 
-    reai->db     = NULL;
     reai->logger = NULL;
 
     reai_deinit_conn (reai);
@@ -414,24 +411,6 @@ REQUEST_FAILED:
 };
 
 /**
- * @b Set a database in Reai. This will make sure that database
- * is automatically updated in case of file upload or analysis creation.
- *
- * @param reai
- * @param db
- *
- * @return @c reai On success.
- * @return @c NULL otherwise.
- * */
-Reai* reai_set_db (Reai* reai, ReaiDb* db) {
-    RETURN_VALUE_IF (!reai || !db, NULL, ERR_INVALID_ARGUMENTS);
-
-    reai->db = db;
-
-    return reai;
-}
-
-/**
  * @b Set a logger in Reai. This will increase verbosity in the logger.
  * Every request and respose will be dumped into the log file.
  *
@@ -447,79 +426,6 @@ Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
     reai->logger = logger;
 
     return reai;
-}
-
-/**
- * @b Update analysis status of all created analyses in database.
- *
- * This call requires that Reai already has a set database.
- *
- * @param reai
- *
- * @return @c reai On success.
- * @return @c NULL otherwise.
- * */
-Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
-    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
-
-    /* no need to continue if we don't need an update */
-    if (!reai_db_require_analysis_status_update (reai->db)) {
-        return reai;
-    }
-
-    U64Vec* bin_ids_in_processing =
-        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_PROCESSING);
-    U64Vec* bin_ids_in_queue =
-        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_QUEUED);
-    RETURN_VALUE_IF (!bin_ids_in_processing, NULL, "Failed to get all created analyses from DB.");
-
-    ReaiResponse response;
-    GOTO_HANDLER_IF (
-        !reai_response_init (&response),
-        STATUS_UPDATE_FAILED,
-        "Failed to create response structure."
-    );
-
-#define UPDATE_STATUS_FOR(bin_ids)                                                                 \
-    REAI_VEC_FOREACH (bin_ids, bin_id, {                                                           \
-        ReaiRequest request               = {0};                                                   \
-        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;                     \
-        request.analysis_status.binary_id = *bin_id;                                               \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !reai_request (reai, &request, &response),                                             \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Failed to make request to RevEngAI servers : %s.",                                    \
-            response.raw.data                                                                      \
-        );                                                                                         \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !response.analysis_status.status,                                                      \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Invalid analysis status."                                                             \
-        );                                                                                         \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !reai_db_set_analysis_status (reai->db, *bin_id, response.analysis_status.status),     \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Failed to update analysis status in db."                                              \
-        );                                                                                         \
-    });
-
-    UPDATE_STATUS_FOR (bin_ids_in_processing);
-    UPDATE_STATUS_FOR (bin_ids_in_queue);
-
-#undef UPDATE_STATUS_FOR
-
-DEFAULT_RETURN:
-    reai_u64_vec_destroy (bin_ids_in_processing);
-    reai_u64_vec_destroy (bin_ids_in_queue);
-    reai_response_deinit (&response);
-    return reai;
-
-STATUS_UPDATE_FAILED:
-    reai = NULL;
-    goto DEFAULT_RETURN;
 }
 
 /**
@@ -547,16 +453,6 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
-                if (reai->db) {
-                    if (!reai_db_add_upload (
-                            reai->db,
-                            file_path,
-                            response->upload_file.sha_256_hash
-                        )) {
-                        PRINT_ERR ("Failed to add uploaded file into to Reai DB.");
-                    }
-                }
-
                 return response->upload_file.sha_256_hash;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
@@ -629,26 +525,6 @@ ReaiBinaryId reai_create_analysis (
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_CREATE_ANALYSIS : {
-                if (reai->db) {
-                    if (!reai_db_add_analysis (
-                            reai->db,
-                            response->create_analysis.binary_id,
-                            sha_256_hash,
-                            model,
-                            file_name,
-                            cmdline_args
-                        )) {
-                        PRINT_ERR ("Failed to add created analysis info to database.");
-                    } else {
-                        if (reai->logger) {
-                            REAI_LOG_TRACE (
-                                reai->logger,
-                                "Analysis information added to local database."
-                            );
-                        }
-                    }
-                }
-
                 return response->create_analysis.binary_id;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
