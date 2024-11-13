@@ -97,6 +97,10 @@ extern "C" {
 
         union {
             struct {
+                CString api_key;
+            } auth_check;
+
+            struct {
                 CString file_path; /**< @b Complete file path to be uploaded */
             } upload_file;
 

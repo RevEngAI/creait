@@ -108,7 +108,11 @@ extern "C" {
             struct {
                 Bool    success; /**< @b Is true when request was successful */
                 CString message; /**< @b Message returned by request */
-            } health_check, auth_check, delete_analysis;
+            } health_check, delete_analysis;
+
+            struct {
+                CString message;
+            } auth_check;
 
             struct {
                 Bool    success;      /**< @b Is true when request was successful */

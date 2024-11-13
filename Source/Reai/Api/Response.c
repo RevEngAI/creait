@@ -107,10 +107,10 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
             response->type = REAI_RESPONSE_TYPE_HEALTH_CHECK;
 
-            GET_JSON_BOOL (json, "success", response->auth_check.success);
+            GET_JSON_BOOL (json, "success", response->health_check.success);
 
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            CString msg_keyname = response->health_check.success ? "message" : "error";
+            GET_JSON_STRING (json, msg_keyname, response->health_check.message);
 
             break;
         }
@@ -118,10 +118,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_AUTH_CHECK : {
             response->type = REAI_RESPONSE_TYPE_AUTH_CHECK;
 
-            GET_JSON_BOOL (json, "success", response->auth_check.success);
-
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            GET_OPTIONAL_JSON_STRING (json, "message", response->auth_check.message);
 
             break;
         }
@@ -142,7 +139,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
             GET_JSON_BOOL (json, "success", response->create_analysis.success);
 
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
+            CString msg_keyname = response->upload_file.success ? "message" : "error";
             GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
 
             /* sha256 hash provided only on success */

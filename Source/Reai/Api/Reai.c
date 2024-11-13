@@ -25,14 +25,14 @@ struct Reai {
     CString host;
     CString api_key;
     CString model;
-
-    ReaiLog* logger;
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
 HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request, CString model);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* request);
+Reai*                reai_deinit_curl_headers (Reai* reai);
+Reai*                reai_init_curl_headers (Reai* reai, CString api_key);
 Reai*                reai_init_conn (Reai* reai);
 Reai*                reai_deinit_conn (Reai* reai);
 
@@ -88,15 +88,7 @@ Reai* reai_init_conn (Reai* reai) {
     curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
-    Char auth_hdr_str[80];
-    snprintf (auth_hdr_str, sizeof (auth_hdr_str), "Authorization: %s", reai->api_key);
-    reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
-
-    /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
-    RETURN_VALUE_IF (!reai->headers, NULL, "Failed to prepare initial headers");
-
-    /* set headers */
-    curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
+    reai_init_curl_headers (reai, reai->api_key);
 
     return reai;
 }
@@ -104,10 +96,7 @@ Reai* reai_init_conn (Reai* reai) {
 Reai* reai_deinit_conn (Reai* reai) {
     RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
-    if (reai->headers) {
-        curl_slist_free_all (reai->headers);
-        reai->headers = NULL;
-    }
+    reai_deinit_curl_headers (reai);
     if (reai->curl) {
         curl_easy_cleanup (reai->curl);
         reai->curl = NULL;
@@ -123,8 +112,6 @@ Reai* reai_deinit_conn (Reai* reai) {
  * */
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
-
-    reai->logger = NULL;
 
     reai_deinit_conn (reai);
 
@@ -144,6 +131,39 @@ void reai_destroy (Reai* reai) {
     }
 
     FREE (reai);
+}
+
+Reai* reai_deinit_curl_headers (Reai* reai) {
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
+
+    if (reai->headers) {
+        REAI_LOG_TRACE ("headers deinited");
+        curl_slist_free_all (reai->headers);
+        reai->headers = NULL;
+    }
+
+    return reai;
+}
+
+Reai* reai_init_curl_headers (Reai* reai, CString api_key) {
+    RETURN_VALUE_IF (!reai || !api_key, NULL, ERR_INVALID_ARGUMENTS);
+
+    REAI_LOG_TRACE ("headers init");
+
+    Char auth_hdr_str[80];
+    snprintf (auth_hdr_str, sizeof (auth_hdr_str), "Authorization: %s", api_key);
+    reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
+
+    REAI_LOG_TRACE ("auth header : %s", auth_hdr_str);
+
+    /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
+    RETURN_VALUE_IF (!reai->headers, NULL, "Failed to prepare initial headers");
+
+    /* set headers */
+    curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
+
+
+    return reai;
 }
 
 /**
@@ -180,17 +200,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     do {                                                                                           \
         snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);                       \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "ENDPOINT : '%s'", endpoint_str);                        \
-        }                                                                                          \
+        REAI_LOG_TRACE ("ENDPOINT : '%s'", endpoint_str);                                          \
     } while (0)
 
 #define SET_METHOD(method)                                                                         \
     do {                                                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_CUSTOMREQUEST, method);                              \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "METHOD : '%s'", method);                                \
-        }                                                                                          \
+        REAI_LOG_TRACE ("METHOD : '%s'", method);                                                  \
     } while (0)
 
 #define MAKE_REQUEST(expected_retcode, expected_response)                                          \
@@ -200,16 +216,11 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             Uint32 http_code = 0;                                                                  \
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
                                                                                                    \
-            if (reai->logger) {                                                                    \
-                REAI_LOG_TRACE (reai->logger, "Response code : %u", http_code);                    \
-            }                                                                                      \
-                                                                                                   \
-            if (reai->logger) {                                                                    \
-                if (response->raw.data && response->raw.length) {                                  \
-                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);     \
-                } else {                                                                           \
-                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : INVALID");                      \
-                }                                                                                  \
+            REAI_LOG_TRACE ("Response code : %u", http_code);                                      \
+            if (response->raw.data && response->raw.length) {                                      \
+                REAI_LOG_TRACE ("RESPONSE.JSON : '%s'", response->raw.data);                       \
+            } else {                                                                               \
+                REAI_LOG_TRACE ("RESPONSE.JSON : INVALID");                                        \
             }                                                                                      \
                                                                                                    \
             response = reai_response_init_for_type (                                               \
@@ -232,9 +243,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* convert request to json string */                                                       \
         CString json = reai_request_to_json_cstr (request, reai->model);                           \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON");              \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "REQUEST.JSON : '%s'", json);                            \
-        }                                                                                          \
+        REAI_LOG_TRACE ("REQUEST.JSON : '%s'", json);                                              \
                                                                                                    \
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
@@ -262,9 +271,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* set part info */                                                                        \
         curl_mime_name (mimepart, "file");                                                         \
         curl_mime_filedata (mimepart, request->upload_file.file_path);                             \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "UPLOAD FILE : '%s'", request->upload_file.file_path);   \
-        }                                                                                          \
+        REAI_LOG_TRACE ("UPLOAD FILE : '%s'", request->upload_file.file_path);                     \
                                                                                                    \
         /* set the mime data for post */                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_MIMEPOST, mime);                                     \
@@ -286,6 +293,8 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/authenticate */
         case REAI_REQUEST_TYPE_AUTH_CHECK : {
+            reai_deinit_curl_headers (reai);
+            reai_init_curl_headers (reai, request->auth_check.api_key);
             SET_ENDPOINT ("%s/authenticate", reai->host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_AUTH_CHECK);
@@ -399,6 +408,12 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 #undef SET_ENDPOINT
 
 DEFAULT_RETURN:
+    // restore api key in headers
+    if (request->type == REAI_REQUEST_TYPE_AUTH_CHECK) {
+        reai_deinit_curl_headers (reai);
+        reai_init_curl_headers (reai, reai->api_key);
+    }
+
     if (mime) {
         curl_mime_free (mime);
     }
@@ -411,21 +426,41 @@ REQUEST_FAILED:
 };
 
 /**
- * @b Set a logger in Reai. This will increase verbosity in the logger.
- * Every request and respose will be dumped into the log file.
+ * @b Make call to "/authenticate" endpoint to check whether the given
+ * authentication key works or not.
  *
  * @param reai
- * @param logger
+ * @param response
+ * @param api_key Api key to check against
  *
- * @return @c reai On success.
- * @return @c NULL otherwise.
+ * @return true if auth check is successful
+ * @return false otherwise
  * */
-Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
-    RETURN_VALUE_IF (!reai || !logger, NULL, ERR_INVALID_ARGUMENTS);
+Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString api_key) {
+    RETURN_VALUE_IF (!reai || !response, false, ERR_INVALID_ARGUMENTS);
 
-    reai->logger = logger;
 
-    return reai;
+    /* prepare request */
+    ReaiRequest request        = {0};
+    request.type               = REAI_REQUEST_TYPE_AUTH_CHECK;
+    request.auth_check.api_key = api_key;
+
+    /* make request */
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_AUTH_CHECK : {
+                return true;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                return false;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (false, "Unexpected type.");
+            }
+        }
+    } else {
+        return false;
+    }
 }
 
 /**

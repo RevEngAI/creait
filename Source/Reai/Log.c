@@ -23,33 +23,20 @@
 #    include <unistd.h>
 #endif
 
-typedef struct ReaiLog {
-    CString      log_file;
-    FILE*        log_fd;
-    ReaiLogLevel min_log_level;
-} ReaiLog;
-
 PRIVATE CString log_level_to_cstr (ReaiLogLevel level);
 PRIVATE CString generate_new_log_file_name();
+
+static FILE* log_fd = NULL;
 
 /**
  * @b Destroy given logger object and close attached file handle.
  *
  * @param logger
  * */
-void reai_log_destroy (ReaiLog* logger) {
-    RETURN_IF (!logger, ERR_INVALID_ARGUMENTS);
-
-    if (logger->log_file) {
-        FREE (logger->log_file);
+__attribute__ ((destructor)) void reai_log_destroy() {
+    if (log_fd) {
+        fclose (log_fd);
     }
-
-    if (logger->log_fd) {
-        fclose (logger->log_fd);
-    }
-
-    memset (logger, 0, sizeof (ReaiLog));
-    FREE (logger);
 }
 
 /**
@@ -62,44 +49,14 @@ void reai_log_destroy (ReaiLog* logger) {
  * @return @c ReaiLog on success.
  * @return @c NULL otherwise.
  * */
-ReaiLog* reai_log_create (CString file_name) {
-    ReaiLog* log = NEW (ReaiLog);
-    RETURN_VALUE_IF (!log, NULL, ERR_OUT_OF_MEMORY);
+__attribute__ ((constructor)) void reai_log_create (CString file_name) {
+    log_fd = fopen (generate_new_log_file_name(), "w");
+    if (!log_fd) {
+        PRINT_ERR ("Failed to create log file : %s", strerror (errno));
+        return;
+    }
 
-    log->log_file = file_name ? strdup (file_name) : generate_new_log_file_name();
-    GOTO_HANDLER_IF (!log->log_file, CREATE_FAILED, ERR_OUT_OF_MEMORY);
-
-    log->log_fd = fopen (log->log_file, "w");
-    GOTO_HANDLER_IF (
-        !log->log_fd,
-        CREATE_FAILED,
-        "Failed to create new log file \"%s\" : %s",
-        log->log_file,
-        strerror (errno)
-    );
-
-    return log;
-
-CREATE_FAILED:
-    reai_log_destroy (log);
-    return NULL;
-}
-
-/**
- * @b Set minimum log level for given logger.
- *
- * @param log
- * @parma level
- *
- * @return @c log on success.
- * @return @c NULL otherwise.
- * */
-ReaiLog* reai_log_set_level (ReaiLog* log, ReaiLogLevel level) {
-    RETURN_VALUE_IF (!log || (level >= REAI_LOG_LEVEL_MAX), NULL, ERR_INVALID_ARGUMENTS);
-
-    log->min_log_level = level;
-
-    return log;
+    setbuf (log_fd, NULL);
 }
 
 /**
@@ -111,13 +68,8 @@ ReaiLog* reai_log_set_level (ReaiLog* log, ReaiLogLevel level) {
  * @param fmtstr Format string.
  * @param ... Format string arguments.
  * */
-void reai_log_printf (ReaiLog* logger, ReaiLogLevel level, CString tag, const char* fmtstr, ...) {
-    RETURN_IF (!logger || !tag || !fmtstr, ERR_INVALID_ARGUMENTS);
-
-    /* if given log level is less than min log level then skip */
-    if (level < logger->min_log_level) {
-        return;
-    }
+void reai_log_printf (ReaiLogLevel level, CString tag, const char* fmtstr, ...) {
+    tag = tag ? tag : "reai_log_printf";
 
     /* print time and log level */
     {
@@ -127,21 +79,19 @@ void reai_log_printf (ReaiLog* logger, ReaiLogLevel level, CString tag, const ch
         timeinfo = localtime (&rawtime);
         Char timebuf[10];
         strftime (timebuf, sizeof (timebuf), "%H:%M:%S", timeinfo);
-        fprintf (
-            logger->log_fd,
-            "[%-5s] : [%s] : [%s] : ",
-            log_level_to_cstr (level),
-            timebuf,
-            tag
-        );
+        fprintf (log_fd, "[%-5s] : [%s] : [%s] : ", log_level_to_cstr (level), timebuf, tag);
     }
 
     /* pass on everything else to fprintf */
-    va_list args;
-    va_start (args, fmtstr);
-    vfprintf (logger->log_fd, fmtstr, args);
-    fprintf (logger->log_fd, "\n");
-    va_end (args);
+    if (fmtstr) {
+        va_list args;
+        va_start (args, fmtstr);
+        vfprintf (log_fd, fmtstr, args);
+        fputc ('\n', log_fd);
+        va_end (args);
+    } else {
+        fprintf (log_fd, "invalid format string provided.");
+    }
 }
 
 PRIVATE CString log_level_to_cstr (ReaiLogLevel level) {

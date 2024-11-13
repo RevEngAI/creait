@@ -1,13 +1,14 @@
-#include "Reai/Common.h"
 #include <Reai/Config.h>
+
+#include "Reai/Common.h"
 
 /* tomlc99 */
 #include <toml.h>
 
 /* libc  */
+#include <ctype.h>
 #include <errno.h>
 #include <string.h>
-#include <ctype.h>
 
 /**
  * @b Get default file path where .reait.toml is supposed to be present.
@@ -81,22 +82,6 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.");
     cfg->host = host.u.s;
 
-    toml_datum_t db_dir_path = toml_string_in (reai_conf, "db_dir_path");
-    GOTO_HANDLER_IF (
-        !db_dir_path.ok,
-        LOAD_FAILED,
-        "Cannot find 'db_dir_path' (required) in RevEngAI config."
-    );
-    cfg->db_dir_path = db_dir_path.u.s;
-
-    toml_datum_t log_dir_path = toml_string_in (reai_conf, "log_dir_path");
-    GOTO_HANDLER_IF (
-        !log_dir_path.ok,
-        LOAD_FAILED,
-        "Cannot find 'log_dir_path' (required) in RevEngAI config."
-    );
-    cfg->log_dir_path = log_dir_path.u.s;
-
     toml_datum_t model = toml_string_in (reai_conf, "model");
     if (model.ok) {
         cfg->model = model.u.s;
@@ -137,14 +122,6 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
         memset ((Char *)cfg->model, 0, strlen (cfg->model));
         FREE (cfg->model);
     }
-    if (cfg->db_dir_path) {
-        memset ((Char *)cfg->db_dir_path, 0, strlen (cfg->db_dir_path));
-        FREE (cfg->db_dir_path);
-    }
-    if (cfg->log_dir_path) {
-        memset ((Char *)cfg->log_dir_path, 0, strlen (cfg->log_dir_path));
-        FREE (cfg->log_dir_path);
-    }
 
     memset (cfg, 0, sizeof (ReaiConfig));
     FREE (cfg);
@@ -159,10 +136,10 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
  * @return @c false otherwise.
  * */
 Bool reai_config_check_api_key (CString apikey) {
-    RETURN_VALUE_IF(!apikey, false, ERR_INVALID_ARGUMENTS);
+    RETURN_VALUE_IF (!apikey, false, ERR_INVALID_ARGUMENTS);
 
     // Check the length of the string
-    if (strlen(apikey) != 36) {
+    if (strlen (apikey) != 36) {
         return 0; // Invalid length
     }
 
@@ -175,7 +152,7 @@ Bool reai_config_check_api_key (CString apikey) {
             }
         } else {
             // Check for hexadecimal characters
-            if (!isxdigit((Uint8)apikey[i])) {
+            if (!isxdigit ((Uint8)apikey[i])) {
                 return 0; // Non-hexadecimal character
             }
         }
