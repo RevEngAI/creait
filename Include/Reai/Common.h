@@ -71,6 +71,7 @@
 #define ERR_INVALID_ARGUMENTS              "Invalid Arguments"
 #define ERR_OUT_OF_MEMORY                  "Out of memory (allocation failed)"
 #define ERR_INVALID_SIZE                   "Invalid size (zero)"
+#define ERR_INDEX_OUT_OF_BOUNDS            "Provided index exceeds max element count in vector"
 #define ERR_INVALID_OBJECT_REF             "Invalid object reference (NULL)"
 #define ERR_INVALID_OBJECT_CONTENTS        "Invalid contents inside provided object (not what expected)"
 #define ERR_INVALID_ITERATOR               "Invalid iterator (NULL)"

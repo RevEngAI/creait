@@ -12,6 +12,7 @@
 #include <Reai/Common.h>
 #include <Reai/FnInfo.h>
 #include <Reai/Types.h>
+#include <Reai/Util/CStrVec.h>
 #include <Reai/Util/IntVec.h>
 
 #ifdef __cplusplus
@@ -53,7 +54,7 @@ extern "C" {
         REAI_REQUEST_TYPE_UPLOAD_FILE,
         /* REAI_REQUEST_TYPE_GET_CONFIG, */
         REAI_REQUEST_TYPE_SEARCH,
-        /* REAI_REQUEST_TYPE_GET_MODELS, */
+        REAI_REQUEST_TYPE_GET_MODELS,
 
         /* analysis api */
         REAI_REQUEST_TYPE_CREATE_ANALYSIS,
@@ -76,19 +77,6 @@ extern "C" {
     } ReaiRequestType;
 
     /**
-     * @b Represents the BinNet model to use in RevEngAI created analysis.
-     * This is used in create analysis request type.
-     * */
-    typedef enum ReaiModel {
-        REAI_MODEL_UNKNOWN = 0,
-        REAI_MODEL_X86_WINDOWS,
-        REAI_MODEL_X86_LINUX,
-        REAI_MODEL_X86_MACOS,
-        REAI_MODEL_X86_ANDROID,
-        REAI_MODEL_MAX
-    } ReaiModel;
-
-    /**
      * @b Structure to be prepared with valid field values before making request to API
      * endpoint.
      * */
@@ -106,7 +94,7 @@ extern "C" {
             } upload_file;
 
             struct {
-                ReaiModel       model;        /**< @b BinNet model to be used */
+                CString         ai_model;     /**< @b BinNet model to be used */
                 CString         platform_opt; /**< @b Idk the possible values of this enum. */
                 CString         isa_opt;      /**< @b Idk possible values of this one as well. */
                 ReaiFileOption  file_opt;     /**< @b Info about file type. */

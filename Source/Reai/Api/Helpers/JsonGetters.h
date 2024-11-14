@@ -210,6 +210,11 @@
         GET_OPTIONAL_JSON_U64 (match, "origin_function_id", fn_match.origin_function_id);          \
     } while (0)
 
+#define GET_JSON_AI_MODEL(ai_model, model_name)                                                    \
+    do {                                                                                           \
+        GET_JSON_STRING (ai_model, "model_name", model_name);                                      \
+    } while (0)
+
 #define GET_JSON_CUSTOM_ARR(json, type_name, type_infix, reader, vec)                              \
     do {                                                                                           \
         vec = reai_##type_infix##_vec_create();                                                    \

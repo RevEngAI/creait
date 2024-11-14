@@ -35,7 +35,7 @@ extern "C" {
     ReaiBinaryId reai_create_analysis (
         Reai*          reai,
         ReaiResponse*  response,
-        ReaiModel      model,
+        CString        ai_model,
         Uint64         base_addr,
         ReaiFnInfoVec* fn_info_vec,
         Bool           is_private,
@@ -87,6 +87,8 @@ extern "C" {
         CStrVec*       collection,
         Bool           debug_mode
     );
+
+    CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response);
 
 #ifdef __cplusplus
 }

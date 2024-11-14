@@ -309,6 +309,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_GET_MODELS : {
+            SET_ENDPOINT ("%s/models", reai->host);
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_GET_MODELS);
+            break;
+        }
+
         /* POST : api.local/v1/analyse */
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
             SET_ENDPOINT ("%s/analyse/", reai->host);
@@ -453,6 +460,7 @@ Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString 
                 return true;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return false;
             }
             default : {
@@ -460,6 +468,7 @@ Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString 
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return false;
     }
 }
@@ -492,6 +501,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
                 return response->upload_file.sha_256_hash;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -499,6 +509,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -521,7 +532,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
 ReaiBinaryId reai_create_analysis (
     Reai*          reai,
     ReaiResponse*  response,
-    ReaiModel      model,
+    CString        ai_model,
     Uint64         base_addr,
     ReaiFnInfoVec* fn_info_vec,
     Bool           is_private,
@@ -531,7 +542,8 @@ ReaiBinaryId reai_create_analysis (
     Size           size_in_bytes
 ) {
     RETURN_VALUE_IF (
-        !reai || !response || !model || !sha_256_hash || !file_name || !size_in_bytes,
+        !reai || !response || !ai_model || !strlen (ai_model) || !sha_256_hash ||
+            !(strlen (sha_256_hash)) || !file_name || !strlen (file_name) || !size_in_bytes,
         0,
         ERR_INVALID_ARGUMENTS
     );
@@ -540,7 +552,7 @@ ReaiBinaryId reai_create_analysis (
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
 
-    request.create_analysis.model        = model;
+    request.create_analysis.ai_model     = ai_model;
     request.create_analysis.platform_opt = NULL;
     request.create_analysis.isa_opt      = NULL;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
@@ -564,6 +576,7 @@ ReaiBinaryId reai_create_analysis (
                 return response->create_analysis.binary_id;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return 0;
             }
             default : {
@@ -571,6 +584,7 @@ ReaiBinaryId reai_create_analysis (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return 0;
     }
 }
@@ -604,6 +618,7 @@ ReaiFnInfoVec*
                 return response->basic_function_info.fn_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -611,6 +626,7 @@ ReaiFnInfoVec*
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -654,6 +670,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
                 return response->recent_analysis.analysis_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -661,6 +678,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -698,6 +716,7 @@ Bool reai_batch_renames_functions (
                 return true;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return false;
             }
             default : {
@@ -705,6 +724,7 @@ Bool reai_batch_renames_functions (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return false;
     }
 }
@@ -741,6 +761,7 @@ Bool reai_rename_function (
                 return response->rename_function.success;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return false;
             }
             default : {
@@ -748,6 +769,7 @@ Bool reai_rename_function (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return false;
     }
 }
@@ -801,6 +823,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             }
 
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
 
@@ -809,6 +832,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -850,6 +874,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
             }
 
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
 
@@ -858,6 +883,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -889,6 +915,7 @@ ReaiAnalysisStatus
                 return response->analysis_status.status;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return REAI_ANALYSIS_STATUS_INVALID;
             }
             default : {
@@ -896,6 +923,33 @@ ReaiAnalysisStatus
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return REAI_ANALYSIS_STATUS_INVALID;
+    }
+}
+
+
+CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response) {
+    RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_GET_MODELS;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_GET_MODELS : {
+                return response->get_models.models;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
+                return NULL;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
     }
 }

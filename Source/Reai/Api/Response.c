@@ -342,6 +342,25 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
+        case REAI_RESPONSE_TYPE_GET_MODELS : {
+            response->type = REAI_RESPONSE_TYPE_GET_MODELS;
+
+            GET_JSON_BOOL (json, "success", response->get_models.success);
+
+            cJSON* models = cJSON_GetObjectItem (json, "models");
+
+            // NOTE: current definition skips storing model_id as I don't see why that'd be required
+            GET_JSON_CUSTOM_ARR (
+                models,
+                CString,
+                cstr,
+                GET_JSON_AI_MODEL,
+                response->get_models.models
+            );
+
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
             response->type = REAI_RESPONSE_TYPE_VALIDATION_ERR;
 

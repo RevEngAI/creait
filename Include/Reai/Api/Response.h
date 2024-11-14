@@ -33,8 +33,8 @@ extern "C" {
         /* utility api */
         REAI_RESPONSE_TYPE_UPLOAD_FILE = REAI_REQUEST_TYPE_UPLOAD_FILE,
         /* REAI_RESPONSE_TYPE_GET_CONFIG  = REAI_REQUEST_TYPE_GET_CONFIG, */
-        REAI_RESPONSE_TYPE_SEARCH = REAI_REQUEST_TYPE_SEARCH,
-        /* REAI_RESPONSE_TYPE_GET_MODELS  = REAI_REQUEST_TYPE_GET_MODELS, */
+        REAI_RESPONSE_TYPE_SEARCH     = REAI_REQUEST_TYPE_SEARCH,
+        REAI_RESPONSE_TYPE_GET_MODELS = REAI_REQUEST_TYPE_GET_MODELS,
 
         /* analysis api */
         REAI_RESPONSE_TYPE_CREATE_ANALYSIS     = REAI_REQUEST_TYPE_CREATE_ANALYSIS,
@@ -161,6 +161,11 @@ extern "C" {
                 } settings;
                 ReaiAnnFnMatchVec* function_matches;
             } batch_binary_symbol_ann, batch_function_symbol_ann;
+
+            struct {
+                Bool     success;
+                CStrVec* models;
+            } get_models;
         };
     } ReaiResponse;
 

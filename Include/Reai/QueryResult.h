@@ -24,7 +24,6 @@ extern "C" {
         CString            creation;
         Uint64             model_id;
         CString            model_name;
-        ReaiModel          model;
         CString            sha_256_hash;
         ReaiAnalysisStatus status;
         CStrVec*           tags;
