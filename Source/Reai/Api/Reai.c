@@ -293,9 +293,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/authenticate */
         case REAI_REQUEST_TYPE_AUTH_CHECK : {
-            reai_deinit_curl_headers (reai);
+            reai_deinit_curl_headers (reai); // NOTE: Not the best solution here but it works...
             reai_init_curl_headers (reai, request->auth_check.api_key);
-            SET_ENDPOINT ("%s/authenticate", reai->host);
+            SET_ENDPOINT ("%s/authenticate", request->auth_check.host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_AUTH_CHECK);
             break;
@@ -436,14 +436,15 @@ REQUEST_FAILED:
  * @return true if auth check is successful
  * @return false otherwise
  * */
-Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString api_key) {
-    RETURN_VALUE_IF (!reai || !response, false, ERR_INVALID_ARGUMENTS);
+Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString api_key) {
+    RETURN_VALUE_IF (!reai || !response || !api_key || !host, false, ERR_INVALID_ARGUMENTS);
 
 
     /* prepare request */
     ReaiRequest request        = {0};
     request.type               = REAI_REQUEST_TYPE_AUTH_CHECK;
     request.auth_check.api_key = api_key;
+    request.auth_check.host    = host;
 
     /* make request */
     if ((response = reai_request (reai, &request, response))) {

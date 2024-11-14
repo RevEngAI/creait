@@ -30,8 +30,8 @@ extern "C" {
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
 
-    Bool         reai_auth_check (Reai* reai, ReaiResponse* response, CString api_key);
-    CString      reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
+    Bool    reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString api_key);
+    CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
     ReaiBinaryId reai_create_analysis (
         Reai*          reai,
         ReaiResponse*  response,

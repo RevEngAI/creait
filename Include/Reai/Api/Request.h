@@ -97,6 +97,7 @@ extern "C" {
 
         union {
             struct {
+                CString host;
                 CString api_key;
             } auth_check;
 
