@@ -24,12 +24,11 @@ struct Reai {
 
     CString host;
     CString api_key;
-    CString model;
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
-HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request, CString model);
+HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* request);
 Reai*                reai_deinit_curl_headers (Reai* reai);
 Reai*                reai_init_curl_headers (Reai* reai, CString api_key);
@@ -47,15 +46,14 @@ Reai*                reai_deinit_conn (Reai* reai);
  *
  * @return @c Reai.
  * */
-Reai* reai_create (CString host, CString api_key, CString model) {
-    RETURN_VALUE_IF (!host || !api_key || !model, NULL, ERR_INVALID_ARGUMENTS);
+Reai* reai_create (CString host, CString api_key) {
+    RETURN_VALUE_IF (!host || !api_key, NULL, ERR_INVALID_ARGUMENTS);
 
     Reai* reai = NEW (Reai);
     RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     GOTO_HANDLER_IF (
-        !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)) ||
-            !(reai->model = strdup (model)),
+        !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)),
         CREATE_FAILED,
         ERR_OUT_OF_MEMORY
     );
@@ -123,11 +121,6 @@ void reai_destroy (Reai* reai) {
     if (reai->api_key) {
         FREE (reai->api_key);
         reai->api_key = NULL;
-    }
-
-    if (reai->model) {
-        FREE (reai->model);
-        reai->model = NULL;
     }
 
     FREE (reai);
@@ -241,7 +234,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         curl_slist_append (reai->headers, "Content-Type: application/json");                       \
                                                                                                    \
         /* convert request to json string */                                                       \
-        CString json = reai_request_to_json_cstr (request, reai->model);                           \
+        CString json = reai_request_to_json_cstr (request);                                        \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON");              \
         REAI_LOG_TRACE ("REQUEST.JSON : '%s'", json);                                              \
                                                                                                    \

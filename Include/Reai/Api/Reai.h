@@ -26,7 +26,7 @@ extern "C" {
     typedef struct ReaiResponse ReaiResponse;
     typedef struct ReaiRequest  ReaiRequest;
 
-    Reai*         reai_create (CString host, CString api_key, CString model);
+    Reai*         reai_create (CString host, CString api_key);
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
 

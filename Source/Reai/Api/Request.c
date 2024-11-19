@@ -87,8 +87,8 @@ static CString reai_file_opt_to_str[] = {
  * @return @c CString containing request data in json format.
  * @return @c NULL if json is empty or on failure.
  * */
-HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
-    RETURN_VALUE_IF (!request || !model, NULL, ERR_INVALID_ARGUMENTS);
+HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
+    RETURN_VALUE_IF (!request, NULL, ERR_INVALID_ARGUMENTS);
 
     cJSON* json = cJSON_CreateObject();
     GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");

@@ -36,7 +36,6 @@ extern "C" {
     typedef struct ReaiConfig {
         CString host;
         CString apikey;
-        CString model;
     } ReaiConfig;
 
     ReaiConfig *reai_config_load (CString path);

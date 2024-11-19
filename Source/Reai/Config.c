@@ -82,11 +82,6 @@ PUBLIC ReaiConfig *reai_config_load (CString path) {
     GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.");
     cfg->host = host.u.s;
 
-    toml_datum_t model = toml_string_in (reai_conf, "model");
-    if (model.ok) {
-        cfg->model = model.u.s;
-    }
-
     if (reai_conf) {
         toml_free (reai_conf);
     }
@@ -117,10 +112,6 @@ PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
     if (cfg->host) {
         memset ((Char *)cfg->host, 0, strlen (cfg->host));
         FREE (cfg->host);
-    }
-    if (cfg->model) {
-        memset ((Char *)cfg->model, 0, strlen (cfg->model));
-        FREE (cfg->model);
     }
 
     memset (cfg, 0, sizeof (ReaiConfig));
