@@ -400,6 +400,11 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             break;
         }
 
+        case REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION : {
+            JSON_ADD_U64 (json, "function_id", request->begin_ai_decompilation.function_id);
+            break;
+        }
+
         default : {
             GOTO_HANDLER_IF_REACHED (
                 CONVERSION_FAILED,

@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(CREAIT LANGUAGES C VERSION 0.1.1)
 include(FetchContent)
 include(ExternalProject)
+include(CTest)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
@@ -21,6 +22,7 @@ find_package(CURL REQUIRED)
 
 # Add library source
 add_subdirectory(Source)
+add_subdirectory(Test)
 
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)

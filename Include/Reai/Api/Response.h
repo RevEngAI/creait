@@ -11,6 +11,7 @@
 #include <Reai/AnalysisInfo.h>
 #include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
+#include <Reai/ApiError.h>
 #include <Reai/FnInfo.h>
 #include <Reai/QueryResult.h>
 
@@ -52,6 +53,10 @@ extern "C" {
         /* ann api */
         REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN   = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
         REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN = REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN,
+
+        /* ai decompilation */
+        REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION = REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION,
+        REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION  = REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION,
 
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
@@ -166,6 +171,23 @@ extern "C" {
                 Bool     success;
                 CStrVec* models;
             } get_models;
+
+            struct {
+                Bool           status;
+                CString        message;
+                ReaiApiErrors* errors;
+            } begin_ai_decompilation;
+
+            struct {
+                Bool status;
+                struct {
+                    CString status;
+                    CString decompilation;
+                    // TODO: function mapping?
+                } data;
+                CString        message;
+                ReaiApiErrors* errors;
+            } poll_ai_decompilation;
         };
     } ReaiResponse;
 

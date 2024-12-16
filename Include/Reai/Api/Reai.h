@@ -26,7 +26,17 @@ extern "C" {
     typedef struct ReaiResponse ReaiResponse;
     typedef struct ReaiRequest  ReaiRequest;
 
-    Reai*         reai_create (CString host, CString api_key);
+    Reai* reai_create (CString host, CString api_key);
+    Reai* reai_set_mock_handler (
+        Reai* reai,
+        ReaiResponse* (*mock_handler) (
+            Reai*         reai,
+            ReaiRequest*  req,
+            ReaiResponse* response,
+            CString       endpoint,
+            Uint32*       http_code
+        )
+    );
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
 

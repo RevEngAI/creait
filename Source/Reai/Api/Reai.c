@@ -24,6 +24,14 @@ struct Reai {
 
     CString host;
     CString api_key;
+
+    ReaiResponse* (*mock_handler) (
+        Reai*         reai,
+        ReaiRequest*  req,
+        ReaiResponse* response,
+        CString       endpoint_str,
+        Uint32*       http_code
+    );
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
@@ -65,6 +73,37 @@ Reai* reai_create (CString host, CString api_key) {
 CREATE_FAILED:
     reai_destroy (reai);
     return NULL;
+}
+
+/**
+ * If a mock handler is provided then the `reai_request` method
+ * will automatically forward request to mock handler. No actual API calls
+ * will be made.
+ *
+ * @param reai
+ * @param mock_handler
+ *
+ * @return reai on success.
+ * @return NULL otherwise.
+ * */
+Reai* reai_set_mock_handler (
+    Reai* reai,
+    ReaiResponse* (*mock_handler) (
+        Reai*         reai,
+        ReaiRequest*  req,
+        ReaiResponse* response,
+        CString       endpoint_str,
+        Uint32*       http_code
+    )
+) {
+    if (!reai || !mock_handler) {
+        REAI_LOG_ERROR ("invalid arguments.");
+        return NULL;
+    }
+
+    reai->mock_handler = mock_handler;
+
+    return reai;
 }
 
 /**
@@ -204,11 +243,19 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
 #define MAKE_REQUEST(expected_retcode, expected_response)                                          \
     do {                                                                                           \
-        CURLcode retcode = curl_easy_perform (reai->curl);                                         \
-        if (retcode == CURLE_OK) {                                                                 \
-            Uint32 http_code = 0;                                                                  \
-            curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
+        Uint32   http_code = 0;                                                                    \
+        CURLcode retcode   = 0;                                                                    \
                                                                                                    \
+        /* if mock handler is provided, then forward call to it. */                                \
+        if (reai->mock_handler) {                                                                  \
+            reai->mock_handler (reai, request, response, endpoint_str, &http_code);                \
+            retcode = CURLE_OK;                                                                    \
+        } else {                                                                                   \
+            retcode = curl_easy_perform (reai->curl);                                              \
+            curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
+        }                                                                                          \
+                                                                                                   \
+        if (retcode == CURLE_OK) {                                                                 \
             REAI_LOG_TRACE ("Response code : %u", http_code);                                      \
             if (response->raw.data && response->raw.length) {                                      \
                 REAI_LOG_TRACE ("RESPONSE.JSON : '%s'", response->raw.data);                       \
@@ -226,6 +273,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             PRINT_ERR ("Interaction with API endpoint '%s' failed\n", endpoint_str);               \
             response = reai_response_init_for_type (response, REAI_RESPONSE_TYPE_UNKNOWN_ERR);     \
         }                                                                                          \
+                                                                                                   \
     } while (0)
 
 #define MAKE_JSON_REQUEST(expected_retcode, expected_response)                                     \
@@ -278,7 +326,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     switch (request->type) {
         /* GET : api.local/v1 */
         case REAI_REQUEST_TYPE_HEALTH_CHECK : {
-            SET_ENDPOINT ("%s", reai->host);
+            SET_ENDPOINT ("%s/v1", reai->host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_HEALTH_CHECK);
             break;
@@ -288,7 +336,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         case REAI_REQUEST_TYPE_AUTH_CHECK : {
             reai_deinit_curl_headers (reai); // NOTE: Not the best solution here but it works...
             reai_init_curl_headers (reai, request->auth_check.api_key);
-            SET_ENDPOINT ("%s/authenticate", request->auth_check.host);
+            SET_ENDPOINT ("%s/v1/authenticate", request->auth_check.host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_AUTH_CHECK);
             break;
@@ -296,14 +344,14 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* POST : api.local/v1/upload */
         case REAI_REQUEST_TYPE_UPLOAD_FILE : {
-            SET_ENDPOINT ("%s/upload", reai->host);
+            SET_ENDPOINT ("%s/v1/upload", reai->host);
             SET_METHOD ("POST");
             MAKE_UPLOAD_REQUEST (200, REAI_RESPONSE_TYPE_UPLOAD_FILE);
             break;
         }
 
         case REAI_REQUEST_TYPE_GET_MODELS : {
-            SET_ENDPOINT ("%s/models", reai->host);
+            SET_ENDPOINT ("%s/v1/models", reai->host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_GET_MODELS);
             break;
@@ -311,7 +359,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* POST : api.local/v1/analyse */
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/", reai->host);
+            SET_ENDPOINT ("%s/v1/analyse/", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (201, REAI_RESPONSE_TYPE_CREATE_ANALYSIS);
             break;
@@ -319,7 +367,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* DELETE : api.local/v1/analyse/binary_id */
         case REAI_REQUEST_TYPE_DELETE_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/%llu", reai->host, request->delete_analysis.binary_id);
+            SET_ENDPOINT ("%s/v1/analyse/%llu", reai->host, request->delete_analysis.binary_id);
             SET_METHOD ("DELETE");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_DELETE_ANALYSIS);
             break;
@@ -328,7 +376,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* GET : api.local/v1/analyse/functions/binary_id */
         case REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO : {
             SET_ENDPOINT (
-                "%s/analyse/functions/%llu",
+                "%s/v1/analyse/functions/%llu",
                 reai->host,
                 request->basic_function_info.binary_id
             );
@@ -339,7 +387,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/analyse/recent */
         case REAI_REQUEST_TYPE_RECENT_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/recent", reai->host);
+            SET_ENDPOINT ("%s/v1/analyse/recent", reai->host);
             SET_METHOD ("GET");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_RECENT_ANALYSIS);
             break;
@@ -347,21 +395,25 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
             /* GET : api.local/v1/analyse/status/{binary_id} */
         case REAI_REQUEST_TYPE_ANALYSIS_STATUS : {
-            SET_ENDPOINT ("%s/analyse/status/%llu", reai->host, request->analysis_status.binary_id);
+            SET_ENDPOINT (
+                "%s/v1/analyse/status/%llu",
+                reai->host,
+                request->analysis_status.binary_id
+            );
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_ANALYSIS_STATUS);
             break;
         }
 
         case REAI_REQUEST_TYPE_SEARCH : {
-            SET_ENDPOINT ("%s/search", reai->host);
+            SET_ENDPOINT ("%s/v1/search", reai->host);
             SET_METHOD ("GET");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_SEARCH);
             break;
         }
 
         case REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS : {
-            SET_ENDPOINT ("%s/functions/batch/rename", reai->host);
+            SET_ENDPOINT ("%s/v1/functions/batch/rename", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS);
             break;
@@ -369,7 +421,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         case REAI_REQUEST_TYPE_RENAME_FUNCTION : {
             SET_ENDPOINT (
-                "%s/functions/rename/%llu",
+                "%s/v1/functions/rename/%llu",
                 reai->host,
                 request->rename_function.function_id
             );
@@ -380,7 +432,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         case REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN : {
             SET_ENDPOINT (
-                "%s/ann/symbol/%llu",
+                "%s/v1/ann/symbol/%llu",
                 reai->host,
                 request->batch_binary_symbol_ann.binary_id
             );
@@ -390,9 +442,27 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         }
 
         case REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
-            SET_ENDPOINT ("%s/ann/symbol/batch", reai->host);
+            SET_ENDPOINT ("%s/v1/ann/symbol/batch", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION : {
+            SET_ENDPOINT ("%s/v2/ai-decompilation", reai->host);
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (201, REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION : {
+            SET_ENDPOINT (
+                "%s/v2/ai-decompilation/%llu",
+                reai->host,
+                request->poll_ai_decompilation.function_id
+            );
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION);
             break;
         }
 

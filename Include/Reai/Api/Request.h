@@ -73,6 +73,10 @@ extern "C" {
         REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
         REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN,
 
+        /* ai decompilation */
+        REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION,
+        REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION,
+
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
 
@@ -161,6 +165,10 @@ extern "C" {
                 ReaiFunctionId* speculative_function_ids;
                 Size            speculative_function_id_count;
             } batch_function_symbol_ann;
+
+            struct {
+                ReaiFunctionId function_id;
+            } begin_ai_decompilation, poll_ai_decompilation;
         };
     } ReaiRequest;
 

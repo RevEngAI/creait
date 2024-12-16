@@ -279,7 +279,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             GET_JSON_BOOL (json, "success", response->rename_function.success);
 
             /* this string is optional, so we won't throw error if failed */
-            response->rename_function.msg = json_response_get_string (json, "msg");
+            response->rename_function.msg = strdup (json_response_get_string (json, "msg"));
 
             break;
         }
@@ -358,6 +358,53 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 response->get_models.models
             );
 
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION : {
+            response->type = REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION;
+            GET_JSON_BOOL (json, "status", response->begin_ai_decompilation.status);
+            GET_JSON_STRING (json, "message", response->begin_ai_decompilation.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                GET_JSON_CUSTOM_ARR (
+                    json,
+                    ReaiApiError,
+                    api_error,
+                    GET_JSON_API_ERROR,
+                    response->begin_ai_decompilation.errors
+                );
+            }
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION : {
+            response->type = REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION;
+            GET_JSON_BOOL (json, "status", response->poll_ai_decompilation.status);
+
+            if (response->poll_ai_decompilation.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                GET_JSON_STRING (data, "status", response->poll_ai_decompilation.data.status);
+                GET_JSON_STRING (
+                    data,
+                    "decompilation",
+                    response->poll_ai_decompilation.data.decompilation
+                );
+            }
+
+            GET_JSON_STRING (json, "message", response->poll_ai_decompilation.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                GET_JSON_CUSTOM_ARR (
+                    json,
+                    ReaiApiError,
+                    api_error,
+                    GET_JSON_API_ERROR,
+                    response->poll_ai_decompilation.errors
+                );
+            }
             break;
         }
 
@@ -536,10 +583,9 @@ PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num)
 
 /**
  * @b Helper method to extract a String field form given JSON.
- * 
- * The returned pointer (if any) is created by `strdup` and hence is
- * completely owned by the caller. After use, the string must be freed
- * using `FREE`
+ *
+ * The returned string is not strdupped and hence user must NOT free it
+ * after use.
  *
  * @param json[in] JSON Object containing the string field.
  * @param name[in] Name of string field.
@@ -561,7 +607,7 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
 
     /* copy value */
     CString str = NULL;
-    RETURN_VALUE_IF (!(str = strdup (cJSON_GetStringValue (str_value))), NULL, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!(str = cJSON_GetStringValue (str_value)), NULL, ERR_OUT_OF_MEMORY);
 
     return str;
 }
@@ -644,27 +690,6 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
     }
 
     switch (response->type) {
-        case REAI_RESPONSE_TYPE_AUTH_CHECK :
-        case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
-            if (response->health_check.message) {
-                FREE (response->health_check.message);
-                response->health_check.message = NULL;
-            }
-            break;
-        }
-
-        case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
-            if (response->upload_file.message) {
-                FREE (response->upload_file.message);
-                response->upload_file.message = NULL;
-            }
-            if (response->upload_file.sha_256_hash) {
-                FREE (response->upload_file.sha_256_hash);
-                response->upload_file.sha_256_hash = NULL;
-            }
-            break;
-        }
-
         case REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO : {
             if (response->basic_function_info.fn_infos) {
                 reai_fn_info_vec_destroy (response->basic_function_info.fn_infos);

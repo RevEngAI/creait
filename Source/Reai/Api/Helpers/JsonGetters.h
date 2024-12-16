@@ -215,6 +215,12 @@
         GET_JSON_STRING (ai_model, "model_name", model_name);                                      \
     } while (0)
 
+#define GET_JSON_API_ERROR(error, api_error)                                                       \
+    do {                                                                                           \
+        GET_JSON_STRING (error, "code", api_error.code);                                           \
+        GET_JSON_STRING (error, "message", api_error.message);                                     \
+    } while (0)
+
 #define GET_JSON_CUSTOM_ARR(json, type_name, type_infix, reader, vec)                              \
     do {                                                                                           \
         vec = reai_##type_infix##_vec_create();                                                    \
