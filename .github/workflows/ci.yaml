@@ -1,12 +1,8 @@
 name: CMake Build and Test
 
 on:
-  push:
-    branches:
-      - main
-  pull_request:
-    branches:
-      - main
+  push: # Trigger on any push to any branch
+  pull_request: # Trigger on any PR
 
 jobs:
   build-and-test:
