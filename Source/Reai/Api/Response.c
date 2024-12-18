@@ -100,7 +100,12 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
     /* convert from string to json */
     cJSON* json = cJSON_ParseWithLength (response->raw.data, response->raw.length);
-    GOTO_HANDLER_IF (!json, INIT_FAILED, "Failed to parse given response as JSON data");
+    if (!json) {
+        if (type != REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS) {
+            REAI_LOG_ERROR ("failed to convert response to json");
+            return NULL;
+        }
+    }
 
     /* each response type has a different structure */
     switch (type) {
@@ -137,10 +142,10 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
             response->type = REAI_RESPONSE_TYPE_UPLOAD_FILE;
 
-            GET_JSON_BOOL (json, "success", response->create_analysis.success);
+            GET_JSON_BOOL (json, "success", response->upload_file.success);
 
             CString msg_keyname = response->upload_file.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            GET_JSON_STRING (json, msg_keyname, response->upload_file.message);
 
             /* sha256 hash provided only on success */
             GET_JSON_STRING_ON_SUCCESS (

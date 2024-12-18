@@ -160,7 +160,7 @@ HANDLER (delete_analysis, {
         ReaiBinaryId bin_id = strtoull (endpoint_str, &end, 10);
 
         // check binary id is valid and that there's no extra information available
-        if (bin_id || strlen (end)) {
+        if (!bin_id || strlen (end)) {
             REAI_LOG_ERROR ("invalid delete analysis request : failed to parse binary id");
             RESPONSE_SET ("{\"detail\":\"Method Not Allowed\"}");
             *http_code = 405;
@@ -188,7 +188,7 @@ HANDLER (basic_function_info, {
         ReaiBinaryId bin_id = strtoull (endpoint_str, &end, 10);
 
         // check binary id is valid and that there's no extra information available
-        if (bin_id || strlen (end)) {
+        if (!bin_id || strlen (end)) {
             REAI_LOG_ERROR ("invalid basic function info request : failed to parse binary id");
             RESPONSE_SET ("{\"detail\":\"Method Not Allowed\"}");
             *http_code = 405;
@@ -241,7 +241,7 @@ HANDLER (analysis_status, {
         ReaiBinaryId bin_id = strtoull (endpoint_str, &end, 10);
 
         // check binary id is valid and that there's no extra information available
-        if (bin_id || strlen (end)) {
+        if (!bin_id || strlen (end)) {
             REAI_LOG_ERROR ("invalid analysis status request : failed to parse binary id");
             RESPONSE_SET ("{\"detail\":\"Method Not Allowed\"}");
             *http_code = 405;
@@ -279,7 +279,7 @@ HANDLER (search, {
 
 
 HANDLER (batch_renames_functions, {
-    if (!strcmp (endpoint_str, "/v1/batch/renames")) {
+    if (!strcmp (endpoint_str, "/v1/functions/batch/rename")) {
         if (request->batch_renames_functions.new_name_mapping &&
             request->batch_renames_functions.new_name_mapping->count) {
             RESPONSE_SET ("");
@@ -309,7 +309,7 @@ HANDLER (rename_function, {
         ReaiFunctionId fun_id = strtoull (endpoint_str, &end, 10);
 
         // check function id is valid and that there's no extra information available
-        if (fun_id || strlen (end)) {
+        if (!fun_id || strlen (end)) {
             REAI_LOG_ERROR ("invalid function rename request : failed to parse function id");
             RESPONSE_SET ("{\"detail\":\"Method Not Allowed\"}");
             *http_code = 405;
@@ -337,7 +337,7 @@ HANDLER (batch_binary_symbol_ann, {
         ReaiBinaryId bin_id = strtoull (endpoint_str, &end, 10);
 
         // check binary id is valid and that there's no extra information available
-        if (bin_id || strlen (end)) {
+        if (!bin_id || strlen (end)) {
             REAI_LOG_ERROR ("invalid batch binary symbol ann request : failed to parse binary id");
             RESPONSE_SET ("{\"detail\":\"Method Not Allowed\"}");
             *http_code = 405;
@@ -462,6 +462,7 @@ HANDLER (batch_function_symbol_ann, {
                 "\"f55e4553ed04f085bc5b93cf7e5386c3d938abcb13a95ef1d2c3f8b21c454db8\",\"origin_"
                 "function_id\":3614702}}]}"
             );
+            *http_code = 200;
         } else {
             REAI_LOG_ERROR ("required field missing");
             RESPONSE_SET ("{\"success\": false, \"detail\":\"Required field missing\"}");
@@ -485,6 +486,13 @@ ReaiResponse* reai_mock_request (
     if (!reai || !request || !response || !endpoint_str || !http_code) {
         REAI_LOG_ERROR ("invalid arguments.");
         return NULL;
+    }
+
+    if (response->raw.data) {
+        FREE (response->raw.data);
+        response->raw.data     = NULL;
+        response->raw.length   = 0;
+        response->raw.capacity = 0;
     }
 
 #define FORWARD(handler)                                                                           \
@@ -541,8 +549,8 @@ ReaiResponse* reai_mock_request (
 
         default :
             PRINT_ERR ("Invalid request.");
-            break;
+            RESPONSE_SET ("{\"detail\":\"Not Found\"}");
+            *http_code = 404;
+            return response;
     }
-
-    return response;
 }
