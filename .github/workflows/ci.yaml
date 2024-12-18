@@ -1,0 +1,39 @@
+name: CMake Build and Test
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      # Checkout the repository
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      # Set up dependencies
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc g++ ninja-build libcurl4-openssl-dev pkg-config
+
+      # Configure the build
+      - name: Configure with CMake
+        run: |
+          cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
+
+      # Build the project
+      - name: Build the project
+        run: |
+          ninja -C build
+
+      # Run tests
+      - name: Run tests
+        run: |
+          ./build/bin/reai_test

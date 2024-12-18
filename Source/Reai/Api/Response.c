@@ -289,9 +289,8 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
-        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN :
-        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
-            response->type = (ReaiResponseType)type;
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN;
 
             GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
             if (!response->batch_binary_symbol_ann.success) {
@@ -344,6 +343,66 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 response->batch_binary_symbol_ann.function_matches
             );
 
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN;
+
+            GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
+            if (!response->batch_binary_symbol_ann.success) {
+                break;
+            }
+
+            cJSON* settings = cJSON_GetObjectItem (json, "settings");
+            GOTO_HANDLER_IF (
+                !settings,
+                INIT_FAILED,
+                "Failed to get 'settings' from returned response"
+            );
+
+            GET_OPTIONAL_JSON_STRING_ARR (
+                settings,
+                "collection",
+                response->batch_binary_symbol_ann.settings.collections
+            );
+
+            GET_JSON_BOOL (
+                settings,
+                "debug_mode",
+                response->batch_binary_symbol_ann.settings.debug_mode
+            );
+
+            GET_JSON_F64 (
+                settings,
+                "distance",
+                response->batch_binary_symbol_ann.settings.distance
+            );
+
+            GET_JSON_U64 (
+                settings,
+                "result_per_function",
+                response->batch_binary_symbol_ann.settings.result_per_function
+            );
+
+            cJSON* function_matches = cJSON_GetObjectItem (json, "function_matches");
+            GOTO_HANDLER_IF (
+                !function_matches,
+                INIT_FAILED,
+                "Failed to get 'function_matches' array from returned response"
+            );
+
+            if (cJSON_GetObjectItem (function_matches, "function_matches")) {
+                function_matches = cJSON_GetObjectItem (function_matches, "function_matches");
+            }
+
+            GET_JSON_CUSTOM_ARR (
+                function_matches,
+                ReaiAnnFnMatch,
+                ann_fn_match,
+                GET_JSON_ANN_FN_MATCH,
+                response->batch_binary_symbol_ann.function_matches
+            );
             break;
         }
 

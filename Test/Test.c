@@ -130,6 +130,7 @@ int main() {
               !!response.batch_binary_symbol_ann.function_matches)
     )
 
+  // TODO fix dis
     TEST (
         "Batch function symbol ANN",
         reai_batch_function_symbol_ann (reai, &response, 54321, NULL, 10, 0.1, NULL, true) &&
