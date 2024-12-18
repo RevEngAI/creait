@@ -122,7 +122,7 @@ Reai* reai_init_conn (Reai* reai) {
     curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
 
     /* cache the CA cert bundle in memory for a week */
-    curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
+    // curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
     reai_init_curl_headers (reai, reai->api_key);
