@@ -138,6 +138,9 @@ int main() {
               !!response.batch_function_symbol_ann.function_matches)
     )
 
+    reai_destroy (reai);
+    reai = NULL;
+    reai_response_deinit (&response);
 
     return !success;
 }

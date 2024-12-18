@@ -732,6 +732,20 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             }
         }
 
+        case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
+            if (response->rename_function.msg) {
+                FREE (response->rename_function.msg);
+                response->rename_function.msg = NULL;
+            }
+        }
+
+        case REAI_RESPONSE_TYPE_GET_MODELS : {
+            if (response->get_models.models) {
+                reai_cstr_vec_destroy (response->get_models.models);
+                response->get_models.models = NULL;
+            }
+        }
+
         default :
             break;
     }

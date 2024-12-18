@@ -50,10 +50,21 @@ __attribute__ ((destructor)) void reai_log_destroy() {
  * @return @c NULL otherwise.
  * */
 __attribute__ ((constructor)) void reai_log_create (CString file_name) {
-    log_fd = fopen (generate_new_log_file_name(), "w");
-    if (!log_fd) {
-        PRINT_ERR ("Failed to create log file : %s", strerror (errno));
-        return;
+    CString log_file_name = generate_new_log_file_name();
+    if (log_file_name) {
+        log_fd = fopen (log_file_name, "w");
+
+        if (!log_fd) {
+            PRINT_ERR (
+                "Failed to create log file : %s. Sending all future logs to stderr",
+                strerror (errno)
+            );
+            log_fd = stderr;
+            FREE (log_file_name);
+            return;
+        }
+
+        FREE (log_file_name);
     }
 
     setbuf (log_fd, NULL);
@@ -142,7 +153,7 @@ PRIVATE CString generate_new_log_file_name() {
 #ifdef _WIN32
     tmp_dir = getenv ("TMP") ? getenv ("TMP") : getenv ("TEMP") ? getenv ("TEMP") : NULL;
 #else
-    tmp_dir = getenv ("TMPDIR") ? getenv ("TMPDIR") : NULL;
+    tmp_dir = getenv ("TMP") ? getenv ("TMP") : getenv ("TMPDIR") ? getenv ("TMPDIR") : NULL;
 #endif
 
     RETURN_VALUE_IF (!tmp_dir, NULL, "Failed to get path to temporary directory.");
