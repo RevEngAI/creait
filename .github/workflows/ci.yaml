@@ -29,7 +29,21 @@ jobs:
         run: |
           ninja -C build
 
+      # Create temporary directory for logs
+      - name: Create temporary directory
+        run: |
+          export TMP=$(mktemp -d)
+          echo "Temporary directory created at $TMP"
+          echo "TMP=$TMP" >> $GITHUB_ENV
+
       # Run tests
       - name: Run tests
         run: |
           ./build/bin/reai_test
+
+      # Output logs from the temporary directory
+      - name: Display logs
+        run: |
+          echo "Logs from $TMP:"
+          ls "$TMP"
+          cat "$TMP"/* || echo "No log files found"
