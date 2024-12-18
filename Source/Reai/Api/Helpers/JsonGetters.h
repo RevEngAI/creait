@@ -152,13 +152,7 @@
         GET_JSON_STRING (json_analysis_info, "status", status);                                    \
         if (!(estatus = reai_analysis_status_from_cstr (status))) {                                \
             PRINT_ERR ("Failed to convert analysis status to enum");                               \
-            if (status) {                                                                          \
-                FREE (status);                                                                     \
-            }                                                                                      \
             goto INIT_FAILED;                                                                      \
-        }                                                                                          \
-        if (status) {                                                                              \
-            FREE (status);                                                                         \
         }                                                                                          \
         ainfo.status = estatus;                                                                    \
     } while (0)
@@ -179,13 +173,7 @@
         GET_JSON_STRING (json_query_res, "status", status);                                        \
         if (!(qres.status = reai_analysis_status_from_cstr (status))) {                            \
             PRINT_ERR ("Failed to convert analysis status to enum");                               \
-            if (status) {                                                                          \
-                FREE (status);                                                                     \
-            }                                                                                      \
             goto INIT_FAILED;                                                                      \
-        }                                                                                          \
-        if (status) {                                                                              \
-            FREE (status);                                                                         \
         }                                                                                          \
         qres.status = estatus;                                                                     \
     } while (0)
