@@ -146,13 +146,13 @@ extern "C" {
         ReaiGenericCloneDeinit deiniter = (ReaiGenericCloneDeinit)vec_iclone_deinit;               \
         if (deiniter) {                                                                            \
             deiniter (vec->items + index);                                                         \
-        } else {                                                                                   \
-            memset (vec->items + index, 0, sizeof (vec_itype));                                    \
         }                                                                                          \
                                                                                                    \
-        for (Size i = index; i < vec->count - 1; i++) {                                            \
-            memcpy (vec->items + index, vec->items + index + 1, sizeof (vec_itype));               \
-        }                                                                                          \
+        memmove (                                                                                  \
+            vec->items + index,                                                                    \
+            vec->items + index + 1,                                                                \
+            sizeof (vec_itype) * (vec->length - index - 1)                                         \
+        );                                                                                         \
         vec->count--;                                                                              \
                                                                                                    \
         return vec;                                                                                \
