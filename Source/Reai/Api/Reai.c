@@ -154,12 +154,10 @@ void reai_destroy (Reai* reai) {
 
     if (reai->host) {
         FREE (reai->host);
-        reai->host = NULL;
     }
 
     if (reai->api_key) {
         FREE (reai->api_key);
-        reai->api_key = NULL;
     }
 
     FREE (reai);

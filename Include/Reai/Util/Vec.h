@@ -151,7 +151,7 @@ extern "C" {
         memmove (                                                                                  \
             vec->items + index,                                                                    \
             vec->items + index + 1,                                                                \
-            sizeof (vec_itype) * (vec->length - index - 1)                                         \
+            sizeof (vec_itype) * (vec->count - index - 1)                                         \
         );                                                                                         \
         vec->count--;                                                                              \
                                                                                                    \

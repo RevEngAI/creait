@@ -46,12 +46,10 @@ ReaiApiError* reai_api_error_clone_deinit (ReaiApiError* clone) {
 
     if (clone->code) {
         FREE (clone->code);
-        clone->code = NULL;
     }
 
     if (clone->message) {
         FREE (clone->message);
-        clone->message = NULL;
     }
 
     return clone;

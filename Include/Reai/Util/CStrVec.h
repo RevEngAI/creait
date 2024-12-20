@@ -50,7 +50,6 @@ extern "C" {
         RETURN_VALUE_IF (!clone || !*clone, (CString *)NULL, ERR_INVALID_ARGUMENTS);
 
         FREE (*clone);
-        *clone = (CString)NULL;
 
         return clone;
     }

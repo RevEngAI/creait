@@ -794,7 +794,6 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
             if (response->rename_function.msg) {
                 FREE (response->rename_function.msg);
-                response->rename_function.msg = NULL;
             }
         }
 
