@@ -21,10 +21,19 @@ ReaiResponse* reai_mock_request (
 
 int main() {
     Reai* reai = reai_create ("https://mock.reveng.api", "XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX");
+    if (!reai) {
+        REAI_LOG_ERROR ("failed to create reai object.");
+        return EXIT_FAILURE;
+    }
+
     reai_set_mock_handler (reai, reai_mock_request);
 
     ReaiResponse response = {0};
-    reai_response_init (&response);
+    if (!reai_response_init (&response)) {
+        REAI_LOG_ERROR ("failed to init response object.");
+        return EXIT_FAILURE;
+    }
+
     Bool success = true;
 
     ReaiRequest req = {0};
@@ -130,7 +139,6 @@ int main() {
               !!response.batch_binary_symbol_ann.function_matches)
     )
 
-  // TODO fix dis
     TEST (
         "Batch function symbol ANN",
         reai_batch_function_symbol_ann (reai, &response, 54321, NULL, 10, 0.1, NULL, true) &&
