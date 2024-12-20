@@ -17,13 +17,6 @@
 
 #include "Reai/Util/Vec.h"
 
-static CString reai_model_to_name[] = {
-    [REAI_MODEL_X86_WINDOWS] = "x86-windows",
-    [REAI_MODEL_X86_LINUX]   = "x86-linux",
-    [REAI_MODEL_X86_MACOS]   = "x86-macos",
-    [REAI_MODEL_X86_ANDROID] = "x86-android",
-};
-
 static CString reai_file_opt_to_str[] = {
     [REAI_FILE_OPTION_PE]    = "PE",
     [REAI_FILE_OPTION_ELF]   = "ELF",
@@ -94,8 +87,8 @@ static CString reai_file_opt_to_str[] = {
  * @return @c CString containing request data in json format.
  * @return @c NULL if json is empty or on failure.
  * */
-HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
-    RETURN_VALUE_IF (!request || !model, NULL, ERR_INVALID_ARGUMENTS);
+HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
+    RETURN_VALUE_IF (!request, NULL, ERR_INVALID_ARGUMENTS);
 
     cJSON* json = cJSON_CreateObject();
     GOTO_HANDLER_IF (!json, CONVERSION_FAILED, "Failed to create JSON");
@@ -105,24 +98,17 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
     switch (request->type) {
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
             GOTO_HANDLER_IF (
-                (request->create_analysis.model == REAI_MODEL_UNKNOWN ||
-                 request->create_analysis.model >= REAI_MODEL_MAX),
+                (!request->create_analysis.ai_model ||
+                 !strlen (request->create_analysis.ai_model) ||
+                 !request->create_analysis.sha_256_hash ||
+                 !strlen (request->create_analysis.sha_256_hash) ||
+                 !request->create_analysis.file_name ||
+                 !strlen (request->create_analysis.file_name)),
                 CONVERSION_FAILED,
-                "Required field model is invalid\n"
+                "Invalid arguments to create analysis.\n"
             );
 
-            /* required field */
-            CString model_suffix_name = reai_model_to_name[request->create_analysis.model];
-            CString model_prefix_name = model;
-            Size    model_name_len    = strlen (model_suffix_name) + strlen (model_prefix_name) + 2;
-            model_name                = ALLOCATE (Char, model_name_len);
-
-            if (!model_name) {
-                PRINT_ERR (ERR_OUT_OF_MEMORY);
-            }
-
-            snprintf (model_name, model_name_len, "%s-%s", model_prefix_name, model_suffix_name);
-            JSON_ADD_STRING (json, "model_name", model_name);
+            JSON_ADD_STRING (json, "model_name", request->create_analysis.ai_model);
 
             /* optional field */
             if (request->create_analysis.platform_opt) {
@@ -411,6 +397,11 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request, CString model) {
                 );
             }
 
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION : {
+            JSON_ADD_U64 (json, "function_id", request->begin_ai_decompilation.function_id);
             break;
         }
 

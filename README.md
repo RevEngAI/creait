@@ -5,7 +5,7 @@ creait is currently under development.
 
 ## Installation
 
-``` sh
+```sh
 # first install libtoml (https://github.com/brightprogrammer/tomlc99)
 
 # Clone this repo and cd into it
@@ -28,9 +28,15 @@ given the following dependencies are installed already.
 
 Before building, user/developer must have libcurl (development package), git, cmake, make, ninja and pkg-config installed on host system. The package names differ from OS to OS.
 
-On Windows 
+When building and installing cJSON from source on Mac OS based systems, add `CMAKE_INSTALL_NAME_DIR=<install_prefix>/lib`
+Where `<install_prefix>` is the prefix path you chose to install the library. This can be something like `/usr` or `/usr/local`
+or if you're installing it some other place then that directory path. For example, my command looks like this :
+`cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_NAME_DIR=/usr/local/lib`
+
+On Windows
+
 - You need Visual Studio.
-- Git can be manually installed by downloading the installation setup. 
+- Git can be manually installed by downloading the installation setup.
 - Python must be installed and then use `pip install meson` to install meson.
 - pkg-config can be installed by running `choco install pkgconfiglite` after installing chocolatey package manager for windows.
 
@@ -41,18 +47,19 @@ The naming convention for function is in `snake_case` and is in the following fo
 `reai_<object-name>_<command>(...)`. Examples are `reai_analysis_info_vec_create()` or
 `reai_request()`, where `Reai` is the object name.
 
-There are three main objects you need to interact with. 
+There are three main objects you need to interact with.
+
 - First one is opaque `Reai` object. This is the main object that connects you to RevEng.AI servers.
 - Second is `ReaiRequest` which you must use to build your request.
 - Last is `ReaiResponse` where you get the response from RevEng.AI servers.
 
-### Configurations 
+### Configurations
 
 To connect with RevEng.AI servers, you first need to load a config file. The config file must
-usually be present in your home directory and must have name `~/.reai-rz.toml`. When using a 
-plugin, this file can be auto-generated using one of the commands. A very basic config is 
+usually be present in your home directory and must have name `~/.reai-rz.toml`. When using a
+plugin, this file can be auto-generated using one of the commands. A very basic config is
 
-``` toml
+```toml
 apikey = "libr3"                   # Replace this with your own API key
 host = "https://api.reveng.ai/v1"  # API version and base endpoint
 model = "binnet-0.3-x86"           # Set the latest AI model here.
@@ -63,13 +70,13 @@ log_dir_path = "/tmp"              # This path may change depending on your OS
 To load the config, you must create a `ReaiConfig` object that parses this toml file and stores
 the data in it for you to use easily.
 
-``` c
+```c
 #include <Reai/Config.h>
 
 int main() {
     ReaiConfig *cfg = reai_config_load (NULL);
     RETURN_VALUE_IF(!cfg, EXIT_FAILURE, "Failed to load configuration.");
-    
+
     return EXIT_SUCCESS;
 }
 ```
@@ -81,17 +88,17 @@ default expected path. Alternatively, you can load the config from your given pa
 
 Next step is to connect with RevEng.AI servers. This is done using a single function call
 
-``` c
+```c
 #include <Reai/Api/Api.h>
 
 int main() {
     // load config
-    
+
     // These values can be passed without loading config as well if
     // it is desired to be hardcoded ihe the program itself.
     Reai *reai = reai_create (cfg->host, cfg->apikey, cfg->model);
     RETURN_VALUE_IF(!reai, EXIT_FAILURE, "Failed to connect to RevEng.AI servers.");
-    
+
     return EXIT_SUCCESS;
 }
 ```
@@ -104,12 +111,12 @@ the configuration as well.
 Before you make any request, you must create a response structure where you'll get
 responses from the server. This is done by initializing one.
 
-``` c
+```c
 #include <Reai/Api/Api.h>
 
 int main() {
     // other code
-    
+
     ReaiResponse response;
     reai_response_init (&response);
 
@@ -126,12 +133,12 @@ you need to fill valid data in correspondigly name structure inside `ReaiRequest
 For example, if you want to search a binary you'll use the request type `REAI_REQUEST_TYPE_SEARCH`
 and fill data in `ReaiRequest::search`.
 
-``` c
+```c
 #include <Reai/Api/Api.h>
 
 int main() {
     // other code
-    
+
     ReaiRequest request = {0};
 
     // Build request

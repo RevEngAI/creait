@@ -27,7 +27,7 @@
 #    error "Unsupported OS"
 #endif
 
-#define REAI_CONFIG_FILE_NAME ".reai-rz.toml"
+#define REAI_CONFIG_FILE_NAME ".creait.toml"
 
 #ifdef __cplusplus
 extern "C" {
@@ -36,9 +36,6 @@ extern "C" {
     typedef struct ReaiConfig {
         CString host;
         CString apikey;
-        CString model;
-        CString db_dir_path;
-        CString log_dir_path;
     } ReaiConfig;
 
     ReaiConfig *reai_config_load (CString path);

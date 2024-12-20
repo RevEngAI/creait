@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.12)
 project(CREAIT LANGUAGES C VERSION 0.1.1)
 include(FetchContent)
 include(ExternalProject)
+include(CTest)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 
@@ -10,10 +11,6 @@ option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIRBARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
-
-set(CMAKE_C_STANDARD 23)
-set(CMAKE_C_STANDARD_REQUIRED ON)
-set(CMAKE_C_EXTENSIONS OFF)
 
 # generate a compile_commands.json for LSP clients
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
@@ -25,6 +22,7 @@ find_package(CURL REQUIRED)
 
 # Add library source
 add_subdirectory(Source)
+add_subdirectory(Test)
 
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)

@@ -25,21 +25,27 @@ extern "C" {
     typedef struct Reai         Reai; /* opaque object */
     typedef struct ReaiResponse ReaiResponse;
     typedef struct ReaiRequest  ReaiRequest;
-    typedef struct ReaiDb       ReaiDb;
-    typedef struct ReaiLog      ReaiLog;
 
-    Reai*         reai_create (CString host, CString api_key, CString model);
+    Reai* reai_create (CString host, CString api_key);
+    Reai* reai_set_mock_handler (
+        Reai* reai,
+        ReaiResponse* (*mock_handler) (
+            Reai*         reai,
+            ReaiRequest*  req,
+            ReaiResponse* response,
+            CString       endpoint,
+            Uint32*       http_code
+        )
+    );
     void          reai_destroy (Reai* reai);
     ReaiResponse* reai_request (Reai* reai, ReaiRequest* req, ReaiResponse* response);
-    Reai*         reai_set_db (Reai* reai, ReaiDb* db);
-    Reai*         reai_set_logger (Reai* reai, ReaiLog* logger);
-    Reai*         reai_update_all_analyses_status_in_db (Reai* reai);
 
-    CString      reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
+    Bool    reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString api_key);
+    CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path);
     ReaiBinaryId reai_create_analysis (
         Reai*          reai,
         ReaiResponse*  response,
-        ReaiModel      model,
+        CString        ai_model,
         Uint64         base_addr,
         ReaiFnInfoVec* fn_info_vec,
         Bool           is_private,
@@ -77,7 +83,8 @@ extern "C" {
         ReaiBinaryId  bin_id,
         Size          max_results_per_function,
         Float64       max_distance,
-        CStrVec*      collection
+        CStrVec*      collection,
+        Bool          debug_mode
     );
 
     ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
@@ -87,8 +94,11 @@ extern "C" {
         U64Vec*        speculative_fn_ids,
         Size           max_results_per_function,
         Float64        max_distance,
-        CStrVec*       collection
+        CStrVec*       collection,
+        Bool           debug_mode
     );
+
+    CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response);
 
 #ifdef __cplusplus
 }

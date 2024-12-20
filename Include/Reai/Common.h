@@ -8,6 +8,7 @@
 #ifndef REAI_COMMON_H
 #define REAI_COMMON_H
 
+#include <Reai/Log.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -27,7 +28,9 @@
 #    define NEW(type)                (type *)calloc (1, sizeof (type))
 #    define ALLOCATE(type, n)        (type *)calloc (n, sizeof (type))
 #    define REALLOCATE(ptr, type, n) (type *)realloc (ptr, n * sizeof (type));
-#    define FREE(x)                  free ((void *)(x)); x = NULL
+#    define FREE(x)                                                                                \
+        free ((void *)(x));                                                                        \
+        x = NULL
 #endif
 #define PACKED __attribute__ ((packed))
 
@@ -68,6 +71,7 @@
 #define ERR_INVALID_ARGUMENTS              "Invalid Arguments"
 #define ERR_OUT_OF_MEMORY                  "Out of memory (allocation failed)"
 #define ERR_INVALID_SIZE                   "Invalid size (zero)"
+#define ERR_INDEX_OUT_OF_BOUNDS            "Provided index exceeds max element count in vector"
 #define ERR_INVALID_OBJECT_REF             "Invalid object reference (NULL)"
 #define ERR_INVALID_OBJECT_CONTENTS        "Invalid contents inside provided object (not what expected)"
 #define ERR_INVALID_ITERATOR               "Invalid iterator (NULL)"
@@ -89,10 +93,7 @@
 #    define RETURN_VALUE_IF(cond, value, ...)                                                      \
         do {                                                                                       \
             if ((cond)) {                                                                          \
-                fputs (__FUNCTION__, stderr);                                                      \
-                fputs (" : ", stderr);                                                             \
-                fprintf (stderr, __VA_ARGS__);                                                     \
-                fputc ('\n', stderr);                                                              \
+                REAI_LOG_ERROR (__VA_ARGS__);                                                      \
                 return value;                                                                      \
             }                                                                                      \
         } while (0)
@@ -107,10 +108,7 @@
 #    define RETURN_IF(cond, ...)                                                                   \
         do {                                                                                       \
             if ((cond)) {                                                                          \
-                fputs (__FUNCTION__, stderr);                                                      \
-                fputs (" : ", stderr);                                                             \
-                fprintf (stderr, __VA_ARGS__);                                                     \
-                fputc ('\n', stderr);                                                              \
+                REAI_LOG_ERROR (__VA_ARGS__);                                                      \
                 return;                                                                            \
             }                                                                                      \
         } while (0)
@@ -124,10 +122,7 @@
 #ifndef GOTO_HANDLER_IF_REACHED
 #    define GOTO_HANDLER_IF_REACHED(handler, ...)                                                  \
         do {                                                                                       \
-            fputs (__FUNCTION__, stderr);                                                          \
-            fputs (" : " #handler " : ", stderr);                                                  \
-            fprintf (stderr, __VA_ARGS__);                                                         \
-            fputc ('\n', stderr);                                                                  \
+            REAI_LOG_ERROR (__VA_ARGS__);                                                          \
             goto handler;                                                                          \
         } while (0)
 #endif
@@ -142,10 +137,7 @@
 #    define GOTO_HANDLER_IF(cond, handler, ...)                                                    \
         do {                                                                                       \
             if ((cond)) {                                                                          \
-                fputs (__FUNCTION__, stderr);                                                      \
-                fputs (" : " #handler " : ", stderr);                                              \
-                fprintf (stderr, __VA_ARGS__);                                                     \
-                fputc ('\n', stderr);                                                              \
+                REAI_LOG_ERROR (__VA_ARGS__);                                                      \
                 goto handler;                                                                      \
             }                                                                                      \
         } while (0)
@@ -161,10 +153,7 @@
 #    define CALL_HANDLER_IF(cond, handler, ...)                                                    \
         do {                                                                                       \
             if ((cond)) {                                                                          \
-                fputs (__FUNCTION__, stderr);                                                      \
-                fputs (" : ", stderr);                                                             \
-                fprintf (stderr, __VA_ARGS__);                                                     \
-                fputc ('\n', stderr);                                                              \
+                REAI_LOG_ERROR (__VA_ARGS__);                                                      \
                 handler;                                                                           \
             }                                                                                      \
         } while (0)
@@ -179,10 +168,7 @@
 #    define ABORT_IF(cond, ...)                                                                    \
         do {                                                                                       \
             if ((cond)) {                                                                          \
-                fputs (__FUNCTION__, stderr);                                                      \
-                fputs (" : ", stderr);                                                             \
-                fprintf (stderr, __VA_ARGS__);                                                     \
-                fputc ('\n', stderr);                                                              \
+                REAI_LOG_ERROR (__VA_ARGS__);                                                      \
                 abort();                                                                           \
             }                                                                                      \
         } while (0)
@@ -196,11 +182,7 @@
 #ifndef RETURN_VALUE_IF_REACHED
 #    define RETURN_VALUE_IF_REACHED(val, ...)                                                      \
         do {                                                                                       \
-            fputs (__FUNCTION__, stderr);                                                          \
-            fputs (" : ", stderr);                                                                 \
-            fputs ("unreachable code reached : ", stderr);                                         \
-            fprintf (stderr, __VA_ARGS__);                                                         \
-            fputc ('\n', stderr);                                                                  \
+            REAI_LOG_ERROR (__VA_ARGS__);                                                          \
             return val;                                                                            \
         } while (0)
 #endif
@@ -212,11 +194,7 @@
 #ifndef RETURN_IF_REACHED
 #    define RETURN_IF_REACHED(...)                                                                 \
         do {                                                                                       \
-            fputs (__FUNCTION__, stderr);                                                          \
-            fputs (" : ", stderr);                                                                 \
-            fputs ("unreachable code reached : ", stderr);                                         \
-            fprintf (stderr, __VA_ARGS__);                                                         \
-            fputc ('\n', stderr);                                                                  \
+            REAI_LOG_ERROR (__VA_ARGS__);                                                          \
             return;                                                                                \
         } while (0)
 #endif
@@ -228,11 +206,7 @@
 #ifndef ABORT_IF_REACHED
 #    define ABORT_IF_REACHED(...)                                                                  \
         do {                                                                                       \
-            fputs (__FUNCTION__, stderr);                                                          \
-            fputs (" : ", stderr);                                                                 \
-            fputs ("unreachable code reached : ", stderr);                                         \
-            fprintf (stderr, __VA_ARGS__);                                                         \
-            fputc ('\n', stderr);                                                                  \
+            REAI_LOG_ERROR (__VA_ARGS__);                                                          \
             abort();                                                                               \
         } while (0)
 #endif
@@ -244,10 +218,7 @@
 #ifndef PRINT_ERR
 #    define PRINT_ERR(...)                                                                         \
         do {                                                                                       \
-            fputs (__FUNCTION__, stderr);                                                          \
-            fputs (" : ", stderr);                                                                 \
-            fprintf (stderr, __VA_ARGS__);                                                         \
-            fputc ('\n', stderr);                                                                  \
+            REAI_LOG_ERROR (__VA_ARGS__);                                                          \
         } while (0)
 #endif
 

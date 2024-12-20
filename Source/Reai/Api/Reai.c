@@ -12,7 +12,6 @@
 
 /* reai */
 #include <Reai/Api/Api.h>
-#include <Reai/Db.h>
 #include <Reai/Log.h>
 #include <Reai/Util/Vec.h>
 
@@ -25,16 +24,22 @@ struct Reai {
 
     CString host;
     CString api_key;
-    CString model;
 
-    ReaiDb*  db;
-    ReaiLog* logger;
+    ReaiResponse* (*mock_handler) (
+        Reai*         reai,
+        ReaiRequest*  req,
+        ReaiResponse* response,
+        CString       endpoint_str,
+        Uint32*       http_code
+    );
 };
 
 HIDDEN Size reai_response_write_callback (void* ptr, Size size, Size nmemb, ReaiResponse* response);
 HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiResponseType type);
-HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request, CString model);
+HIDDEN CString       reai_request_to_json_cstr (ReaiRequest* request);
 HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* request);
+Reai*                reai_deinit_curl_headers (Reai* reai);
+Reai*                reai_init_curl_headers (Reai* reai, CString api_key);
 Reai*                reai_init_conn (Reai* reai);
 Reai*                reai_deinit_conn (Reai* reai);
 
@@ -49,15 +54,14 @@ Reai*                reai_deinit_conn (Reai* reai);
  *
  * @return @c Reai.
  * */
-Reai* reai_create (CString host, CString api_key, CString model) {
-    RETURN_VALUE_IF (!host || !api_key || !model, NULL, ERR_INVALID_ARGUMENTS);
+Reai* reai_create (CString host, CString api_key) {
+    RETURN_VALUE_IF (!host || !api_key, NULL, ERR_INVALID_ARGUMENTS);
 
     Reai* reai = NEW (Reai);
     RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
     GOTO_HANDLER_IF (
-        !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)) ||
-            !(reai->model = strdup (model)),
+        !(reai->host = strdup (host)) || !(reai->api_key = strdup (api_key)),
         CREATE_FAILED,
         ERR_OUT_OF_MEMORY
     );
@@ -69,6 +73,37 @@ Reai* reai_create (CString host, CString api_key, CString model) {
 CREATE_FAILED:
     reai_destroy (reai);
     return NULL;
+}
+
+/**
+ * If a mock handler is provided then the `reai_request` method
+ * will automatically forward request to mock handler. No actual API calls
+ * will be made.
+ *
+ * @param reai
+ * @param mock_handler
+ *
+ * @return reai on success.
+ * @return NULL otherwise.
+ * */
+Reai* reai_set_mock_handler (
+    Reai* reai,
+    ReaiResponse* (*mock_handler) (
+        Reai*         reai,
+        ReaiRequest*  req,
+        ReaiResponse* response,
+        CString       endpoint_str,
+        Uint32*       http_code
+    )
+) {
+    if (!reai || !mock_handler) {
+        REAI_LOG_ERROR ("invalid arguments.");
+        return NULL;
+    }
+
+    reai->mock_handler = mock_handler;
+
+    return reai;
 }
 
 /**
@@ -87,18 +122,10 @@ Reai* reai_init_conn (Reai* reai) {
     curl_easy_setopt (reai->curl, CURLOPT_MAXREDIRS, 50);
 
     /* cache the CA cert bundle in memory for a week */
-    curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
+    // curl_easy_setopt (reai->curl, CURLOPT_CA_CACHE_TIMEOUT, 604800L);
     /* curl_easy_setopt (reai->curl, CURLOPT_VERBOSE, 1); */
 
-    Char auth_hdr_str[80];
-    snprintf (auth_hdr_str, sizeof (auth_hdr_str), "Authorization: %s", reai->api_key);
-    reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
-
-    /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
-    RETURN_VALUE_IF (!reai->headers, NULL, "Failed to prepare initial headers");
-
-    /* set headers */
-    curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
+    reai_init_curl_headers (reai, reai->api_key);
 
     return reai;
 }
@@ -106,10 +133,7 @@ Reai* reai_init_conn (Reai* reai) {
 Reai* reai_deinit_conn (Reai* reai) {
     RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
 
-    if (reai->headers) {
-        curl_slist_free_all (reai->headers);
-        reai->headers = NULL;
-    }
+    reai_deinit_curl_headers (reai);
     if (reai->curl) {
         curl_easy_cleanup (reai->curl);
         reai->curl = NULL;
@@ -126,27 +150,50 @@ Reai* reai_deinit_conn (Reai* reai) {
 void reai_destroy (Reai* reai) {
     RETURN_IF (!reai, ERR_INVALID_ARGUMENTS);
 
-    reai->db     = NULL;
-    reai->logger = NULL;
-
     reai_deinit_conn (reai);
 
     if (reai->host) {
         FREE (reai->host);
-        reai->host = NULL;
     }
 
     if (reai->api_key) {
         FREE (reai->api_key);
-        reai->api_key = NULL;
-    }
-
-    if (reai->model) {
-        FREE (reai->model);
-        reai->model = NULL;
     }
 
     FREE (reai);
+}
+
+Reai* reai_deinit_curl_headers (Reai* reai) {
+    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
+
+    if (reai->headers) {
+        REAI_LOG_TRACE ("headers deinited");
+        curl_slist_free_all (reai->headers);
+        reai->headers = NULL;
+    }
+
+    return reai;
+}
+
+Reai* reai_init_curl_headers (Reai* reai, CString api_key) {
+    RETURN_VALUE_IF (!reai || !api_key, NULL, ERR_INVALID_ARGUMENTS);
+
+    REAI_LOG_TRACE ("headers init");
+
+    Char auth_hdr_str[80];
+    snprintf (auth_hdr_str, sizeof (auth_hdr_str), "Authorization: %s", api_key);
+    reai->headers = curl_slist_append (reai->headers, auth_hdr_str);
+
+    REAI_LOG_TRACE ("auth header : %s", auth_hdr_str);
+
+    /* reai->headers = curl_slist_append (reai->headers, "Expect:"); */
+    RETURN_VALUE_IF (!reai->headers, NULL, "Failed to prepare initial headers");
+
+    /* set headers */
+    curl_easy_setopt (reai->curl, CURLOPT_HTTPHEADER, reai->headers);
+
+
+    return reai;
 }
 
 /**
@@ -183,36 +230,35 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     do {                                                                                           \
         snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);                       \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "ENDPOINT : '%s'", endpoint_str);                        \
-        }                                                                                          \
+        REAI_LOG_TRACE ("ENDPOINT : '%s'", endpoint_str);                                          \
     } while (0)
 
 #define SET_METHOD(method)                                                                         \
     do {                                                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_CUSTOMREQUEST, method);                              \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "METHOD : '%s'", method);                                \
-        }                                                                                          \
+        REAI_LOG_TRACE ("METHOD : '%s'", method);                                                  \
     } while (0)
 
 #define MAKE_REQUEST(expected_retcode, expected_response)                                          \
     do {                                                                                           \
-        CURLcode retcode = curl_easy_perform (reai->curl);                                         \
-        if (retcode == CURLE_OK) {                                                                 \
-            Uint32 http_code = 0;                                                                  \
+        Uint32   http_code = 0;                                                                    \
+        CURLcode retcode   = 0;                                                                    \
+                                                                                                   \
+        /* if mock handler is provided, then forward call to it. */                                \
+        if (reai->mock_handler) {                                                                  \
+            reai->mock_handler (reai, request, response, endpoint_str, &http_code);                \
+            retcode = CURLE_OK;                                                                    \
+        } else {                                                                                   \
+            retcode = curl_easy_perform (reai->curl);                                              \
             curl_easy_getinfo (reai->curl, CURLINFO_RESPONSE_CODE, &http_code);                    \
+        }                                                                                          \
                                                                                                    \
-            if (reai->logger) {                                                                    \
-                REAI_LOG_TRACE (reai->logger, "Response code : %u", http_code);                    \
-            }                                                                                      \
-                                                                                                   \
-            if (reai->logger) {                                                                    \
-                if (response->raw.data && response->raw.length) {                                  \
-                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : '%s'", response->raw.data);     \
-                } else {                                                                           \
-                    REAI_LOG_TRACE (reai->logger, "RESPONSE.JSON : INVALID");                      \
-                }                                                                                  \
+        if (retcode == CURLE_OK) {                                                                 \
+            REAI_LOG_TRACE ("Response code : %u", http_code);                                      \
+            if (response->raw.data && response->raw.length) {                                      \
+                REAI_LOG_TRACE ("RESPONSE.JSON : '%s'", response->raw.data);                       \
+            } else {                                                                               \
+                REAI_LOG_TRACE ("RESPONSE.JSON : INVALID");                                        \
             }                                                                                      \
                                                                                                    \
             response = reai_response_init_for_type (                                               \
@@ -225,6 +271,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             PRINT_ERR ("Interaction with API endpoint '%s' failed\n", endpoint_str);               \
             response = reai_response_init_for_type (response, REAI_RESPONSE_TYPE_UNKNOWN_ERR);     \
         }                                                                                          \
+                                                                                                   \
     } while (0)
 
 #define MAKE_JSON_REQUEST(expected_retcode, expected_response)                                     \
@@ -233,11 +280,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         curl_slist_append (reai->headers, "Content-Type: application/json");                       \
                                                                                                    \
         /* convert request to json string */                                                       \
-        CString json = reai_request_to_json_cstr (request, reai->model);                           \
+        CString json = reai_request_to_json_cstr (request);                                        \
         GOTO_HANDLER_IF (!json, REQUEST_FAILED, "Failed to convert request to JSON");              \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "REQUEST.JSON : '%s'", json);                            \
-        }                                                                                          \
+        REAI_LOG_TRACE ("REQUEST.JSON : '%s'", json);                                              \
                                                                                                    \
         /* set json data */                                                                        \
         curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
@@ -265,9 +310,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* set part info */                                                                        \
         curl_mime_name (mimepart, "file");                                                         \
         curl_mime_filedata (mimepart, request->upload_file.file_path);                             \
-        if (reai->logger) {                                                                        \
-            REAI_LOG_TRACE (reai->logger, "UPLOAD FILE : '%s'", request->upload_file.file_path);   \
-        }                                                                                          \
+        REAI_LOG_TRACE ("UPLOAD FILE : '%s'", request->upload_file.file_path);                     \
                                                                                                    \
         /* set the mime data for post */                                                           \
         curl_easy_setopt (reai->curl, CURLOPT_MIMEPOST, mime);                                     \
@@ -281,7 +324,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
     switch (request->type) {
         /* GET : api.local/v1 */
         case REAI_REQUEST_TYPE_HEALTH_CHECK : {
-            SET_ENDPOINT ("%s", reai->host);
+            SET_ENDPOINT ("%s/v1", reai->host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_HEALTH_CHECK);
             break;
@@ -289,7 +332,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/authenticate */
         case REAI_REQUEST_TYPE_AUTH_CHECK : {
-            SET_ENDPOINT ("%s/authenticate", reai->host);
+            reai_deinit_curl_headers (reai); // NOTE: Not the best solution here but it works...
+            reai_init_curl_headers (reai, request->auth_check.api_key);
+            SET_ENDPOINT ("%s/v1/authenticate", request->auth_check.host);
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_AUTH_CHECK);
             break;
@@ -297,15 +342,22 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* POST : api.local/v1/upload */
         case REAI_REQUEST_TYPE_UPLOAD_FILE : {
-            SET_ENDPOINT ("%s/upload", reai->host);
+            SET_ENDPOINT ("%s/v1/upload", reai->host);
             SET_METHOD ("POST");
             MAKE_UPLOAD_REQUEST (200, REAI_RESPONSE_TYPE_UPLOAD_FILE);
             break;
         }
 
+        case REAI_REQUEST_TYPE_GET_MODELS : {
+            SET_ENDPOINT ("%s/v1/models", reai->host);
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_GET_MODELS);
+            break;
+        }
+
         /* POST : api.local/v1/analyse */
         case REAI_REQUEST_TYPE_CREATE_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/", reai->host);
+            SET_ENDPOINT ("%s/v1/analyse/", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (201, REAI_RESPONSE_TYPE_CREATE_ANALYSIS);
             break;
@@ -313,7 +365,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* DELETE : api.local/v1/analyse/binary_id */
         case REAI_REQUEST_TYPE_DELETE_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/%llu", reai->host, request->delete_analysis.binary_id);
+            SET_ENDPOINT ("%s/v1/analyse/%llu", reai->host, request->delete_analysis.binary_id);
             SET_METHOD ("DELETE");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_DELETE_ANALYSIS);
             break;
@@ -322,7 +374,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         /* GET : api.local/v1/analyse/functions/binary_id */
         case REAI_REQUEST_TYPE_BASIC_FUNCTION_INFO : {
             SET_ENDPOINT (
-                "%s/analyse/functions/%llu",
+                "%s/v1/analyse/functions/%llu",
                 reai->host,
                 request->basic_function_info.binary_id
             );
@@ -333,7 +385,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/analyse/recent */
         case REAI_REQUEST_TYPE_RECENT_ANALYSIS : {
-            SET_ENDPOINT ("%s/analyse/recent", reai->host);
+            SET_ENDPOINT ("%s/v1/analyse/recent", reai->host);
             SET_METHOD ("GET");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_RECENT_ANALYSIS);
             break;
@@ -341,21 +393,25 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
             /* GET : api.local/v1/analyse/status/{binary_id} */
         case REAI_REQUEST_TYPE_ANALYSIS_STATUS : {
-            SET_ENDPOINT ("%s/analyse/status/%llu", reai->host, request->analysis_status.binary_id);
+            SET_ENDPOINT (
+                "%s/v1/analyse/status/%llu",
+                reai->host,
+                request->analysis_status.binary_id
+            );
             SET_METHOD ("GET");
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_ANALYSIS_STATUS);
             break;
         }
 
         case REAI_REQUEST_TYPE_SEARCH : {
-            SET_ENDPOINT ("%s/search", reai->host);
+            SET_ENDPOINT ("%s/v1/search", reai->host);
             SET_METHOD ("GET");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_SEARCH);
             break;
         }
 
         case REAI_REQUEST_TYPE_BATCH_RENAMES_FUNCTIONS : {
-            SET_ENDPOINT ("%s/functions/batch/rename", reai->host);
+            SET_ENDPOINT ("%s/v1/functions/batch/rename", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS);
             break;
@@ -363,7 +419,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         case REAI_REQUEST_TYPE_RENAME_FUNCTION : {
             SET_ENDPOINT (
-                "%s/functions/rename/%llu",
+                "%s/v1/functions/rename/%llu",
                 reai->host,
                 request->rename_function.function_id
             );
@@ -374,7 +430,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         case REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN : {
             SET_ENDPOINT (
-                "%s/ann/symbol/%llu",
+                "%s/v1/ann/symbol/%llu",
                 reai->host,
                 request->batch_binary_symbol_ann.binary_id
             );
@@ -384,9 +440,27 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         }
 
         case REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
-            SET_ENDPOINT ("%s/ann/symbol/batch", reai->host);
+            SET_ENDPOINT ("%s/v1/ann/symbol/batch", reai->host);
             SET_METHOD ("POST");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION : {
+            SET_ENDPOINT ("%s/v2/ai-decompilation", reai->host);
+            SET_METHOD ("POST");
+            MAKE_JSON_REQUEST (201, REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION : {
+            SET_ENDPOINT (
+                "%s/v2/ai-decompilation/%llu",
+                reai->host,
+                request->poll_ai_decompilation.function_id
+            );
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION);
             break;
         }
 
@@ -402,6 +476,12 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 #undef SET_ENDPOINT
 
 DEFAULT_RETURN:
+    // restore api key in headers
+    if (request->type == REAI_REQUEST_TYPE_AUTH_CHECK) {
+        reai_deinit_curl_headers (reai);
+        reai_init_curl_headers (reai, reai->api_key);
+    }
+
     if (mime) {
         curl_mime_free (mime);
     }
@@ -414,112 +494,44 @@ REQUEST_FAILED:
 };
 
 /**
- * @b Set a database in Reai. This will make sure that database
- * is automatically updated in case of file upload or analysis creation.
+ * @b Make call to "/authenticate" endpoint to check whether the given
+ * authentication key works or not.
  *
  * @param reai
- * @param db
+ * @param response
+ * @param api_key Api key to check against
  *
- * @return @c reai On success.
- * @return @c NULL otherwise.
+ * @return true if auth check is successful
+ * @return false otherwise
  * */
-Reai* reai_set_db (Reai* reai, ReaiDb* db) {
-    RETURN_VALUE_IF (!reai || !db, NULL, ERR_INVALID_ARGUMENTS);
+Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString api_key) {
+    RETURN_VALUE_IF (!reai || !response || !api_key || !host, false, ERR_INVALID_ARGUMENTS);
 
-    reai->db = db;
 
-    return reai;
-}
+    /* prepare request */
+    ReaiRequest request        = {0};
+    request.type               = REAI_REQUEST_TYPE_AUTH_CHECK;
+    request.auth_check.api_key = api_key;
+    request.auth_check.host    = host;
 
-/**
- * @b Set a logger in Reai. This will increase verbosity in the logger.
- * Every request and respose will be dumped into the log file.
- *
- * @param reai
- * @param logger
- *
- * @return @c reai On success.
- * @return @c NULL otherwise.
- * */
-Reai* reai_set_logger (Reai* reai, ReaiLog* logger) {
-    RETURN_VALUE_IF (!reai || !logger, NULL, ERR_INVALID_ARGUMENTS);
-
-    reai->logger = logger;
-
-    return reai;
-}
-
-/**
- * @b Update analysis status of all created analyses in database.
- *
- * This call requires that Reai already has a set database.
- *
- * @param reai
- *
- * @return @c reai On success.
- * @return @c NULL otherwise.
- * */
-Reai* reai_update_all_analyses_status_in_db (Reai* reai) {
-    RETURN_VALUE_IF (!reai, NULL, ERR_INVALID_ARGUMENTS);
-
-    /* no need to continue if we don't need an update */
-    if (!reai_db_require_analysis_status_update (reai->db)) {
-        return reai;
+    /* make request */
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_AUTH_CHECK : {
+                return true;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
+                return false;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (false, "Unexpected type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return false;
     }
-
-    U64Vec* bin_ids_in_processing =
-        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_PROCESSING);
-    U64Vec* bin_ids_in_queue =
-        reai_db_get_analyses_with_status (reai->db, REAI_ANALYSIS_STATUS_QUEUED);
-    RETURN_VALUE_IF (!bin_ids_in_processing, NULL, "Failed to get all created analyses from DB.");
-
-    ReaiResponse response;
-    GOTO_HANDLER_IF (
-        !reai_response_init (&response),
-        STATUS_UPDATE_FAILED,
-        "Failed to create response structure."
-    );
-
-#define UPDATE_STATUS_FOR(bin_ids)                                                                 \
-    REAI_VEC_FOREACH (bin_ids, bin_id, {                                                           \
-        ReaiRequest request               = {0};                                                   \
-        request.type                      = REAI_REQUEST_TYPE_ANALYSIS_STATUS;                     \
-        request.analysis_status.binary_id = *bin_id;                                               \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !reai_request (reai, &request, &response),                                             \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Failed to make request to RevEngAI servers : %s.",                                    \
-            response.raw.data                                                                      \
-        );                                                                                         \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !response.analysis_status.status,                                                      \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Invalid analysis status."                                                             \
-        );                                                                                         \
-                                                                                                   \
-        GOTO_HANDLER_IF (                                                                          \
-            !reai_db_set_analysis_status (reai->db, *bin_id, response.analysis_status.status),     \
-            STATUS_UPDATE_FAILED,                                                                  \
-            "Failed to update analysis status in db."                                              \
-        );                                                                                         \
-    });
-
-    UPDATE_STATUS_FOR (bin_ids_in_processing);
-    UPDATE_STATUS_FOR (bin_ids_in_queue);
-
-#undef UPDATE_STATUS_FOR
-
-DEFAULT_RETURN:
-    reai_u64_vec_destroy (bin_ids_in_processing);
-    reai_u64_vec_destroy (bin_ids_in_queue);
-    reai_response_deinit (&response);
-    return reai;
-
-STATUS_UPDATE_FAILED:
-    reai = NULL;
-    goto DEFAULT_RETURN;
 }
 
 /**
@@ -547,19 +559,10 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
-                if (reai->db) {
-                    if (!reai_db_add_upload (
-                            reai->db,
-                            file_path,
-                            response->upload_file.sha_256_hash
-                        )) {
-                        PRINT_ERR ("Failed to add uploaded file into to Reai DB.");
-                    }
-                }
-
                 return response->upload_file.sha_256_hash;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -567,6 +570,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -589,7 +593,7 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
 ReaiBinaryId reai_create_analysis (
     Reai*          reai,
     ReaiResponse*  response,
-    ReaiModel      model,
+    CString        ai_model,
     Uint64         base_addr,
     ReaiFnInfoVec* fn_info_vec,
     Bool           is_private,
@@ -599,7 +603,8 @@ ReaiBinaryId reai_create_analysis (
     Size           size_in_bytes
 ) {
     RETURN_VALUE_IF (
-        !reai || !response || !model || !sha_256_hash || !file_name || !size_in_bytes,
+        !reai || !response || !ai_model || !strlen (ai_model) || !sha_256_hash ||
+            !(strlen (sha_256_hash)) || !file_name || !strlen (file_name) || !size_in_bytes,
         0,
         ERR_INVALID_ARGUMENTS
     );
@@ -608,7 +613,7 @@ ReaiBinaryId reai_create_analysis (
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_CREATE_ANALYSIS;
 
-    request.create_analysis.model        = model;
+    request.create_analysis.ai_model     = ai_model;
     request.create_analysis.platform_opt = NULL;
     request.create_analysis.isa_opt      = NULL;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
@@ -629,22 +634,10 @@ ReaiBinaryId reai_create_analysis (
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_CREATE_ANALYSIS : {
-                if (reai->db) {
-                    if (!reai_db_add_analysis (
-                            reai->db,
-                            response->create_analysis.binary_id,
-                            sha_256_hash,
-                            model,
-                            file_name,
-                            cmdline_args
-                        )) {
-                        PRINT_ERR ("Failed to add created analysis info to database.");
-                    }
-                }
-
                 return response->create_analysis.binary_id;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return 0;
             }
             default : {
@@ -652,6 +645,7 @@ ReaiBinaryId reai_create_analysis (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return 0;
     }
 }
@@ -685,6 +679,7 @@ ReaiFnInfoVec*
                 return response->basic_function_info.fn_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -692,6 +687,7 @@ ReaiFnInfoVec*
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -735,6 +731,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
                 return response->recent_analysis.analysis_infos;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
             default : {
@@ -742,6 +739,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -779,6 +777,7 @@ Bool reai_batch_renames_functions (
                 return true;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return false;
             }
             default : {
@@ -786,6 +785,7 @@ Bool reai_batch_renames_functions (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return false;
     }
 }
@@ -822,6 +822,7 @@ Bool reai_rename_function (
                 return response->rename_function.success;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return false;
             }
             default : {
@@ -829,6 +830,7 @@ Bool reai_rename_function (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return false;
     }
 }
@@ -857,7 +859,8 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     ReaiBinaryId  bin_id,
     Size          max_results_per_function,
     Float64       max_distance,
-    CStrVec*      collection
+    CStrVec*      collection,
+    Bool          debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !bin_id, NULL, ERR_INVALID_ARGUMENTS);
 
@@ -870,7 +873,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
     request.batch_binary_symbol_ann.distance             = max_distance;
-    request.batch_binary_symbol_ann.debug_mode           = true;
+    request.batch_binary_symbol_ann.debug_mode           = debug_mode;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -881,6 +884,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             }
 
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
 
@@ -889,6 +893,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -900,7 +905,8 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     U64Vec*        speculative_fn_ids,
     Size           max_results_per_function,
     Float64        max_distance,
-    CStrVec*       collection
+    CStrVec*       collection,
+    Bool           debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
 
@@ -918,7 +924,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     request.batch_function_symbol_ann.collection_count     = collection ? collection->count : 0;
     request.batch_function_symbol_ann.results_per_function = max_results_per_function;
     request.batch_function_symbol_ann.distance             = max_distance;
-    request.batch_function_symbol_ann.debug_mode           = true;
+    request.batch_function_symbol_ann.debug_mode           = debug_mode;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -929,6 +935,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
             }
 
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return NULL;
             }
 
@@ -937,6 +944,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
     }
 }
@@ -968,6 +976,7 @@ ReaiAnalysisStatus
                 return response->analysis_status.status;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
                 return REAI_ANALYSIS_STATUS_INVALID;
             }
             default : {
@@ -975,6 +984,33 @@ ReaiAnalysisStatus
             }
         }
     } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return REAI_ANALYSIS_STATUS_INVALID;
+    }
+}
+
+
+CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response) {
+    RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_GET_MODELS;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_GET_MODELS : {
+                return response->get_models.models;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
+                return NULL;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
     }
 }

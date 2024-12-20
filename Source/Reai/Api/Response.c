@@ -100,17 +100,22 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
     /* convert from string to json */
     cJSON* json = cJSON_ParseWithLength (response->raw.data, response->raw.length);
-    GOTO_HANDLER_IF (!json, INIT_FAILED, "Failed to parse given response as JSON data");
+    if (!json) {
+        if (type != REAI_RESPONSE_TYPE_BATCH_RENAMES_FUNCTIONS) {
+            REAI_LOG_ERROR ("failed to convert response to json");
+            return NULL;
+        }
+    }
 
     /* each response type has a different structure */
     switch (type) {
         case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
             response->type = REAI_RESPONSE_TYPE_HEALTH_CHECK;
 
-            GET_JSON_BOOL (json, "success", response->auth_check.success);
+            GET_JSON_BOOL (json, "success", response->health_check.success);
 
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            CString msg_keyname = response->health_check.success ? "message" : "error";
+            GET_JSON_STRING (json, msg_keyname, response->health_check.message);
 
             break;
         }
@@ -118,10 +123,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_AUTH_CHECK : {
             response->type = REAI_RESPONSE_TYPE_AUTH_CHECK;
 
-            GET_JSON_BOOL (json, "success", response->auth_check.success);
-
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            GET_OPTIONAL_JSON_STRING (json, "message", response->auth_check.message);
 
             break;
         }
@@ -140,10 +142,10 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
             response->type = REAI_RESPONSE_TYPE_UPLOAD_FILE;
 
-            GET_JSON_BOOL (json, "success", response->create_analysis.success);
+            GET_JSON_BOOL (json, "success", response->upload_file.success);
 
-            CString msg_keyname = response->auth_check.success ? "message" : "error";
-            GET_JSON_STRING (json, msg_keyname, response->auth_check.message);
+            CString msg_keyname = response->upload_file.success ? "message" : "error";
+            GET_JSON_STRING (json, msg_keyname, response->upload_file.message);
 
             /* sha256 hash provided only on success */
             GET_JSON_STRING_ON_SUCCESS (
@@ -282,14 +284,13 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             GET_JSON_BOOL (json, "success", response->rename_function.success);
 
             /* this string is optional, so we won't throw error if failed */
-            response->rename_function.msg = json_response_get_string (json, "msg");
+            response->rename_function.msg = strdup (json_response_get_string (json, "msg"));
 
             break;
         }
 
-        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN :
-        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
-            response->type = (ReaiResponseType)type;
+        case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN;
 
             GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
             if (!response->batch_binary_symbol_ann.success) {
@@ -342,6 +343,132 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 response->batch_binary_symbol_ann.function_matches
             );
 
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            response->type = REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN;
+
+            GET_JSON_BOOL (json, "success", response->batch_binary_symbol_ann.success);
+            if (!response->batch_binary_symbol_ann.success) {
+                break;
+            }
+
+            cJSON* settings = cJSON_GetObjectItem (json, "settings");
+            GOTO_HANDLER_IF (
+                !settings,
+                INIT_FAILED,
+                "Failed to get 'settings' from returned response"
+            );
+
+            GET_OPTIONAL_JSON_STRING_ARR (
+                settings,
+                "collection",
+                response->batch_binary_symbol_ann.settings.collections
+            );
+
+            GET_JSON_BOOL (
+                settings,
+                "debug_mode",
+                response->batch_binary_symbol_ann.settings.debug_mode
+            );
+
+            GET_JSON_F64 (
+                settings,
+                "distance",
+                response->batch_binary_symbol_ann.settings.distance
+            );
+
+            GET_JSON_U64 (
+                settings,
+                "result_per_function",
+                response->batch_binary_symbol_ann.settings.result_per_function
+            );
+
+            cJSON* function_matches = cJSON_GetObjectItem (json, "function_matches");
+            GOTO_HANDLER_IF (
+                !function_matches,
+                INIT_FAILED,
+                "Failed to get 'function_matches' array from returned response"
+            );
+
+            if (cJSON_GetObjectItem (function_matches, "function_matches")) {
+                function_matches = cJSON_GetObjectItem (function_matches, "function_matches");
+            }
+
+            GET_JSON_CUSTOM_ARR (
+                function_matches,
+                ReaiAnnFnMatch,
+                ann_fn_match,
+                GET_JSON_ANN_FN_MATCH,
+                response->batch_binary_symbol_ann.function_matches
+            );
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_GET_MODELS : {
+            response->type = REAI_RESPONSE_TYPE_GET_MODELS;
+
+            GET_JSON_BOOL (json, "success", response->get_models.success);
+
+            cJSON* models = cJSON_GetObjectItem (json, "models");
+
+            // NOTE: current definition skips storing model_id as I don't see why that'd be required
+            GET_JSON_CUSTOM_ARR (
+                models,
+                CString,
+                cstr,
+                GET_JSON_AI_MODEL,
+                response->get_models.models
+            );
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION : {
+            response->type = REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION;
+            GET_JSON_BOOL (json, "status", response->begin_ai_decompilation.status);
+            GET_JSON_STRING (json, "message", response->begin_ai_decompilation.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                GET_JSON_CUSTOM_ARR (
+                    json,
+                    ReaiApiError,
+                    api_error,
+                    GET_JSON_API_ERROR,
+                    response->begin_ai_decompilation.errors
+                );
+            }
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION : {
+            response->type = REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION;
+            GET_JSON_BOOL (json, "status", response->poll_ai_decompilation.status);
+
+            if (response->poll_ai_decompilation.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                GET_JSON_STRING (data, "status", response->poll_ai_decompilation.data.status);
+                GET_JSON_STRING (
+                    data,
+                    "decompilation",
+                    response->poll_ai_decompilation.data.decompilation
+                );
+            }
+
+            GET_JSON_STRING (json, "message", response->poll_ai_decompilation.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                GET_JSON_CUSTOM_ARR (
+                    json,
+                    ReaiApiError,
+                    api_error,
+                    GET_JSON_API_ERROR,
+                    response->poll_ai_decompilation.errors
+                );
+            }
             break;
         }
 
@@ -520,10 +647,9 @@ PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num)
 
 /**
  * @b Helper method to extract a String field form given JSON.
- * 
- * The returned pointer (if any) is created by `strdup` and hence is
- * completely owned by the caller. After use, the string must be freed
- * using `FREE`
+ *
+ * The returned string is not strdupped and hence user must NOT free it
+ * after use.
  *
  * @param json[in] JSON Object containing the string field.
  * @param name[in] Name of string field.
@@ -545,7 +671,7 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
 
     /* copy value */
     CString str = NULL;
-    RETURN_VALUE_IF (!(str = strdup (cJSON_GetStringValue (str_value))), NULL, ERR_OUT_OF_MEMORY);
+    RETURN_VALUE_IF (!(str = cJSON_GetStringValue (str_value)), NULL, ERR_OUT_OF_MEMORY);
 
     return str;
 }
@@ -628,27 +754,6 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
     }
 
     switch (response->type) {
-        case REAI_RESPONSE_TYPE_AUTH_CHECK :
-        case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
-            if (response->health_check.message) {
-                FREE (response->health_check.message);
-                response->health_check.message = NULL;
-            }
-            break;
-        }
-
-        case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
-            if (response->upload_file.message) {
-                FREE (response->upload_file.message);
-                response->upload_file.message = NULL;
-            }
-            if (response->upload_file.sha_256_hash) {
-                FREE (response->upload_file.sha_256_hash);
-                response->upload_file.sha_256_hash = NULL;
-            }
-            break;
-        }
-
         case REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO : {
             if (response->basic_function_info.fn_infos) {
                 reai_fn_info_vec_destroy (response->basic_function_info.fn_infos);
@@ -683,6 +788,19 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             if (response->batch_binary_symbol_ann.settings.collections) {
                 reai_cstr_vec_destroy (response->batch_binary_symbol_ann.settings.collections);
                 response->batch_binary_symbol_ann.settings.collections = NULL;
+            }
+        }
+
+        case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
+            if (response->rename_function.msg) {
+                FREE (response->rename_function.msg);
+            }
+        }
+
+        case REAI_RESPONSE_TYPE_GET_MODELS : {
+            if (response->get_models.models) {
+                reai_cstr_vec_destroy (response->get_models.models);
+                response->get_models.models = NULL;
             }
         }
 

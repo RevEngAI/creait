@@ -37,7 +37,7 @@ extern "C" {
             break;                                                                                 \
         }                                                                                          \
                                                                                                    \
-        __typeof__ (vec->items) iter = (__typeof__ (vec->items))NULL;                                      \
+        __typeof__ (vec->items) iter = (__typeof__ (vec->items))NULL;                              \
         for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
             iter = vec->items + ___idx;                                                            \
             { body; };                                                                             \
@@ -135,6 +135,25 @@ extern "C" {
         } else {                                                                                   \
             vec->items[vec->count++] = *item;                                                      \
         }                                                                                          \
+                                                                                                   \
+        return vec;                                                                                \
+    }                                                                                              \
+                                                                                                   \
+    PRIVATE vec_tname* reai_##fn_infix##_vec_remove (vec_tname* vec, Size index) {                 \
+        RETURN_VALUE_IF (!vec, (vec_tname*)NULL, ERR_INVALID_ARGUMENTS);                           \
+        RETURN_VALUE_IF ((index >= vec->count), (vec_tname*)NULL, ERR_INDEX_OUT_OF_BOUNDS);        \
+                                                                                                   \
+        ReaiGenericCloneDeinit deiniter = (ReaiGenericCloneDeinit)vec_iclone_deinit;               \
+        if (deiniter) {                                                                            \
+            deiniter (vec->items + index);                                                         \
+        }                                                                                          \
+                                                                                                   \
+        memmove (                                                                                  \
+            vec->items + index,                                                                    \
+            vec->items + index + 1,                                                                \
+            sizeof (vec_itype) * (vec->count - index - 1)                                         \
+        );                                                                                         \
+        vec->count--;                                                                              \
                                                                                                    \
         return vec;                                                                                \
     }                                                                                              \

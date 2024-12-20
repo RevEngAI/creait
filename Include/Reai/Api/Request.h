@@ -12,6 +12,7 @@
 #include <Reai/Common.h>
 #include <Reai/FnInfo.h>
 #include <Reai/Types.h>
+#include <Reai/Util/CStrVec.h>
 #include <Reai/Util/IntVec.h>
 
 #ifdef __cplusplus
@@ -53,7 +54,7 @@ extern "C" {
         REAI_REQUEST_TYPE_UPLOAD_FILE,
         /* REAI_REQUEST_TYPE_GET_CONFIG, */
         REAI_REQUEST_TYPE_SEARCH,
-        /* REAI_REQUEST_TYPE_GET_MODELS, */
+        REAI_REQUEST_TYPE_GET_MODELS,
 
         /* analysis api */
         REAI_REQUEST_TYPE_CREATE_ANALYSIS,
@@ -72,21 +73,12 @@ extern "C" {
         REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN,
         REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN,
 
+        /* ai decompilation */
+        REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION,
+        REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION,
+
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
-
-    /**
-     * @b Represents the BinNet model to use in RevEngAI created analysis.
-     * This is used in create analysis request type.
-     * */
-    typedef enum ReaiModel {
-        REAI_MODEL_UNKNOWN = 0,
-        REAI_MODEL_X86_WINDOWS,
-        REAI_MODEL_X86_LINUX,
-        REAI_MODEL_X86_MACOS,
-        REAI_MODEL_X86_ANDROID,
-        REAI_MODEL_MAX
-    } ReaiModel;
 
     /**
      * @b Structure to be prepared with valid field values before making request to API
@@ -97,11 +89,16 @@ extern "C" {
 
         union {
             struct {
+                CString host;
+                CString api_key;
+            } auth_check;
+
+            struct {
                 CString file_path; /**< @b Complete file path to be uploaded */
             } upload_file;
 
             struct {
-                ReaiModel       model;        /**< @b BinNet model to be used */
+                CString         ai_model;     /**< @b BinNet model to be used */
                 CString         platform_opt; /**< @b Idk the possible values of this enum. */
                 CString         isa_opt;      /**< @b Idk possible values of this one as well. */
                 ReaiFileOption  file_opt;     /**< @b Info about file type. */
@@ -168,6 +165,10 @@ extern "C" {
                 ReaiFunctionId* speculative_function_ids;
                 Size            speculative_function_id_count;
             } batch_function_symbol_ann;
+
+            struct {
+                ReaiFunctionId function_id;
+            } begin_ai_decompilation, poll_ai_decompilation;
         };
     } ReaiRequest;
 
