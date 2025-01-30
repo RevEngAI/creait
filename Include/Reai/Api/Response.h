@@ -62,6 +62,40 @@ extern "C" {
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
     } ReaiResponseType;
 
+    typedef enum ReaiAiDecompilationStatus {
+        REAI_AI_DECOMPILATION_STATUS_ERROR,
+        REAI_AI_DECOMPILATION_STATUS_UNINITIALIZED,
+        REAI_AI_DECOMPILATION_STATUS_PENDING,
+        REAI_AI_DECOMPILATION_STATUS_SUCCESS,
+    } ReaiAiDecompilationStatus;
+
+    static inline ReaiAiDecompilationStatus reai_ai_decompilation_status_from_cstr (CString status
+    ) {
+        if (!status) {
+            return REAI_AI_DECOMPILATION_STATUS_ERROR;
+        } else if (!strcmp (status, "uninitialized")) {
+            return REAI_AI_DECOMPILATION_STATUS_UNINITIALIZED;
+        } else if (!strcmp (status, "pending")) {
+            return REAI_AI_DECOMPILATION_STATUS_PENDING;
+        } else if (!strcmp (status, "success")) {
+            return REAI_AI_DECOMPILATION_STATUS_SUCCESS;
+        } else {
+            return REAI_AI_DECOMPILATION_STATUS_ERROR;
+        }
+    }
+
+    static inline CString reai_ai_decompilation_status_to_cstr (ReaiAiDecompilationStatus status) {
+        switch (status) {
+            case REAI_AI_DECOMPILATION_STATUS_UNINITIALIZED :
+                return "uninitialized";
+            case REAI_AI_DECOMPILATION_STATUS_PENDING :
+                return "pending";
+            case REAI_AI_DECOMPILATION_STATUS_SUCCESS :
+                return "success";
+            default :
+                return "error";
+        }
+    }
 
     /**
      * @b Structure returned and taken by reai_request calls that get
@@ -181,8 +215,8 @@ extern "C" {
             struct {
                 Bool status;
                 struct {
-                    CString status;
-                    CString decompilation;
+                    ReaiAiDecompilationStatus status;
+                    CString                   decompilation;
                     // TODO: function mapping?
                 } data;
                 CString        message;

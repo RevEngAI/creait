@@ -285,7 +285,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         REAI_LOG_TRACE ("REQUEST.JSON : '%s'", json);                                              \
                                                                                                    \
         /* set json data */                                                                        \
-        curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, json);                                   \
+        /* HACK: it fails for some reason if we don't do this, seems to be a bug in curl */        \
+        CString tmp_json_for_curl_setopt = json;                                                   \
+        curl_easy_setopt (reai->curl, CURLOPT_POSTFIELDS, tmp_json_for_curl_setopt);               \
                                                                                                    \
         /* WARN: this method will fail if MAKE request makes any jump */                           \
         MAKE_REQUEST (expected_retcode, expected_response);                                        \
@@ -460,7 +462,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                 request->poll_ai_decompilation.function_id
             );
             SET_METHOD ("GET");
-            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION);
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION);
             break;
         }
 
@@ -1012,5 +1014,65 @@ CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response) {
     } else {
         REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return NULL;
+    }
+}
+
+Reai* reai_begin_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id) {
+    RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                        = {0};
+    request.type                               = REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION;
+    request.begin_ai_decompilation.function_id = fn_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION : {
+                return response->begin_ai_decompilation.status ? reai : NULL;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
+                return NULL;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
+    }
+}
+
+ReaiAiDecompilationStatus
+    reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id) {
+    RETURN_VALUE_IF (
+        !reai || !response || !fn_id,
+        REAI_AI_DECOMPILATION_STATUS_ERROR,
+        ERR_INVALID_ARGUMENTS
+    );
+
+    ReaiRequest request                       = {0};
+    request.type                              = REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION;
+    request.poll_ai_decompilation.function_id = fn_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION : {
+                return response->poll_ai_decompilation.data.status;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("reveng.ai request returned validation error.");
+                return REAI_AI_DECOMPILATION_STATUS_ERROR;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (
+                    REAI_AI_DECOMPILATION_STATUS_ERROR,
+                    "Unexpected response type."
+                );
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return REAI_AI_DECOMPILATION_STATUS_ERROR;
     }
 }

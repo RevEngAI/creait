@@ -11,6 +11,7 @@
 #include <Reai/AnalysisInfo.h>
 #include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
+#include <Reai/Api/Response.h>
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 #include <Reai/Util/CStrVec.h>
@@ -99,6 +100,10 @@ extern "C" {
     );
 
     CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response);
+
+    Reai* reai_begin_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
+    ReaiAiDecompilationStatus
+        reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
 
 #ifdef __cplusplus
 }

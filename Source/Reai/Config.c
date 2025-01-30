@@ -10,6 +10,9 @@
 #include <errno.h>
 #include <string.h>
 
+// TODO: remove toml dependency, by converting the toml file to a simple kv config file
+// simply store k=v in a single line where anything before = is a key and after = is the corresponding value
+
 /**
  * @b Get default file path where .reait.toml is supposed to be present.
  *
