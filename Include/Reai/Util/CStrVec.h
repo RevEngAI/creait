@@ -47,9 +47,11 @@ extern "C" {
      * @return @c NULL otherwise.
      * */
     PRIVATE CString *cstr_clone_deinit (CString *clone) {
-        RETURN_VALUE_IF (!clone || !*clone, (CString *)NULL, ERR_INVALID_ARGUMENTS);
+        RETURN_VALUE_IF (!clone, (CString *)NULL, ERR_INVALID_ARGUMENTS);
 
-        FREE (*clone);
+        if (*clone) {
+            FREE (*clone);
+        }
 
         return clone;
     }

@@ -428,17 +428,27 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION : {
             response->type = REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION;
             GET_JSON_BOOL (json, "status", response->begin_ai_decompilation.status);
-            GET_JSON_STRING (json, "message", response->begin_ai_decompilation.message);
+            GET_OPTIONAL_JSON_STRING (json, "message", response->begin_ai_decompilation.message);
 
             cJSON* errors = cJSON_GetObjectItem (json, "errors");
             if (errors) {
-                GET_JSON_CUSTOM_ARR (
-                    json,
-                    ReaiApiError,
-                    api_error,
-                    GET_JSON_API_ERROR,
-                    response->begin_ai_decompilation.errors
-                );
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->begin_ai_decompilation.errors
+                    );
+                }
             }
             break;
         }
@@ -447,27 +457,48 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION;
             GET_JSON_BOOL (json, "status", response->poll_ai_decompilation.status);
 
-            if (response->poll_ai_decompilation.status) {
-                cJSON* data = cJSON_GetObjectItem (json, "data");
-                GET_JSON_STRING (data, "status", response->poll_ai_decompilation.data.status);
-                GET_JSON_STRING (
-                    data,
-                    "decompilation",
-                    response->poll_ai_decompilation.data.decompilation
-                );
+            cJSON* data = cJSON_GetObjectItem (json, "data");
+            if (data) {
+                /* get decompilation status */
+                CString status = NULL;
+                GET_JSON_STRING (data, "status", status);
+                response->poll_ai_decompilation.data.status =
+                    reai_ai_decompilation_status_from_cstr (status);
+                FREE (status);
+
+                if (response->poll_ai_decompilation.data.status ==
+                    REAI_AI_DECOMPILATION_STATUS_SUCCESS) {
+                    GET_OPTIONAL_JSON_STRING (
+                        data,
+                        "decompilation",
+                        response->poll_ai_decompilation.data.decompilation
+                    );
+                } else {
+                    response->poll_ai_decompilation.data.decompilation = NULL;
+                }
             }
 
-            GET_JSON_STRING (json, "message", response->poll_ai_decompilation.message);
+            GET_OPTIONAL_JSON_STRING (json, "message", response->poll_ai_decompilation.message);
 
             cJSON* errors = cJSON_GetObjectItem (json, "errors");
             if (errors) {
-                GET_JSON_CUSTOM_ARR (
-                    json,
-                    ReaiApiError,
-                    api_error,
-                    GET_JSON_API_ERROR,
-                    response->poll_ai_decompilation.errors
-                );
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->poll_ai_decompilation.errors
+                    );
+                }
             }
             break;
         }
@@ -648,7 +679,7 @@ PRIVATE Float64* json_response_get_f64 (cJSON* json, CString name, Float64* num)
 /**
  * @b Helper method to extract a String field form given JSON.
  *
- * The returned string is not strdupped and hence user must NOT free it
+ * The returned string is strdup and hence user must be free it
  * after use.
  *
  * @param json[in] JSON Object containing the string field.
@@ -670,19 +701,19 @@ PRIVATE CString json_response_get_string (cJSON* json, CString name) {
     );
 
     /* copy value */
-    CString str = NULL;
-    RETURN_VALUE_IF (!(str = cJSON_GetStringValue (str_value)), NULL, ERR_OUT_OF_MEMORY);
-
-    return str;
+    CString val = cJSON_GetStringValue (str_value);
+    if (val) {
+        return strdup (val);
+    }
+    return NULL;
 }
 
 /**
+ * Returned CStrVec containes strdupped values of given string array object.
+ * The returned string must be freed after use.
+ *
  * @param json[in] JSON Object containing the string field.
  * @param name[in] Name of string field.
- * @param buf[out] Buffer where string list will be written to.
- * @param buf_cap[in,out] Pointer to variable that must contain the current
- * capacity of given buffer. If buffer is resized, new capacity will be
- * stored in this variable through this pointer.
  * 
  * @return @c buf if field is present.
  * @return @c NULL otherwise.
@@ -720,11 +751,8 @@ PRIVATE CStrVec* json_response_get_string_arr (cJSON* json, CString name) {
         );
 
         CString loc = cJSON_GetStringValue (location);
-        if (!reai_cstr_vec_append (vec, &loc)) {
-            PRINT_ERR ("Failed to append value to list.");
-            reai_cstr_vec_destroy (vec);
-            return NULL;
-        }
+        loc         = loc ? strdup (loc) : NULL;
+        reai_cstr_vec_append (vec, &loc);
     }
 
     return vec;
@@ -750,10 +778,30 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
 
     if (response->validation_error.locations) {
         reai_cstr_vec_destroy (response->validation_error.locations);
-        response->validation_error.locations = NULL;
+        FREE (response->validation_error.message);
+        FREE (response->validation_error.type);
+        memset (&response->validation_error, 0, sizeof (response->validation_error));
     }
 
     switch (response->type) {
+        case REAI_RESPONSE_TYPE_DELETE_ANALYSIS :
+        case REAI_RESPONSE_TYPE_HEALTH_CHECK : {
+            FREE (response->health_check.message);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_AUTH_CHECK : {
+            FREE (response->auth_check.message);
+            break;
+        }
+
+
+        case REAI_RESPONSE_TYPE_UPLOAD_FILE : {
+            FREE (response->upload_file.message);
+            FREE (response->upload_file.sha_256_hash);
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_BASIC_FUNCTION_INFO : {
             if (response->basic_function_info.fn_infos) {
                 reai_fn_info_vec_destroy (response->basic_function_info.fn_infos);
@@ -770,6 +818,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             break;
         }
 
+        case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
+            FREE (response->rename_function.msg);
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_SEARCH : {
             if (response->search.query_results) {
                 reai_query_result_vec_destroy (response->search.query_results);
@@ -780,6 +833,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
 
         case REAI_RESPONSE_TYPE_BATCH_BINARY_SYMBOL_ANN :
         case REAI_RESPONSE_TYPE_BATCH_FUNCTION_SYMBOL_ANN : {
+            if (response->batch_binary_symbol_ann.settings.collections) {
+                reai_cstr_vec_destroy (response->batch_binary_symbol_ann.settings.collections);
+                response->batch_binary_symbol_ann.settings.collections = NULL;
+            }
+
             if (response->batch_binary_symbol_ann.function_matches) {
                 reai_ann_fn_match_vec_destroy (response->batch_binary_symbol_ann.function_matches);
                 response->batch_binary_symbol_ann.function_matches = NULL;
@@ -789,12 +847,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 reai_cstr_vec_destroy (response->batch_binary_symbol_ann.settings.collections);
                 response->batch_binary_symbol_ann.settings.collections = NULL;
             }
-        }
-
-        case REAI_RESPONSE_TYPE_RENAME_FUNCTION : {
-            if (response->rename_function.msg) {
-                FREE (response->rename_function.msg);
-            }
+            break;
         }
 
         case REAI_RESPONSE_TYPE_GET_MODELS : {
@@ -802,6 +855,25 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 reai_cstr_vec_destroy (response->get_models.models);
                 response->get_models.models = NULL;
             }
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION : {
+            if (response->begin_ai_decompilation.errors) {
+                reai_api_error_vec_destroy (response->begin_ai_decompilation.errors);
+                response->begin_ai_decompilation.errors = NULL;
+            }
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION : {
+            if (response->poll_ai_decompilation.errors) {
+                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
+                response->poll_ai_decompilation.errors = NULL;
+            }
+            FREE (response->poll_ai_decompilation.message);
+            FREE (response->poll_ai_decompilation.data.decompilation);
+            break;
         }
 
         default :

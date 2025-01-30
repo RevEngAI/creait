@@ -29,8 +29,12 @@
 #    define ALLOCATE(type, n)        (type *)calloc (n, sizeof (type))
 #    define REALLOCATE(ptr, type, n) (type *)realloc (ptr, n * sizeof (type));
 #    define FREE(x)                                                                                \
-        free ((void *)(x));                                                                        \
-        x = NULL
+        do {                                                                                       \
+            if (x) {                                                                               \
+                free ((void *)(x));                                                                \
+                x = NULL;                                                                          \
+            }                                                                                      \
+        } while (0)
 #endif
 #define PACKED __attribute__ ((packed))
 
