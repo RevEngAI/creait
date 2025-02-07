@@ -80,6 +80,10 @@ __attribute__ ((constructor)) void reai_log_create (CString file_name) {
  * @param ... Format string arguments.
  * */
 void reai_log_printf (ReaiLogLevel level, CString tag, const char* fmtstr, ...) {
+    if (!log_fd) {
+        return;
+    }
+
     tag = tag ? tag : "reai_log_printf";
 
     /* print time and log level */
@@ -153,7 +157,10 @@ PRIVATE CString generate_new_log_file_name() {
 #ifdef _WIN32
     tmp_dir = getenv ("TMP") ? getenv ("TMP") : getenv ("TEMP") ? getenv ("TEMP") : NULL;
 #else
-    tmp_dir = getenv ("TMP") ? getenv ("TMP") : getenv ("TMPDIR") ? getenv ("TMPDIR") : NULL;
+    tmp_dir = getenv ("TMP")    ? getenv ("TMP") :
+              getenv ("TMPDIR") ? getenv ("TMPDIR") :
+              getenv ("PWD")    ? getenv ("PWD") :
+                                  NULL;
 #endif
 
     RETURN_VALUE_IF (!tmp_dir, NULL, "Failed to get path to temporary directory.");
