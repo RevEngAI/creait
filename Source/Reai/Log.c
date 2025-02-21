@@ -166,7 +166,7 @@ PRIVATE CString generate_new_log_file_name() {
     RETURN_VALUE_IF (!tmp_dir, NULL, "Failed to get path to temporary directory.");
 
     /* generate filename with PID and time */
-    Char filename[64] = {0};
+    Char filename[256] = {0};
     snprintf (filename, sizeof (filename), "%s/reai_%u_%s.log", tmp_dir, pid, time_str);
 
     return strdup (filename);
