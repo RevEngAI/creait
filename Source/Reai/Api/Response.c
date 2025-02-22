@@ -462,6 +462,8 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 /* get decompilation status */
                 CString status = NULL;
                 GET_JSON_STRING (data, "status", status);
+                REAI_LOG_TRACE ("Got analysis status : %s", status);
+
                 response->poll_ai_decompilation.data.status =
                     reai_ai_decompilation_status_from_cstr (status);
                 FREE (status);
@@ -471,6 +473,11 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                     GET_OPTIONAL_JSON_STRING (
                         data,
                         "decompilation",
+                        response->poll_ai_decompilation.data.decompilation
+                    );
+
+                    REAI_LOG_TRACE (
+                        "Got decompilation : \"%s\"",
                         response->poll_ai_decompilation.data.decompilation
                     );
                 } else {

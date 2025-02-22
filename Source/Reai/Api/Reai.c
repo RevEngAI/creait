@@ -1058,6 +1058,12 @@ ReaiAiDecompilationStatus
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION : {
+                REAI_LOG_TRACE (
+                    "AI Decompilation Status = \"%s\"",
+                    reai_ai_decompilation_status_to_cstr (
+                        response->poll_ai_decompilation.data.status
+                    )
+                );
                 return response->poll_ai_decompilation.data.status;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
