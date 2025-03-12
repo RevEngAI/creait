@@ -23,6 +23,7 @@ extern "C" {
 
 /* libc */
 #include <memory.h>
+#include <string.h>
 
 #ifndef REAI_VEC_INITIAL_ITEM_CAPACITY
 #    define REAI_VEC_INITIAL_ITEM_CAPACITY 32
