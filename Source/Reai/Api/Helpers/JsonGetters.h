@@ -211,6 +211,32 @@
         );                                                                                         \
     } while (0)
 
+#define GET_JSON_SIMILAR_FN(json_similar_fn, similar_fn)                                           \
+    do {                                                                                           \
+        GET_OPTIONAL_JSON_U64 (json_similar_fn, "function_id", (similar_fn).function_id);          \
+        GET_OPTIONAL_JSON_STRING (json_similar_fn, "function_name", (similar_fn).function_name);   \
+        GET_OPTIONAL_JSON_U64 (json_similar_fn, "binary_id", (similar_fn).binary_id);              \
+        GET_OPTIONAL_JSON_STRING (json_similar_fn, "binary_name", (similar_fn).binary_name);       \
+        GET_OPTIONAL_JSON_F64 (json_similar_fn, "distance", (similar_fn).distance);                \
+                                                                                                   \
+        cJSON* json_similar_fn_projection = cJSON_GetObjectItem (json_similar_fn, "projection");   \
+        (similar_fn).projection           = NULL;                                                  \
+        if (json_similar_fn_projection) {                                                          \
+            (similar_fn).projection = reai_f64_vec_create();                                       \
+            cJSON* arr_item         = NULL;                                                        \
+            cJSON_ArrayForEach (arr_item, json_similar_fn_projection) {                            \
+                Float64 val = cJSON_GetNumberValue (arr_item);                                     \
+                if (!reai_f64_vec_append ((similar_fn).projection, &val)) {                        \
+                    reai_f64_vec_destroy ((similar_fn).projection);                                \
+                    (similar_fn).projection = NULL;                                                \
+                    goto INIT_FAILED;                                                              \
+                }                                                                                  \
+            }                                                                                      \
+        }                                                                                          \
+                                                                                                   \
+        GET_OPTIONAL_JSON_STRING (json_similar_fn, "sha_256_hash", (similar_fn).sha_256_hash);     \
+    } while (0)
+
 #define GET_JSON_AI_MODEL(json_ai_model, model_name)                                               \
     do {                                                                                           \
         GET_JSON_STRING (json_ai_model, "model_name", model_name);                                 \
@@ -245,6 +271,7 @@
                 if (!reai_##type_infix##_vec_append ((vec), &item)) {                              \
                     PRINT_ERR ("Failed to insert " #type_name " object into vector.");             \
                     reai_##type_infix##_vec_destroy (vec);                                         \
+                    (vec) = NULL;                                                                  \
                     goto INIT_FAILED;                                                              \
                 }                                                                                  \
             }                                                                                      \

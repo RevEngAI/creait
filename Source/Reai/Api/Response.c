@@ -510,6 +510,53 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
+        case REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID : {
+            response->type = REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID;
+            GET_JSON_U64 (json, "analysis_id", response->analysis_id);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS : {
+            response->type = REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS;
+            GET_JSON_BOOL (json, "status", response->get_similar_functions.status);
+
+            cJSON* data = cJSON_GetObjectItem (json, "data");
+            if (data) {
+                GET_JSON_CUSTOM_ARR (
+                    data,
+                    ReaiSimilarFn,
+                    similar_fn,
+                    GET_JSON_SIMILAR_FN,
+                    response->get_similar_functions.data
+                );
+            }
+
+            GET_OPTIONAL_JSON_STRING (json, "message", response->get_similar_functions.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->get_similar_functions.errors
+                    );
+                }
+            }
+
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
             response->type = REAI_RESPONSE_TYPE_VALIDATION_ERR;
 

@@ -8,6 +8,7 @@ extern "C" {
 #include <Reai/Util/Vec.h>
 
     REAI_MAKE_VEC (U64Vec, u64, Uint64, NULL, NULL);
+    REAI_MAKE_VEC (F64Vec, f64, Float64, NULL, NULL);
 
 #ifdef __cplusplus
 }

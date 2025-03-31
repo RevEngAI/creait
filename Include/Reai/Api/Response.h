@@ -14,6 +14,7 @@
 #include <Reai/ApiError.h>
 #include <Reai/FnInfo.h>
 #include <Reai/QueryResult.h>
+#include <Reai/SimilarFn.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -24,6 +25,8 @@ extern "C" {
 
     typedef enum ReaiResponseType {
         REAI_RESPONSE_TYPE_UNKNOWN_ERR = 0,
+
+        /* v1 API endpoints */
 
         /* health api */
         REAI_RESPONSE_TYPE_HEALTH_CHECK = REAI_REQUEST_TYPE_HEALTH_CHECK,
@@ -57,6 +60,15 @@ extern "C" {
         /* ai decompilation */
         REAI_RESPONSE_TYPE_BEGIN_AI_DECOMPILATION = REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION,
         REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION  = REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION,
+
+        /* v2 API endpoints */
+
+        /* analysis management */
+        REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID =
+            REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID,
+
+        /* function overview */
+        REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
 
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
@@ -222,6 +234,16 @@ extern "C" {
                 CString        message;
                 ReaiApiErrors* errors;
             } poll_ai_decompilation;
+
+            /* response for analysis id from binary id request */
+            ReaiAnalysisId analysis_id;
+
+            struct {
+                Bool              status;
+                ReaiSimilarFnVec* data;
+                CString           message;
+                ReaiApiErrors*    errors;
+            } get_similar_functions;
         };
     } ReaiResponse;
 

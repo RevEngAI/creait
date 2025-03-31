@@ -32,6 +32,7 @@ typedef unsigned char Bool;
 typedef const Char *CString;
 
 typedef Uint64 ReaiBinaryId;
+typedef Uint64 ReaiAnalysisId;
 typedef Uint64 ReaiFunctionId;
 
 // clang-format on

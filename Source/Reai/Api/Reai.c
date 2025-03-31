@@ -466,6 +466,24 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID : {
+            SET_ENDPOINT ("%s/v2/analyses/lookup/%llu", reai->host, request->binary_id);
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS : {
+            SET_ENDPOINT (
+                "%s/v2/functions/%llu/similar-functions",
+                reai->host,
+                request->get_similar_functions.function_id
+            );
+            SET_METHOD ("GET");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS);
+            break;
+        }
+
         default :
             PRINT_ERR ("Invalid request.");
             break;

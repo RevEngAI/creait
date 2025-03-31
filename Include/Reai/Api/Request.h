@@ -44,6 +44,8 @@ extern "C" {
     typedef enum ReaiRequestType {
         REAI_REQUEST_TYPE_INVALID = 0,
 
+        /* v1 API endpoints */
+
         /* health api */
         REAI_REQUEST_TYPE_HEALTH_CHECK,
 
@@ -76,6 +78,14 @@ extern "C" {
         /* ai decompilation */
         REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION,
         REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION,
+
+        /* v2 API endpoints */
+
+        /* analysis management */
+        REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID,
+
+        /* functions overview */
+        REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
 
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
@@ -148,10 +158,10 @@ extern "C" {
             struct {
                 ReaiBinaryId binary_id;
                 Size         results_per_function;
-                Bool         debug_mode; ///< Enabling this gives better names
-                Float32      distance;
-                CString*     collection;
-                Size         collection_count;
+                Bool     debug_mode; ///< Enabling this limits search results to debug symbols only
+                Float32  distance;
+                CString* collection;
+                Size     collection_count;
             } batch_binary_symbol_ann;
 
             struct {
@@ -169,6 +179,20 @@ extern "C" {
             struct {
                 ReaiFunctionId function_id;
             } begin_ai_decompilation, poll_ai_decompilation;
+
+            /* request for analysis id from binary id */
+            ReaiBinaryId binary_id;
+
+            struct {
+                ReaiFunctionId function_id;
+                Uint32         max_result_count;
+                Float32        distance;
+                Uint64*        collection_ids;
+                Uint64         collection_id_count;
+                Bool           debug; ///< Limit the search results to debug symbols only!
+                Uint64*        binary_ids;
+                Uint64         binary_id_count;
+            } get_similar_functions;
         };
     } ReaiRequest;
 
