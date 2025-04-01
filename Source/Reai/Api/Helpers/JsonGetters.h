@@ -237,6 +237,58 @@
         GET_OPTIONAL_JSON_STRING (json_similar_fn, "sha_256_hash", (similar_fn).sha_256_hash);     \
     } while (0)
 
+#define GET_JSON_COLLECTION_INFO(json_collection_info, collection_info)                            \
+    do {                                                                                           \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_info,                                                                  \
+            "collection_name",                                                                     \
+            (collection_info).collection_name                                                      \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_info,                                                                  \
+            "description",                                                                         \
+            (collection_info).description                                                          \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_info,                                                                  \
+            "collection_scope",                                                                    \
+            (collection_info).collection_scope                                                     \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_info,                                                                  \
+            "collection_owner",                                                                    \
+            (collection_info).collection_owner                                                     \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_BOOL (                                                                   \
+            json_collection_info,                                                                  \
+            "official_collection",                                                                 \
+            (collection_info).official_collection                                                  \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING_ARR (                                                             \
+            json_collection_info,                                                                  \
+            "collection_tags",                                                                     \
+            (collection_info).collection_tags                                                      \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_collection_info,                                                                  \
+            "collection_size",                                                                     \
+            (collection_info).collection_size                                                      \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_collection_info,                                                                  \
+            "collection_id",                                                                       \
+            (collection_info).collection_id                                                        \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (json_collection_info, "creation", (collection_info).creation);   \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_info,                                                                  \
+            "model_name",                                                                          \
+            (collection_info).model_name                                                           \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (json_collection_info, "team_id", (collection_info).team_id);        \
+    } while (0)
+
+
 #define GET_JSON_AI_MODEL(json_ai_model, model_name)                                               \
     do {                                                                                           \
         GET_JSON_STRING (json_ai_model, "model_name", model_name);                                 \

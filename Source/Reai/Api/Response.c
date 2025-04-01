@@ -16,6 +16,7 @@
 
 /* local */
 #include "Helpers/JsonGetters.h"
+#include "Reai/Common.h"
 
 PRIVATE Bool         json_response_get_bool (cJSON* json, CString name);
 PRIVATE Uint64*      json_response_get_u64 (cJSON* json, CString name, Uint64* num);
@@ -557,6 +558,50 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
+        case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
+            response->type = REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO;
+            GET_JSON_BOOL (json, "status", response->get_similar_functions.status);
+
+            cJSON* data = cJSON_GetObjectItem (json, "data");
+            if (data) {
+                cJSON* results = cJSON_GetObjectItem (data, "results");
+                if (results) {
+                    GET_JSON_CUSTOM_ARR (
+                        results,
+                        ReaiCollectionInfo,
+                        collection_info,
+                        GET_JSON_COLLECTION_INFO,
+                        response->basic_collection_info.data.results
+                    );
+                }
+            }
+
+            GET_OPTIONAL_JSON_STRING (json, "message", response->get_similar_functions.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->get_similar_functions.errors
+                    );
+                }
+            }
+
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
             response->type = REAI_RESPONSE_TYPE_VALIDATION_ERR;
 
@@ -927,6 +972,32 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             }
             FREE (response->poll_ai_decompilation.message);
             FREE (response->poll_ai_decompilation.data.decompilation);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS : {
+            if (response->get_similar_functions.data) {
+                reai_similar_fn_vec_destroy (response->get_similar_functions.data);
+                response->get_similar_functions.data = NULL;
+            }
+            if (response->poll_ai_decompilation.errors) {
+                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
+                response->poll_ai_decompilation.errors = NULL;
+            }
+            FREE (response->poll_ai_decompilation.message);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
+            if (response->basic_collection_info.data.results) {
+                reai_collection_info_vec_destroy (response->basic_collection_info.data.results);
+                response->basic_collection_info.data.results = NULL;
+            }
+            if (response->poll_ai_decompilation.errors) {
+                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
+                response->poll_ai_decompilation.errors = NULL;
+            }
+            FREE (response->poll_ai_decompilation.message);
             break;
         }
 

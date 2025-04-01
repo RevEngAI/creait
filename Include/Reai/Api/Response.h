@@ -12,6 +12,7 @@
 #include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
 #include <Reai/ApiError.h>
+#include <Reai/CollectionInfo.h>
 #include <Reai/FnInfo.h>
 #include <Reai/QueryResult.h>
 #include <Reai/SimilarFn.h>
@@ -69,6 +70,9 @@ extern "C" {
 
         /* function overview */
         REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
+
+        /* collections */
+        REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO = REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO,
 
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
@@ -244,6 +248,15 @@ extern "C" {
                 CString           message;
                 ReaiApiErrors*    errors;
             } get_similar_functions;
+
+            struct {
+                Bool status;
+                struct {
+                    ReaiCollectionInfoVec* results;
+                } data;
+                CString        message;
+                ReaiApiErrors* errors;
+            } basic_collection_info;
         };
     } ReaiResponse;
 

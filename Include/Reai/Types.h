@@ -34,6 +34,8 @@ typedef const Char *CString;
 typedef Uint64 ReaiBinaryId;
 typedef Uint64 ReaiAnalysisId;
 typedef Uint64 ReaiFunctionId;
+typedef Uint64 ReaiCollectionId;
+typedef Uint64 ReaiTeamId;
 
 // clang-format on
 

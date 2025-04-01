@@ -18,6 +18,8 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Api/Response.h"
+
 struct Reai {
     CURL*              curl;
     struct curl_slist* headers;
@@ -481,6 +483,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             );
             SET_METHOD ("GET");
             MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS);
+            break;
+        }
+
+        case REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO : {
+            SET_ENDPOINT ("%s/v2/collections", reai->host);
+            SET_METHOD ("GET");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO);
             break;
         }
 
@@ -1098,5 +1107,106 @@ ReaiAiDecompilationStatus
     } else {
         REAI_LOG_ERROR ("Failed to make reveng.ai request");
         return REAI_AI_DECOMPILATION_STATUS_ERROR;
+    }
+}
+
+ReaiSimilarFnVec* reai_get_similar_functions (
+    Reai*             reai,
+    ReaiResponse*     response,
+    ReaiFunctionId    fn_id,
+    Uint64            limit,
+    Float64           distance,
+    ReaiCollectionId* collection_ids,
+    Size              collection_ids_count,
+    Bool              debug,
+    ReaiBinaryId*     binary_ids,
+    Size              binary_ids_count
+) {
+    RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                               = {0};
+    request.type                                      = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS;
+    request.get_similar_functions.function_id         = fn_id;
+    request.get_similar_functions.limit               = limit;
+    request.get_similar_functions.distance            = distance;
+    request.get_similar_functions.collection_ids      = collection_ids;
+    request.get_similar_functions.collection_id_count = collection_ids_count;
+    request.get_similar_functions.debug               = debug;
+    request.get_similar_functions.binary_ids          = binary_ids;
+    request.get_similar_functions.binary_id_count     = binary_ids_count;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS : {
+                REAI_LOG_TRACE (
+                    "Found %llu similar functions for function id %llu",
+                    response->get_similar_functions.data->count,
+                    fn_id
+                );
+                return response->get_similar_functions.data;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR (
+                    "Failed to find similar functions for function id %llu. Validation Error.",
+                    fn_id
+                );
+                return NULL;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
+    }
+}
+
+ReaiCollectionInfoVec* reai_get_basic_collection_info (
+    Reai*                         reai,
+    ReaiResponse*                 response,
+    CString                       search_term,
+    ReaiCollectionInfoFilterFlags filters,
+    Uint64                        limit,
+    Uint64                        offset,
+    ReaiCollectionInfoOrderBy     order_by,
+    ReaiCollectionInfoOrder       order
+) {
+    RETURN_VALUE_IF (!reai || !response || !search_term, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                        = {0};
+    request.type                               = REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO;
+    request.basic_collections_info.search_term = search_term;
+    request.basic_collections_info.filters     = filters;
+    request.basic_collections_info.limit       = limit;
+    request.basic_collections_info.offset      = offset;
+    request.basic_collections_info.order_by    = order_by;
+    request.basic_collections_info.order       = order;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
+                REAI_LOG_TRACE (
+                    "Found %llu similar collections for search term \"%s\" with provided filters",
+                    response->basic_collection_info.data.results->count,
+                    search_term
+                );
+                return response->basic_collection_info.data.results;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR (
+                    "Failed to find similar functions for search term \"%s\" with provided "
+                    "filters. Validation Error.",
+                    search_term
+                );
+                return NULL;
+            }
+            default : {
+                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
     }
 }

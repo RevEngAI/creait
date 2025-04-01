@@ -37,6 +37,33 @@ extern "C" {
         REAI_BINARY_SCOPE_MAX
     } ReaiBinaryScope;
 
+    typedef Uint8 ReaiCollectionInfoFilterFlags;
+    typedef enum ReaiCollectionInfoFilterFlagBits : ReaiCollectionInfoFilterFlags {
+        REAI_COLLECTION_INFO_FILTER_NONE       = 0,
+        REAI_COLLECTION_INFO_FILTER_OFFICIAL   = 1 << 0,
+        REAI_COLLECTION_INFO_FILTER_USER       = 1 << 1,
+        REAI_COLLECTION_INFO_FILTER_TEAM       = 1 << 2,
+        REAI_COLLECTION_INFO_FILTER_PUBLIC     = 1 << 3,
+        REAI_COLLECTION_INFO_FILTER_HIDE_EMPTY = 1 << 4,
+        REAI_COLLECTION_INFO_FILTER_MAX
+    } ReaiCollectionInfoFilterFlagBits;
+
+    typedef enum ReaiColectionInfoOrderBy {
+        REAI_COLLECTION_INFO_ORDER_BY_INVALID = 0,
+        REAI_COLLECTION_INFO_ORDER_BY_CREATED,
+        REAI_COLLECTION_INFO_ORDER_BY_COLLECTION,
+        REAI_COLLECTION_INFO_ORDER_BY_MODEL,
+        REAI_COLLECTION_INFO_ORDER_BY_OWNER,
+        REAI_COLLECTION_INFO_ORDER_BY_COLLECTION_SIZE,
+        REAI_COLLECTION_INFO_ORDER_BY_MAX
+    } ReaiCollectionInfoOrderBy;
+
+    typedef enum ReaiColectionInfoOrder {
+        REAI_COLLECTION_INFO_ORDER_ASC = 0,
+        REAI_COLLECTION_INFO_ORDER_DESC,
+        REAI_COLLECTION_INFO_ORDER_MAX
+    } ReaiCollectionInfoOrder;
+
     /**
      * @b Each request types represents a unique API endpoint it'll communicate
      * with.
@@ -86,6 +113,9 @@ extern "C" {
 
         /* functions overview */
         REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
+
+        /* collections */
+        REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO,
 
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
@@ -185,7 +215,7 @@ extern "C" {
 
             struct {
                 ReaiFunctionId function_id;
-                Uint32         max_result_count;
+                Uint32         limit;
                 Float32        distance;
                 Uint64*        collection_ids;
                 Uint64         collection_id_count;
@@ -193,6 +223,15 @@ extern "C" {
                 Uint64*        binary_ids;
                 Uint64         binary_id_count;
             } get_similar_functions;
+
+            struct {
+                CString                       search_term;
+                ReaiCollectionInfoFilterFlags filters;
+                Uint64                        limit;
+                Uint64                        offset;
+                ReaiCollectionInfoOrderBy     order_by;
+                ReaiCollectionInfoOrder       order;
+            } basic_collections_info;
         };
     } ReaiRequest;
 

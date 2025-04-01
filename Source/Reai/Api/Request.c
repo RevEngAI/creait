@@ -405,6 +405,49 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             break;
         }
 
+        case REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO : {
+            JSON_ADD_STRING (json, "search_term", request->basic_collections_info.search_term);
+
+            // convert filters bits to string array
+            ReaiCollectionInfoFilterFlags filter_flags = request->basic_collections_info.filters;
+            CString                       filters[6]   = {0};
+            CString*                      filter_iter  = filters;
+            if (filter_flags != REAI_COLLECTION_INFO_FILTER_NONE) {
+                CString filter_names[] =
+                    {"official_only", "user_only", "team_only", "public_only", "hide_empty", NULL};
+                for (Size i = 0; i < 5; i++) {
+                    if ((filter_flags & (1 << i)) == (1 << i)) {
+                        *filter_iter++ = filter_names[i];
+                    }
+                }
+                JSON_ADD_STRING_ARR (json, "filters", filters, filter_iter - filters);
+            }
+
+            // limit is clamped between 5 and 50 as per the API endpoint specification
+            Uint64 limit = request->basic_collections_info.limit;
+            JSON_ADD_U64 (json, "limit", limit < 5 ? 5 : limit > 50 ? 50 : limit);
+
+            JSON_ADD_U64 (json, "offset", request->basic_collections_info.offset);
+
+            // convert order_by enum to string
+            CString order_by[] =
+                {NULL, "created", "collection", "model", "owner", "collection_size", NULL};
+            if (request->basic_collections_info.order_by &&
+                request->basic_collections_info.order_by < REAI_COLLECTION_INFO_ORDER_BY_MAX) {
+                JSON_ADD_STRING (
+                    json,
+                    "order_by",
+                    order_by[request->basic_collections_info.order_by]
+                );
+            }
+            // convert order enum to string
+            CString order[] = {NULL, "ASC", "DESC", NULL};
+            if (request->basic_collections_info.order &&
+                request->basic_collections_info.order < REAI_COLLECTION_INFO_ORDER_MAX) {
+                JSON_ADD_STRING (json, "order", order[request->basic_collections_info.order]);
+            }
+        }
+
         default : {
             GOTO_HANDLER_IF_REACHED (
                 CONVERSION_FAILED,

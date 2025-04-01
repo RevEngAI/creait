@@ -105,6 +105,30 @@ extern "C" {
     ReaiAiDecompilationStatus
         reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
 
+    ReaiSimilarFnVec* reai_get_similar_functions (
+        Reai*             reai,
+        ReaiResponse*     response,
+        ReaiFunctionId    fn_id,
+        Uint64            limit,
+        Float64           distance,
+        ReaiCollectionId* collection_ids,
+        Size              collection_ids_count,
+        Bool              debug,
+        ReaiBinaryId*     binary_ids,
+        Size              binary_ids_count
+    );
+
+    ReaiCollectionInfoVec* reai_get_basic_collection_info (
+        Reai*                         reai,
+        ReaiResponse*                 response,
+        CString                       search_term,
+        ReaiCollectionInfoFilterFlags filters,
+        Uint64                        limit,
+        Uint64                        offset,
+        ReaiCollectionInfoOrderBy     order_by,
+        ReaiCollectionInfoOrder       order
+    );
+
 #ifdef __cplusplus
 }
 #endif
