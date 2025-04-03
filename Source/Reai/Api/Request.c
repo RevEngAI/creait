@@ -339,13 +339,13 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 JSON_ADD_F64 (json, "distance", request->batch_binary_symbol_ann.distance);
             }
 
-            if (request->batch_binary_symbol_ann.collection &&
-                request->batch_binary_symbol_ann.collection_count) {
+            if (request->batch_binary_symbol_ann.collections &&
+                request->batch_binary_symbol_ann.collections->count) {
                 JSON_ADD_STRING_ARR (
                     json,
                     "collection",
-                    request->batch_binary_symbol_ann.collection,
-                    request->batch_binary_symbol_ann.collection_count
+                    request->batch_binary_symbol_ann.collections->items,
+                    request->batch_binary_symbol_ann.collections->count
                 );
             }
 
@@ -367,33 +367,33 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 JSON_ADD_F64 (json, "distance", request->batch_function_symbol_ann.distance);
             }
 
-            if (request->batch_function_symbol_ann.collection &&
-                request->batch_function_symbol_ann.collection_count) {
+            if (request->batch_function_symbol_ann.collections &&
+                request->batch_function_symbol_ann.collections->count) {
                 JSON_ADD_STRING_ARR (
                     json,
                     "collection",
-                    request->batch_function_symbol_ann.collection,
-                    request->batch_function_symbol_ann.collection_count
+                    request->batch_function_symbol_ann.collections->items,
+                    request->batch_function_symbol_ann.collections->count
                 );
             }
 
             if (request->batch_function_symbol_ann.function_ids &&
-                request->batch_function_symbol_ann.function_id_count) {
+                request->batch_function_symbol_ann.function_ids->count) {
                 JSON_ADD_U64_ARR (
                     json,
                     "function_id_list",
-                    request->batch_function_symbol_ann.function_ids,
-                    request->batch_function_symbol_ann.function_id_count
+                    request->batch_function_symbol_ann.function_ids->items,
+                    request->batch_function_symbol_ann.function_ids->count
                 );
             }
 
             if (request->batch_function_symbol_ann.speculative_function_ids &&
-                request->batch_function_symbol_ann.speculative_function_id_count) {
+                request->batch_function_symbol_ann.speculative_function_ids->count) {
                 JSON_ADD_U64_ARR (
                     json,
                     "speculative_function_ids",
-                    request->batch_function_symbol_ann.speculative_function_ids,
-                    request->batch_function_symbol_ann.speculative_function_id_count
+                    request->batch_function_symbol_ann.speculative_function_ids->items,
+                    request->batch_function_symbol_ann.speculative_function_ids->count
                 );
             }
 
@@ -403,77 +403,6 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
         case REAI_REQUEST_TYPE_BEGIN_AI_DECOMPILATION : {
             JSON_ADD_U64 (json, "function_id", request->begin_ai_decompilation.function_id);
             break;
-        }
-
-        case REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO : {
-            JSON_ADD_STRING (json, "search_term", request->basic_collections_info.search_term);
-
-            // convert filters bits to string array
-            ReaiCollectionBasicInfoFilterFlags filter_flags =
-                request->basic_collections_info.filters;
-            CString  filters[6]  = {0};
-            CString* filter_iter = filters;
-            if (filter_flags != REAI_COLLECTION_BASIC_INFO_FILTER_NONE) {
-                CString filter_names[] =
-                    {"official_only", "user_only", "team_only", "public_only", "hide_empty", NULL};
-                for (Size i = 0; i < 5; i++) {
-                    if ((filter_flags & (1 << i)) == (1 << i)) {
-                        *filter_iter++ = filter_names[i];
-                    }
-                }
-                JSON_ADD_STRING_ARR (json, "filters", filters, filter_iter - filters);
-            }
-
-            // limit is clamped between 5 and 50 as per the API endpoint specification
-            Uint64 limit = request->basic_collections_info.limit;
-            JSON_ADD_U64 (json, "limit", limit < 5 ? 5 : limit > 50 ? 50 : limit);
-
-            JSON_ADD_U64 (json, "offset", request->basic_collections_info.offset);
-
-            // convert order_by enum to string
-            CString order_by[] =
-                {NULL, "created", "collection", "model", "owner", "collection_size", NULL};
-            if (request->basic_collections_info.order_by &&
-                request->basic_collections_info.order_by <
-                    REAI_COLLECTION_BASIC_INFO_ORDER_BY_MAX) {
-                JSON_ADD_STRING (
-                    json,
-                    "order_by",
-                    order_by[request->basic_collections_info.order_by]
-                );
-            }
-            // convert order enum to string
-            CString order[] = {NULL, "ASC", "DESC", NULL};
-            if (request->basic_collections_info.order_in &&
-                request->basic_collections_info.order_in <
-                    REAI_COLLECTION_BASIC_INFO_ORDER_IN_MAX) {
-                JSON_ADD_STRING (json, "order", order[request->basic_collections_info.order_in]);
-            }
-        }
-
-        case REAI_REQUEST_TYPE_COLLECTION_SEARCH : {
-            JSON_ADD_STRING (
-                json,
-                "partial_collection_name",
-                request->collection_search.partial_collection_name
-            );
-            JSON_ADD_STRING (
-                json,
-                "partial_binary_name",
-                request->collection_search.partial_binary_name
-            );
-            JSON_ADD_STRING (
-                json,
-                "partial_binary_sha256",
-                request->collection_search.partial_binary_sha256
-            );
-            JSON_ADD_STRING_ARR (
-                json,
-                "tags",
-                request->collection_search.tags,
-                request->collection_search.tag_count
-            );
-            JSON_ADD_STRING (json, "model_name", request->collection_search.model_name);
         }
 
         default : {

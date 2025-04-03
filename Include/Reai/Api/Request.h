@@ -191,20 +191,16 @@ extern "C" {
                 Size         results_per_function;
                 Bool     debug_mode; ///< Enabling this limits search results to debug symbols only
                 Float32  distance;
-                CString* collection;
-                Size     collection_count;
+                CStrVec* collections;
             } batch_binary_symbol_ann;
 
             struct {
-                Size            results_per_function;
-                Bool            debug_mode; ///< Enabling this gives better names
-                Float32         distance;
-                CString*        collection;
-                Size            collection_count;
-                ReaiFunctionId* function_ids;
-                Size            function_id_count;
-                ReaiFunctionId* speculative_function_ids;
-                Size            speculative_function_id_count;
+                Size     results_per_function;
+                Bool     debug_mode; ///< Enabling this gives better names
+                Float32  distance;
+                CStrVec* collections;
+                U64Vec*  function_ids;
+                U64Vec*  speculative_function_ids;
             } batch_function_symbol_ann;
 
             struct {
@@ -218,11 +214,9 @@ extern "C" {
                 ReaiFunctionId function_id;
                 Uint32         limit;
                 Float32        distance;
-                Uint64*        collection_ids;
-                Uint64         collection_id_count;
+                U64Vec*        collection_ids;
                 Bool           debug; ///< Limit the search results to debug symbols only!
-                Uint64*        binary_ids;
-                Uint64         binary_id_count;
+                U64Vec*        binary_ids;
             } get_similar_functions;
 
             struct {
@@ -235,11 +229,12 @@ extern "C" {
             } basic_collections_info;
 
             struct {
+                Size     page;
+                Size     page_size;
                 CString  partial_collection_name;
                 CString  partial_binary_name;
                 CString  partial_binary_sha256;
-                CString* tags;
-                Size     tag_count;
+                CStrVec* tags;
                 CString  model_name;
             } collection_search;
         };

@@ -368,7 +368,7 @@ HANDLER (batch_binary_symbol_ann, {
 HANDLER (batch_function_symbol_ann, {
     if (!strcmp (endpoint_str, "/v1/ann/symbol/batch")) {
         if (request->batch_function_symbol_ann.function_ids &&
-            request->batch_function_symbol_ann.function_id_count) {
+            request->batch_function_symbol_ann.function_ids->count) {
             RESPONSE_SET (
                 "{\"success\": true,\"settings\": {\"collection\": [],\"debug_mode\": "
                 "false,\"distance\": 0.1,\"result_per_function\": 5},\"function_matches\": "

@@ -45,7 +45,7 @@ Reai*                reai_init_curl_headers (Reai* reai, CString api_key);
 Reai*                reai_init_conn (Reai* reai);
 Reai*                reai_deinit_conn (Reai* reai);
 
-#define ENDPOINT_URL_STR_SIZE 100
+#define ENDPOINT_URL_STR_SIZE 1024
 
 /**
  * @b Create a new @c Reai object to handle connection with RevEngAI servers.
@@ -223,6 +223,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
     /* temporary buffer to hold endpoint url */
     Char endpoint_str[ENDPOINT_URL_STR_SIZE];
+    Size urlstr_end = 0;
 
     /* from data for uploading file */
     struct curl_mime*     mime     = NULL;
@@ -230,9 +231,22 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
 #define SET_ENDPOINT(fmtstr, ...)                                                                  \
     do {                                                                                           \
-        snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);                       \
+        urlstr_end = snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);          \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
         REAI_LOG_TRACE ("ENDPOINT : '%s'", endpoint_str);                                          \
+    } while (0)
+
+#define SET_PATH_QUERY_PARAM(fmtstr, ...)                                                          \
+    do {                                                                                           \
+        urlstr_end += snprintf (                                                                   \
+            endpoint_str,                                                                          \
+            sizeof (endpoint_str),                                                                 \
+            "%s" fmtstr,                                                                           \
+            endpoint_str,                                                                          \
+            __VA_ARGS__                                                                            \
+        );                                                                                         \
+        curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
+        REAI_LOG_TRACE ("ADDED NEW PATH PARAM. NEW ENDPOINT : '%s'", endpoint_str);                \
     } while (0)
 
 #define SET_METHOD(method)                                                                         \
@@ -496,7 +510,48 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         case REAI_REQUEST_TYPE_COLLECTION_SEARCH : {
             SET_ENDPOINT ("%s/v2/search/collections", reai->host);
             SET_METHOD ("GET");
-            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_COLLECTION_SEARCH);
+
+            SET_PATH_QUERY_PARAM (
+                "?page=%zu",
+                request->collection_search.page ? request->collection_search.page : 1
+            );
+
+            if (request->collection_search.page_size) {
+                SET_PATH_QUERY_PARAM ("&page_size=%zu", request->collection_search.page_size);
+            }
+
+            if (request->collection_search.partial_collection_name) {
+                SET_PATH_QUERY_PARAM (
+                    "&partial_collection_name=%s",
+                    request->collection_search.partial_collection_name
+                );
+            }
+
+            if (request->collection_search.partial_binary_name) {
+                SET_PATH_QUERY_PARAM (
+                    "&partial_binary_name=%s",
+                    request->collection_search.partial_binary_name
+                );
+            }
+
+            if (request->collection_search.partial_binary_sha256) {
+                SET_PATH_QUERY_PARAM (
+                    "&partial_binary_sha256=%s",
+                    request->collection_search.partial_binary_sha256
+                );
+            }
+
+            if (request->collection_search.model_name) {
+                SET_PATH_QUERY_PARAM ("&model_name=%s", request->collection_search.model_name);
+            }
+
+            if (request->collection_search.tags) {
+                REAI_VEC_FOREACH (request->collection_search.tags, tag, {
+                    SET_PATH_QUERY_PARAM ("&tags=%s", *tag);
+                });
+            }
+
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_COLLECTION_SEARCH);
             break;
         }
 
@@ -510,6 +565,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 #undef MAKE_REQUEST
 #undef SET_METHOD
 #undef SET_ENDPOINT
+#undef SET_PATH_QUERY_PARAM
 
 DEFAULT_RETURN:
     // restore api key in headers
@@ -902,7 +958,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     ReaiBinaryId  bin_id,
     Size          max_results_per_function,
     Float64       max_distance,
-    CStrVec*      collection,
+    CStrVec*      collections,
     Bool          debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !bin_id, NULL, ERR_INVALID_ARGUMENTS);
@@ -912,8 +968,7 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
     request.type        = REAI_REQUEST_TYPE_BATCH_BINARY_SYMBOL_ANN;
 
     request.batch_binary_symbol_ann.binary_id            = bin_id;
-    request.batch_binary_symbol_ann.collection           = collection ? collection->items : NULL;
-    request.batch_binary_symbol_ann.collection_count     = collection ? collection->count : 0;
+    request.batch_binary_symbol_ann.collections          = collections;
     request.batch_binary_symbol_ann.results_per_function = max_results_per_function;
     request.batch_binary_symbol_ann.distance             = max_distance;
     request.batch_binary_symbol_ann.debug_mode           = debug_mode;
@@ -949,7 +1004,7 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     U64Vec*        speculative_fn_ids,
     Size           max_results_per_function,
     Float64        max_distance,
-    CStrVec*       collection,
+    CStrVec*       collections,
     Bool           debug_mode
 ) {
     RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
@@ -958,17 +1013,14 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
     ReaiRequest request = {0};
     request.type        = REAI_REQUEST_TYPE_BATCH_FUNCTION_SYMBOL_ANN;
 
-    request.batch_function_symbol_ann.function_ids      = ((Uint64[]) {fn_id});
-    request.batch_function_symbol_ann.function_id_count = 1;
-    request.batch_function_symbol_ann.speculative_function_ids =
-        speculative_fn_ids ? speculative_fn_ids->items : NULL;
-    request.batch_function_symbol_ann.speculative_function_id_count =
-        speculative_fn_ids ? speculative_fn_ids->count : 0;
-    request.batch_function_symbol_ann.collection           = collection ? collection->items : NULL;
-    request.batch_function_symbol_ann.collection_count     = collection ? collection->count : 0;
-    request.batch_function_symbol_ann.results_per_function = max_results_per_function;
-    request.batch_function_symbol_ann.distance             = max_distance;
-    request.batch_function_symbol_ann.debug_mode           = debug_mode;
+    U64Vec fn_ids = {.items = ((Uint64[]) {fn_id}), .count = 1, .capacity = 1};
+
+    request.batch_function_symbol_ann.function_ids             = &fn_ids;
+    request.batch_function_symbol_ann.speculative_function_ids = speculative_fn_ids;
+    request.batch_function_symbol_ann.collections              = collections;
+    request.batch_function_symbol_ann.results_per_function     = max_results_per_function;
+    request.batch_function_symbol_ann.distance                 = max_distance;
+    request.batch_function_symbol_ann.debug_mode               = debug_mode;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -1144,11 +1196,9 @@ ReaiSimilarFnVec* reai_get_similar_functions (
     request.get_similar_functions.function_id    = fn_id;
     request.get_similar_functions.limit          = limit;
     request.get_similar_functions.distance       = distance;
-    request.get_similar_functions.collection_ids = collection_ids ? collection_ids->items : NULL;
-    request.get_similar_functions.collection_id_count = collection_ids ? collection_ids->count : 0;
-    request.get_similar_functions.debug               = debug;
-    request.get_similar_functions.binary_ids          = binary_ids ? binary_ids->items : NULL;
-    request.get_similar_functions.binary_id_count     = binary_ids ? binary_ids->count : 0;
+    request.get_similar_functions.collection_ids = collection_ids;
+    request.get_similar_functions.debug          = debug;
+    request.get_similar_functions.binary_ids     = binary_ids;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -1244,8 +1294,7 @@ ReaiCollectionSearchResultVec* reai_collection_search (
     request.collection_search.partial_collection_name = partial_collection_name;
     request.collection_search.partial_binary_name     = partial_binary_name;
     request.collection_search.partial_binary_sha256   = partial_binary_sha256;
-    request.collection_search.tags                    = tags ? tags->items : NULL;
-    request.collection_search.tag_count               = tags ? tags->count : 0;
+    request.collection_search.tags                    = tags;
     request.collection_search.model_name              = model_name;
 
     if ((response = reai_request (reai, &request, response))) {
