@@ -1128,29 +1128,27 @@ ReaiAiDecompilationStatus
 }
 
 ReaiSimilarFnVec* reai_get_similar_functions (
-    Reai*             reai,
-    ReaiResponse*     response,
-    ReaiFunctionId    fn_id,
-    Uint64            limit,
-    Float64           distance,
-    ReaiCollectionId* collection_ids,
-    Size              collection_ids_count,
-    Bool              debug,
-    ReaiBinaryId*     binary_ids,
-    Size              binary_ids_count
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiFunctionId fn_id,
+    Uint64         limit,
+    Float64        distance,
+    U64Vec*        collection_ids,
+    Bool           debug,
+    U64Vec*        binary_ids
 ) {
     RETURN_VALUE_IF (!reai || !response || !fn_id, NULL, ERR_INVALID_ARGUMENTS);
 
-    ReaiRequest request                               = {0};
-    request.type                                      = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS;
-    request.get_similar_functions.function_id         = fn_id;
-    request.get_similar_functions.limit               = limit;
-    request.get_similar_functions.distance            = distance;
-    request.get_similar_functions.collection_ids      = collection_ids;
-    request.get_similar_functions.collection_id_count = collection_ids_count;
+    ReaiRequest request                          = {0};
+    request.type                                 = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS;
+    request.get_similar_functions.function_id    = fn_id;
+    request.get_similar_functions.limit          = limit;
+    request.get_similar_functions.distance       = distance;
+    request.get_similar_functions.collection_ids = collection_ids ? collection_ids->items : NULL;
+    request.get_similar_functions.collection_id_count = collection_ids ? collection_ids->count : 0;
     request.get_similar_functions.debug               = debug;
-    request.get_similar_functions.binary_ids          = binary_ids;
-    request.get_similar_functions.binary_id_count     = binary_ids_count;
+    request.get_similar_functions.binary_ids          = binary_ids ? binary_ids->items : NULL;
+    request.get_similar_functions.binary_id_count     = binary_ids ? binary_ids->count : 0;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -1236,8 +1234,7 @@ ReaiCollectionSearchResultVec* reai_collection_search (
     CString       partial_collection_name,
     CString       partial_binary_name,
     CString       partial_binary_sha256,
-    CString*      tags,
-    Size          tag_count,
+    CStrVec*      tags,
     CString       model_name
 ) {
     RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
@@ -1247,8 +1244,8 @@ ReaiCollectionSearchResultVec* reai_collection_search (
     request.collection_search.partial_collection_name = partial_collection_name;
     request.collection_search.partial_binary_name     = partial_binary_name;
     request.collection_search.partial_binary_sha256   = partial_binary_sha256;
-    request.collection_search.tags                    = tags;
-    request.collection_search.tag_count               = tag_count;
+    request.collection_search.tags                    = tags ? tags->items : NULL;
+    request.collection_search.tag_count               = tags ? tags->count : 0;
     request.collection_search.model_name              = model_name;
 
     if ((response = reai_request (reai, &request, response))) {

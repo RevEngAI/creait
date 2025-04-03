@@ -106,16 +106,14 @@ extern "C" {
         reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
 
     ReaiSimilarFnVec* reai_get_similar_functions (
-        Reai*             reai,
-        ReaiResponse*     response,
-        ReaiFunctionId    fn_id,
-        Uint64            limit,
-        Float64           distance,
-        ReaiCollectionId* collection_ids,
-        Size              collection_ids_count,
-        Bool              debug,
-        ReaiBinaryId*     binary_ids,
-        Size              binary_ids_count
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiFunctionId fn_id,
+        Uint64         limit,
+        Float64        distance,
+        U64Vec*        collection_ids,
+        Bool           debug,
+        U64Vec*        binary_ids
     );
 
     ReaiCollectionBasicInfoVec* reai_get_basic_collection_info (
@@ -135,8 +133,7 @@ extern "C" {
         CString       partial_collection_name,
         CString       partial_binary_name,
         CString       partial_binary_sha256,
-        CString*      tags,
-        Size          tag_count,
+        CStrVec*      tags,
         CString       model_name
     );
 
