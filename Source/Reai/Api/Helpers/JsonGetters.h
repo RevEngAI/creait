@@ -237,7 +237,7 @@
         GET_OPTIONAL_JSON_STRING (json_similar_fn, "sha_256_hash", (similar_fn).sha_256_hash);     \
     } while (0)
 
-#define GET_JSON_COLLECTION_INFO(json_collection_info, collection_info)                            \
+#define GET_JSON_COLLECTION_BASIC_INFO(json_collection_info, collection_info)                      \
     do {                                                                                           \
         GET_OPTIONAL_JSON_STRING (                                                                 \
             json_collection_info,                                                                  \
@@ -286,6 +286,50 @@
             (collection_info).model_name                                                           \
         );                                                                                         \
         GET_OPTIONAL_JSON_U64 (json_collection_info, "team_id", (collection_info).team_id);        \
+    } while (0)
+
+#define GET_JSON_COLLECTION_SEARCH_RESULT(json_collection_search_result, collection_search_result) \
+    do {                                                                                           \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_collection_search_result,                                                         \
+            "collection_id",                                                                       \
+            (collection_search_result).collection_id                                               \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_search_result,                                                         \
+            "collection_name",                                                                     \
+            (collection_search_result).collection_name                                             \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_search_result,                                                         \
+            "scope",                                                                               \
+            (collection_search_result).scope                                                       \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_search_result,                                                         \
+            "last_updated_at",                                                                     \
+            (collection_search_result).last_updated_at                                             \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_collection_search_result,                                                         \
+            "model_id",                                                                            \
+            (collection_search_result).model_id                                                    \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_search_result,                                                         \
+            "model_name",                                                                          \
+            (collection_search_result).model_name                                                  \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_collection_search_result,                                                         \
+            "owned_by",                                                                            \
+            (collection_search_result).owned_by                                                    \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING_ARR (                                                             \
+            json_collection_search_result,                                                         \
+            "tags",                                                                                \
+            (collection_search_result).tags                                                        \
+        );                                                                                         \
     } while (0)
 
 

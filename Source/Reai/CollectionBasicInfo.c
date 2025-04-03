@@ -1,12 +1,12 @@
 /**
- * @file CollectionInfo.c
+ * @file CollectionBasicInfo.c
  * @date 1st April 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
 /* reai */
-#include <Reai/CollectionInfo.h>
+#include <Reai/CollectionBasicInfo.h>
 
 /* libc */
 #include <string.h>
@@ -28,7 +28,9 @@
  * @return @c clone on success.
  * @return @c NULL otherwise.
  * */
-PUBLIC ReaiCollectionInfo* reai_collection_info_clone_deinit (ReaiCollectionInfo* clone) {
+PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_deinit (
+    ReaiCollectionBasicInfo* clone
+) {
     RETURN_VALUE_IF (!clone, NULL, ERR_INVALID_ARGUMENTS);
 
     DESTROY_CSTR_CLONE (clone->collection_name);
@@ -55,8 +57,10 @@ PUBLIC ReaiCollectionInfo* reai_collection_info_clone_deinit (ReaiCollectionInfo
  * @return @c dst on success.
  * @return @c NULL otherwise.
  * */
-PUBLIC ReaiCollectionInfo*
-    reai_collection_info_clone_init (ReaiCollectionInfo* dst, ReaiCollectionInfo* src) {
+PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_init (
+    ReaiCollectionBasicInfo* dst,
+    ReaiCollectionBasicInfo* src
+) {
     RETURN_VALUE_IF (!dst || !src, NULL, ERR_INVALID_ARGUMENTS);
 
     CREATE_CSTR_CLONE (dst->collection_name, src->collection_name);
@@ -75,7 +79,7 @@ PUBLIC ReaiCollectionInfo*
     return dst;
 
 CLONE_FAILED:
-    reai_collection_info_clone_deinit (dst);
+    reai_collection_basic_info_clone_deinit (dst);
     return NULL;
 }
 

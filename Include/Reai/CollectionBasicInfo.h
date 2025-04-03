@@ -5,8 +5,8 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#ifndef REAI_COLLECTION_INFO_H
-#define REAI_COLLECTION_INFO_H
+#ifndef REAI_COLLECTION_BASIC_INFO_H
+#define REAI_COLLECTION_BASIC_INFO_H
 
 #include <Reai/Common.h>
 #include <Reai/Types.h>
@@ -19,7 +19,7 @@ extern "C" {
     /**
      * @b Contains parsed JSON response for GET `/v2/collections` endpoint
      * */
-    typedef struct ReaiCollectionInfo {
+    typedef struct ReaiCollectionBasicInfo {
         CString          collection_name;
         CString          description;
         CString          collection_scope;
@@ -31,18 +31,21 @@ extern "C" {
         CString          creation;
         ReaiTeamId       team_id;
         CString          model_name;
-    } ReaiCollectionInfo;
+    } ReaiCollectionBasicInfo;
 
-    ReaiCollectionInfo* reai_collection_info_clone_deinit (ReaiCollectionInfo* clone);
-    ReaiCollectionInfo*
-        reai_collection_info_clone_init (ReaiCollectionInfo* dst, ReaiCollectionInfo* src);
+    ReaiCollectionBasicInfo* reai_collection_basic_info_clone_deinit (ReaiCollectionBasicInfo* clone
+    );
+    ReaiCollectionBasicInfo* reai_collection_basic_info_clone_init (
+        ReaiCollectionBasicInfo* dst,
+        ReaiCollectionBasicInfo* src
+    );
 
     REAI_MAKE_VEC (
-        ReaiCollectionInfoVec,
-        collection_info,
-        ReaiCollectionInfo,
-        reai_collection_info_clone_init,
-        reai_collection_info_clone_deinit
+        ReaiCollectionBasicInfoVec,
+        collection_basic_info,
+        ReaiCollectionBasicInfo,
+        reai_collection_basic_info_clone_init,
+        reai_collection_basic_info_clone_deinit
     );
 
 
@@ -50,4 +53,4 @@ extern "C" {
 }
 #endif
 
-#endif // REAI_COLLECTION_INFO_H
+#endif // REAI_COLLECTION_BASIC_INFO_H

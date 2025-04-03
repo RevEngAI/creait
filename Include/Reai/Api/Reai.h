@@ -118,15 +118,26 @@ extern "C" {
         Size              binary_ids_count
     );
 
-    ReaiCollectionInfoVec* reai_get_basic_collection_info (
-        Reai*                         reai,
-        ReaiResponse*                 response,
-        CString                       search_term,
-        ReaiCollectionInfoFilterFlags filters,
-        Uint64                        limit,
-        Uint64                        offset,
-        ReaiCollectionInfoOrderBy     order_by,
-        ReaiCollectionInfoOrder       order
+    ReaiCollectionBasicInfoVec* reai_get_basic_collection_info (
+        Reai*                              reai,
+        ReaiResponse*                      response,
+        CString                            search_term,
+        ReaiCollectionBasicInfoFilterFlags filters,
+        Uint64                             limit,
+        Uint64                             offset,
+        ReaiCollectionBasicInfoOrderBy     order_by,
+        ReaiCollectionBasicInfoOrderIn     order_in
+    );
+
+    ReaiCollectionSearchResultVec* reai_collection_search (
+        Reai*         reai,
+        ReaiResponse* response,
+        CString       partial_collection_name,
+        CString       partial_binary_name,
+        CString       partial_binary_sha256,
+        CString*      tags,
+        Size          tag_count,
+        CString       model_name
     );
 
 #ifdef __cplusplus

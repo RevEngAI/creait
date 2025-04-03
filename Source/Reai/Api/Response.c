@@ -560,7 +560,7 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
         case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
             response->type = REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO;
-            GET_JSON_BOOL (json, "status", response->get_similar_functions.status);
+            GET_JSON_BOOL (json, "status", response->basic_collection_info.status);
 
             cJSON* data = cJSON_GetObjectItem (json, "data");
             if (data) {
@@ -568,15 +568,15 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                 if (results) {
                     GET_JSON_CUSTOM_ARR (
                         results,
-                        ReaiCollectionInfo,
-                        collection_info,
-                        GET_JSON_COLLECTION_INFO,
+                        ReaiCollectionBasicInfo,
+                        collection_basic_info,
+                        GET_JSON_COLLECTION_BASIC_INFO,
                         response->basic_collection_info.data.results
                     );
                 }
             }
 
-            GET_OPTIONAL_JSON_STRING (json, "message", response->get_similar_functions.message);
+            GET_OPTIONAL_JSON_STRING (json, "message", response->basic_collection_info.message);
 
             cJSON* errors = cJSON_GetObjectItem (json, "errors");
             if (errors) {
@@ -594,7 +594,51 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                         ReaiApiError,
                         api_error,
                         GET_JSON_API_ERROR,
-                        response->get_similar_functions.errors
+                        response->basic_collection_info.errors
+                    );
+                }
+            }
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_COLLECTION_SEARCH : {
+            response->type = REAI_RESPONSE_TYPE_COLLECTION_SEARCH;
+            GET_JSON_BOOL (json, "status", response->collection_search.status);
+
+            cJSON* data = cJSON_GetObjectItem (json, "data");
+            if (data) {
+                cJSON* results = cJSON_GetObjectItem (data, "results");
+                if (results) {
+                    GET_JSON_CUSTOM_ARR (
+                        results,
+                        ReaiCollectionSearchResult,
+                        collection_search_result,
+                        GET_JSON_COLLECTION_SEARCH_RESULT,
+                        response->collection_search.data.results
+                    );
+                }
+            }
+
+            GET_OPTIONAL_JSON_STRING (json, "message", response->collection_search.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->collection_search.errors
                     );
                 }
             }
@@ -990,8 +1034,23 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
 
         case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
             if (response->basic_collection_info.data.results) {
-                reai_collection_info_vec_destroy (response->basic_collection_info.data.results);
+                reai_collection_basic_info_vec_destroy (response->basic_collection_info.data.results
+                );
                 response->basic_collection_info.data.results = NULL;
+            }
+            if (response->poll_ai_decompilation.errors) {
+                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
+                response->poll_ai_decompilation.errors = NULL;
+            }
+            FREE (response->poll_ai_decompilation.message);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_COLLECTION_SEARCH : {
+            if (response->collection_search.data.results) {
+                reai_collection_search_result_vec_destroy (response->collection_search.data.results
+                );
+                response->collection_search.data.results = NULL;
             }
             if (response->poll_ai_decompilation.errors) {
                 reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);

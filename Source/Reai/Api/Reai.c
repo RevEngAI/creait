@@ -493,6 +493,13 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_COLLECTION_SEARCH : {
+            SET_ENDPOINT ("%s/v2/search/collections", reai->host);
+            SET_METHOD ("GET");
+            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_COLLECTION_SEARCH);
+            break;
+        }
+
         default :
             PRINT_ERR ("Invalid request.");
             break;
@@ -554,7 +561,8 @@ Bool reai_auth_check (Reai* reai, ReaiResponse* response, CString host, CString 
                 return false;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (false, "Unexpected type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return false;
             }
         }
     } else {
@@ -595,7 +603,8 @@ CString reai_upload_file (Reai* reai, ReaiResponse* response, CString file_path)
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -670,7 +679,8 @@ ReaiBinaryId reai_create_analysis (
                 return 0;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (0, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return 0;
             }
         }
     } else {
@@ -712,7 +722,8 @@ ReaiFnInfoVec*
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -764,7 +775,8 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -810,7 +822,8 @@ Bool reai_batch_renames_functions (
                 return false;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (false, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return false;
             }
         }
     } else {
@@ -855,7 +868,8 @@ Bool reai_rename_function (
                 return false;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (false, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return false;
             }
         }
     } else {
@@ -918,7 +932,8 @@ ReaiAnnFnMatchVec* reai_batch_binary_symbol_ann (
             }
 
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -969,7 +984,8 @@ ReaiAnnFnMatchVec* reai_batch_function_symbol_ann (
             }
 
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -1009,7 +1025,8 @@ ReaiAnalysisStatus
                 return REAI_ANALYSIS_STATUS_INVALID;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (REAI_ANALYSIS_STATUS_INVALID, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return REAI_ANALYSIS_STATUS_INVALID;
             }
         }
     } else {
@@ -1035,7 +1052,8 @@ CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response) {
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -1061,7 +1079,8 @@ Reai* reai_begin_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunct
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -1098,10 +1117,8 @@ ReaiAiDecompilationStatus
                 return REAI_AI_DECOMPILATION_STATUS_ERROR;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (
-                    REAI_AI_DECOMPILATION_STATUS_ERROR,
-                    "Unexpected response type."
-                );
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return REAI_AI_DECOMPILATION_STATUS_ERROR;
             }
         }
     } else {
@@ -1153,7 +1170,8 @@ ReaiSimilarFnVec* reai_get_similar_functions (
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {
@@ -1162,15 +1180,15 @@ ReaiSimilarFnVec* reai_get_similar_functions (
     }
 }
 
-ReaiCollectionInfoVec* reai_get_basic_collection_info (
-    Reai*                         reai,
-    ReaiResponse*                 response,
-    CString                       search_term,
-    ReaiCollectionInfoFilterFlags filters,
-    Uint64                        limit,
-    Uint64                        offset,
-    ReaiCollectionInfoOrderBy     order_by,
-    ReaiCollectionInfoOrder       order
+ReaiCollectionBasicInfoVec* reai_get_basic_collection_info (
+    Reai*                              reai,
+    ReaiResponse*                      response,
+    CString                            search_term,
+    ReaiCollectionBasicInfoFilterFlags filters,
+    Uint64                             limit,
+    Uint64                             offset,
+    ReaiCollectionBasicInfoOrderBy     order_by,
+    ReaiCollectionBasicInfoOrderIn     order_in
 ) {
     RETURN_VALUE_IF (!reai || !response || !search_term, NULL, ERR_INVALID_ARGUMENTS);
 
@@ -1181,13 +1199,13 @@ ReaiCollectionInfoVec* reai_get_basic_collection_info (
     request.basic_collections_info.limit       = limit;
     request.basic_collections_info.offset      = offset;
     request.basic_collections_info.order_by    = order_by;
-    request.basic_collections_info.order       = order;
+    request.basic_collections_info.order_in    = order_in;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO : {
                 REAI_LOG_TRACE (
-                    "Found %llu similar collections for search term \"%s\" with provided filters",
+                    "Found %llu collections for search term \"%s\" with provided filters",
                     response->basic_collection_info.data.results->count,
                     search_term
                 );
@@ -1195,14 +1213,60 @@ ReaiCollectionInfoVec* reai_get_basic_collection_info (
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR (
-                    "Failed to find similar functions for search term \"%s\" with provided "
-                    "filters. Validation Error.",
+                    "Failed to find collections for search term \"%s\" with provided filters. "
+                    "Validation Error.",
                     search_term
                 );
                 return NULL;
             }
             default : {
-                RETURN_VALUE_IF_REACHED (NULL, "Unexpected response type.");
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
+    }
+}
+
+ReaiCollectionSearchResultVec* reai_collection_search (
+    Reai*         reai,
+    ReaiResponse* response,
+    CString       partial_collection_name,
+    CString       partial_binary_name,
+    CString       partial_binary_sha256,
+    CString*      tags,
+    Size          tag_count,
+    CString       model_name
+) {
+    RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                               = {0};
+    request.type                                      = REAI_REQUEST_TYPE_COLLECTION_SEARCH;
+    request.collection_search.partial_collection_name = partial_collection_name;
+    request.collection_search.partial_binary_name     = partial_binary_name;
+    request.collection_search.partial_binary_sha256   = partial_binary_sha256;
+    request.collection_search.tags                    = tags;
+    request.collection_search.tag_count               = tag_count;
+    request.collection_search.model_name              = model_name;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_COLLECTION_SEARCH : {
+                REAI_LOG_TRACE (
+                    "Found %llu collections",
+                    response->collection_search.data.results->count
+                );
+                return response->collection_search.data.results;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("Failed to find collections. Validation Error.");
+                return NULL;
+            }
+            default : {
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
             }
         }
     } else {

@@ -37,32 +37,32 @@ extern "C" {
         REAI_BINARY_SCOPE_MAX
     } ReaiBinaryScope;
 
-    typedef Uint8 ReaiCollectionInfoFilterFlags;
-    typedef enum ReaiCollectionInfoFilterFlagBits : ReaiCollectionInfoFilterFlags {
-        REAI_COLLECTION_INFO_FILTER_NONE       = 0,
-        REAI_COLLECTION_INFO_FILTER_OFFICIAL   = 1 << 0,
-        REAI_COLLECTION_INFO_FILTER_USER       = 1 << 1,
-        REAI_COLLECTION_INFO_FILTER_TEAM       = 1 << 2,
-        REAI_COLLECTION_INFO_FILTER_PUBLIC     = 1 << 3,
-        REAI_COLLECTION_INFO_FILTER_HIDE_EMPTY = 1 << 4,
-        REAI_COLLECTION_INFO_FILTER_MAX
-    } ReaiCollectionInfoFilterFlagBits;
+    typedef Uint8 ReaiCollectionBasicInfoFilterFlags;
+    typedef enum ReaiCollectionBasicInfoFilterFlagBits : ReaiCollectionBasicInfoFilterFlags {
+        REAI_COLLECTION_BASIC_INFO_FILTER_NONE       = 0,
+        REAI_COLLECTION_BASIC_INFO_FILTER_OFFICIAL   = 1 << 0,
+        REAI_COLLECTION_BASIC_INFO_FILTER_USER       = 1 << 1,
+        REAI_COLLECTION_BASIC_INFO_FILTER_TEAM       = 1 << 2,
+        REAI_COLLECTION_BASIC_INFO_FILTER_PUBLIC     = 1 << 3,
+        REAI_COLLECTION_BASIC_INFO_FILTER_HIDE_EMPTY = 1 << 4,
+        REAI_COLLECTION_BASIC_INFO_FILTER_MAX
+    } ReaiCollectionBasicInfoFilterFlagBits;
 
-    typedef enum ReaiColectionInfoOrderBy {
-        REAI_COLLECTION_INFO_ORDER_BY_INVALID = 0,
-        REAI_COLLECTION_INFO_ORDER_BY_CREATED,
-        REAI_COLLECTION_INFO_ORDER_BY_COLLECTION,
-        REAI_COLLECTION_INFO_ORDER_BY_MODEL,
-        REAI_COLLECTION_INFO_ORDER_BY_OWNER,
-        REAI_COLLECTION_INFO_ORDER_BY_COLLECTION_SIZE,
-        REAI_COLLECTION_INFO_ORDER_BY_MAX
-    } ReaiCollectionInfoOrderBy;
+    typedef enum ReaiColectionBasicInfoOrderBy {
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_INVALID = 0,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_CREATED,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_COLLECTION,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_MODEL,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_OWNER,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_COLLECTION_SIZE,
+        REAI_COLLECTION_BASIC_INFO_ORDER_BY_MAX
+    } ReaiCollectionBasicInfoOrderBy;
 
-    typedef enum ReaiColectionInfoOrder {
-        REAI_COLLECTION_INFO_ORDER_ASC = 0,
-        REAI_COLLECTION_INFO_ORDER_DESC,
-        REAI_COLLECTION_INFO_ORDER_MAX
-    } ReaiCollectionInfoOrder;
+    typedef enum ReaiColectionInfoOrderIn {
+        REAI_COLLECTION_BASIC_INFO_ORDER_IN_ASC = 0,
+        REAI_COLLECTION_BASIC_INFO_ORDER_IN_DESC,
+        REAI_COLLECTION_BASIC_INFO_ORDER_IN_MAX
+    } ReaiCollectionBasicInfoOrderIn;
 
     /**
      * @b Each request types represents a unique API endpoint it'll communicate
@@ -116,6 +116,7 @@ extern "C" {
 
         /* collections */
         REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO,
+        REAI_REQUEST_TYPE_COLLECTION_SEARCH,
 
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
@@ -225,13 +226,22 @@ extern "C" {
             } get_similar_functions;
 
             struct {
-                CString                       search_term;
-                ReaiCollectionInfoFilterFlags filters;
-                Uint64                        limit;
-                Uint64                        offset;
-                ReaiCollectionInfoOrderBy     order_by;
-                ReaiCollectionInfoOrder       order;
+                CString                            search_term;
+                ReaiCollectionBasicInfoFilterFlags filters;
+                Uint64                             limit;
+                Uint64                             offset;
+                ReaiCollectionBasicInfoOrderBy     order_by;
+                ReaiCollectionBasicInfoOrderIn     order_in;
             } basic_collections_info;
+
+            struct {
+                CString  partial_collection_name;
+                CString  partial_binary_name;
+                CString  partial_binary_sha256;
+                CString* tags;
+                Size     tag_count;
+                CString  model_name;
+            } collection_search;
         };
     } ReaiRequest;
 

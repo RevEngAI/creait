@@ -409,10 +409,11 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             JSON_ADD_STRING (json, "search_term", request->basic_collections_info.search_term);
 
             // convert filters bits to string array
-            ReaiCollectionInfoFilterFlags filter_flags = request->basic_collections_info.filters;
-            CString                       filters[6]   = {0};
-            CString*                      filter_iter  = filters;
-            if (filter_flags != REAI_COLLECTION_INFO_FILTER_NONE) {
+            ReaiCollectionBasicInfoFilterFlags filter_flags =
+                request->basic_collections_info.filters;
+            CString  filters[6]  = {0};
+            CString* filter_iter = filters;
+            if (filter_flags != REAI_COLLECTION_BASIC_INFO_FILTER_NONE) {
                 CString filter_names[] =
                     {"official_only", "user_only", "team_only", "public_only", "hide_empty", NULL};
                 for (Size i = 0; i < 5; i++) {
@@ -433,7 +434,8 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             CString order_by[] =
                 {NULL, "created", "collection", "model", "owner", "collection_size", NULL};
             if (request->basic_collections_info.order_by &&
-                request->basic_collections_info.order_by < REAI_COLLECTION_INFO_ORDER_BY_MAX) {
+                request->basic_collections_info.order_by <
+                    REAI_COLLECTION_BASIC_INFO_ORDER_BY_MAX) {
                 JSON_ADD_STRING (
                     json,
                     "order_by",
@@ -442,10 +444,36 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             }
             // convert order enum to string
             CString order[] = {NULL, "ASC", "DESC", NULL};
-            if (request->basic_collections_info.order &&
-                request->basic_collections_info.order < REAI_COLLECTION_INFO_ORDER_MAX) {
-                JSON_ADD_STRING (json, "order", order[request->basic_collections_info.order]);
+            if (request->basic_collections_info.order_in &&
+                request->basic_collections_info.order_in <
+                    REAI_COLLECTION_BASIC_INFO_ORDER_IN_MAX) {
+                JSON_ADD_STRING (json, "order", order[request->basic_collections_info.order_in]);
             }
+        }
+
+        case REAI_REQUEST_TYPE_COLLECTION_SEARCH : {
+            JSON_ADD_STRING (
+                json,
+                "partial_collection_name",
+                request->collection_search.partial_collection_name
+            );
+            JSON_ADD_STRING (
+                json,
+                "partial_binary_name",
+                request->collection_search.partial_binary_name
+            );
+            JSON_ADD_STRING (
+                json,
+                "partial_binary_sha256",
+                request->collection_search.partial_binary_sha256
+            );
+            JSON_ADD_STRING_ARR (
+                json,
+                "tags",
+                request->collection_search.tags,
+                request->collection_search.tag_count
+            );
+            JSON_ADD_STRING (json, "model_name", request->collection_search.model_name);
         }
 
         default : {
