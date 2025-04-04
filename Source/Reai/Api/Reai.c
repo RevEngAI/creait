@@ -224,7 +224,6 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
     /* temporary buffer to hold endpoint url */
     Char endpoint_str[ENDPOINT_URL_STR_SIZE];
-    Size urlstr_end      = 0;
     Bool has_path_params = false;
 
     /* from data for uploading file */
@@ -233,21 +232,23 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
 #define SET_ENDPOINT(fmtstr, ...)                                                                  \
     do {                                                                                           \
-        urlstr_end = snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);          \
+        snprintf (endpoint_str, sizeof (endpoint_str), fmtstr, __VA_ARGS__);                       \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
         REAI_LOG_TRACE ("ENDPOINT : '%s'", endpoint_str);                                          \
     } while (0)
 
 #define SET_PATH_QUERY_PARAM(fmtstr, ...)                                                          \
     do {                                                                                           \
-        urlstr_end += snprintf (                                                                   \
-            endpoint_str,                                                                          \
-            sizeof (endpoint_str),                                                                 \
+        char tmpstr[ENDPOINT_URL_STR_SIZE] = {0};                                                  \
+        snprintf (                                                                                 \
+            tmpstr,                                                                                \
+            sizeof (tmpstr),                                                                       \
             "%s%c" fmtstr,                                                                         \
             endpoint_str,                                                                          \
             has_path_params ? '&' : '?',                                                           \
             __VA_ARGS__                                                                            \
         );                                                                                         \
+        strcpy (endpoint_str, tmpstr);                                                             \
         if (!has_path_params) {                                                                    \
             has_path_params = true;                                                                \
         };                                                                                         \
