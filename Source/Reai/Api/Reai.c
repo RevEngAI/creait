@@ -18,6 +18,7 @@
 /* libc */
 #include <memory.h>
 
+#include "Reai/Api/Request.h"
 #include "Reai/Api/Response.h"
 
 struct Reai {
@@ -223,7 +224,8 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
     /* temporary buffer to hold endpoint url */
     Char endpoint_str[ENDPOINT_URL_STR_SIZE];
-    Size urlstr_end = 0;
+    Size urlstr_end      = 0;
+    Bool has_path_params = false;
 
     /* from data for uploading file */
     struct curl_mime*     mime     = NULL;
@@ -241,10 +243,14 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         urlstr_end += snprintf (                                                                   \
             endpoint_str,                                                                          \
             sizeof (endpoint_str),                                                                 \
-            "%s" fmtstr,                                                                           \
+            "%s%c" fmtstr,                                                                         \
             endpoint_str,                                                                          \
+            has_path_params ? '&' : '?',                                                           \
             __VA_ARGS__                                                                            \
         );                                                                                         \
+        if (!has_path_params) {                                                                    \
+            has_path_params = true;                                                                \
+        };                                                                                         \
         curl_easy_setopt (reai->curl, CURLOPT_URL, endpoint_str);                                  \
         REAI_LOG_TRACE ("ADDED NEW PATH PARAM. NEW ENDPOINT : '%s'", endpoint_str);                \
     } while (0)
@@ -503,7 +509,65 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
         case REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO : {
             SET_ENDPOINT ("%s/v2/collections", reai->host);
             SET_METHOD ("GET");
-            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO);
+
+            if (request->basic_collections_info.search_term) {
+                SET_PATH_QUERY_PARAM (
+                    "search_term=%s",
+                    request->basic_collections_info.search_term
+                );
+            }
+
+            for (Size f = 0; (1 << f) < REAI_COLLECTION_BASIC_INFO_FILTER_MAX; f++) {
+                ReaiCollectionBasicInfoFilterFlags flag = 1 << f;
+                if ((request->basic_collections_info.filters & flag) == flag) {
+                    SET_PATH_QUERY_PARAM (
+                        "filters=%s",
+                        ((CString[]) {NULL,
+                                      "official_only",
+                                      "user_only",
+                                      "team_only",
+                                      "public_only",
+                                      "hide_empty_only",
+                                      NULL})[f]
+                    );
+                }
+            }
+
+            if (request->basic_collections_info.limit) {
+                SET_PATH_QUERY_PARAM (
+                    "limit=%zu",
+                    request->basic_collections_info.limit > 50 ?
+                        50 :
+                    request->basic_collections_info.limit < 5 ?
+                        5 :
+                        request->basic_collections_info.limit
+                );
+            }
+
+            if (request->basic_collections_info.offset) {
+                SET_PATH_QUERY_PARAM ("offset=%zu", request->basic_collections_info.offset);
+            }
+
+            if (request->basic_collections_info.order_by &&
+                request->basic_collections_info.order_by <
+                    REAI_COLLECTION_BASIC_INFO_ORDER_BY_MAX) {
+                SET_PATH_QUERY_PARAM (
+                    "order_by=%s",
+                    ((CString[]
+                    ) {NULL, "created", "collection", "model", "owner", "collection_size", NULL}
+                    )[request->basic_collections_info.order_by]
+                );
+            }
+
+            SET_PATH_QUERY_PARAM (
+                "order=%s",
+                request->basic_collections_info.order_in ==
+                        REAI_COLLECTION_BASIC_INFO_ORDER_IN_DESC ?
+                    "DESC" :
+                    "ASC"
+            );
+
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO);
             break;
         }
 
@@ -511,43 +575,42 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             SET_ENDPOINT ("%s/v2/search/collections", reai->host);
             SET_METHOD ("GET");
 
-            SET_PATH_QUERY_PARAM (
-                "?page=%zu",
-                request->collection_search.page ? request->collection_search.page : 1
-            );
+            if (request->collection_search.page) {
+                SET_PATH_QUERY_PARAM ("page=%zu", request->collection_search.page);
+            }
 
             if (request->collection_search.page_size) {
-                SET_PATH_QUERY_PARAM ("&page_size=%zu", request->collection_search.page_size);
+                SET_PATH_QUERY_PARAM ("page_size=%zu", request->collection_search.page_size);
             }
 
             if (request->collection_search.partial_collection_name) {
                 SET_PATH_QUERY_PARAM (
-                    "&partial_collection_name=%s",
+                    "partial_collection_name=%s",
                     request->collection_search.partial_collection_name
                 );
             }
 
             if (request->collection_search.partial_binary_name) {
                 SET_PATH_QUERY_PARAM (
-                    "&partial_binary_name=%s",
+                    "partial_binary_name=%s",
                     request->collection_search.partial_binary_name
                 );
             }
 
             if (request->collection_search.partial_binary_sha256) {
                 SET_PATH_QUERY_PARAM (
-                    "&partial_binary_sha256=%s",
+                    "partial_binary_sha256=%s",
                     request->collection_search.partial_binary_sha256
                 );
             }
 
             if (request->collection_search.model_name) {
-                SET_PATH_QUERY_PARAM ("&model_name=%s", request->collection_search.model_name);
+                SET_PATH_QUERY_PARAM ("model_name=%s", request->collection_search.model_name);
             }
 
             if (request->collection_search.tags) {
                 REAI_VEC_FOREACH (request->collection_search.tags, tag, {
-                    SET_PATH_QUERY_PARAM ("&tags=%s", *tag);
+                    SET_PATH_QUERY_PARAM ("tags=%s", *tag);
                 });
             }
 

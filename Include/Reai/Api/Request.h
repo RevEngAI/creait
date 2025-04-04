@@ -222,8 +222,8 @@ extern "C" {
             struct {
                 CString                            search_term;
                 ReaiCollectionBasicInfoFilterFlags filters;
-                Uint64                             limit;
-                Uint64                             offset;
+                Size                               limit;
+                Size                               offset;
                 ReaiCollectionBasicInfoOrderBy     order_by;
                 ReaiCollectionBasicInfoOrderIn     order_in;
             } basic_collections_info;
