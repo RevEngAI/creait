@@ -502,7 +502,48 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                 request->get_similar_functions.function_id
             );
             SET_METHOD ("GET");
-            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS);
+
+            if (!request->get_similar_functions.function_id) {
+                REAI_LOG_ERROR (
+                    "Invalid function ID provided. Need a valid function ID to perform similar "
+                    "function search."
+                );
+                goto REQUEST_FAILED;
+            }
+
+            SET_PATH_QUERY_PARAM ("function_id=%llu", request->get_similar_functions.function_id);
+
+            if (request->get_similar_functions.limit) {
+                SET_PATH_QUERY_PARAM ("limit=%u", request->get_similar_functions.limit);
+            }
+
+            SET_PATH_QUERY_PARAM (
+                "distance=%f",
+                request->get_similar_functions.distance < 0 ?
+                    0 :
+                request->get_similar_functions.distance > 1 ?
+                    1 :
+                    request->get_similar_functions.distance
+            );
+
+            if (request->get_similar_functions.collection_ids) {
+                REAI_VEC_FOREACH (request->get_similar_functions.collection_ids, cid, {
+                    SET_PATH_QUERY_PARAM ("collection_ids=%llu", *cid);
+                });
+            }
+
+            SET_PATH_QUERY_PARAM (
+                "debug=%s",
+                request->get_similar_functions.debug ? "true" : "false"
+            );
+
+            if (request->get_similar_functions.binary_ids) {
+                REAI_VEC_FOREACH (request->get_similar_functions.binary_ids, cid, {
+                    SET_PATH_QUERY_PARAM ("binary_ids=%llu", *cid);
+                });
+            }
+
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS);
             break;
         }
 
