@@ -332,6 +332,55 @@
         );                                                                                         \
     } while (0)
 
+#define GET_JSON_BINARY_SEARCH_RESULT(json_binary_search_result, binary_search_result)             \
+    do {                                                                                           \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_binary_search_result,                                                             \
+            "binary_id",                                                                           \
+            (binary_search_result).binary_id                                                       \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_binary_search_result,                                                             \
+            "binary_name",                                                                         \
+            (binary_search_result).binary_name                                                     \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_binary_search_result,                                                             \
+            "analysis_id",                                                                         \
+            (binary_search_result).analysis_id                                                     \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_binary_search_result,                                                             \
+            "sha_256_hash",                                                                        \
+            (binary_search_result).sha_256_hash                                                    \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING_ARR (                                                             \
+            json_binary_search_result,                                                             \
+            "tags",                                                                                \
+            (binary_search_result).tags                                                            \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_binary_search_result,                                                             \
+            "created_at",                                                                          \
+            (binary_search_result).created_at                                                      \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_U64 (                                                                    \
+            json_binary_search_result,                                                             \
+            "model_id",                                                                            \
+            (binary_search_result).model_id                                                        \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_binary_search_result,                                                             \
+            "model_name",                                                                          \
+            (binary_search_result).model_name                                                      \
+        );                                                                                         \
+        GET_OPTIONAL_JSON_STRING (                                                                 \
+            json_binary_search_result,                                                             \
+            "owned_by",                                                                            \
+            (binary_search_result).owned_by                                                        \
+        );                                                                                         \
+    } while (0)
+
 
 #define GET_JSON_AI_MODEL(json_ai_model, model_name)                                               \
     do {                                                                                           \

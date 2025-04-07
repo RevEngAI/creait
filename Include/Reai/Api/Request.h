@@ -118,6 +118,9 @@ extern "C" {
         REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO,
         REAI_REQUEST_TYPE_COLLECTION_SEARCH,
 
+        /* binary */
+        REAI_REQUEST_TYPE_BINARY_SEARCH,
+
         REAI_REQUEST_TYPE_MAX /**< Total number of request types */
     } ReaiRequestType;
 
@@ -237,6 +240,15 @@ extern "C" {
                 CStrVec* tags;
                 CString  model_name;
             } collection_search;
+
+            struct {
+                Size     page;
+                Size     page_size;
+                CString  partial_name;
+                CString  partial_sha256;
+                CStrVec* tags;
+                CString  model_name;
+            } binary_search;
         };
     } ReaiRequest;
 

@@ -660,6 +660,40 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_BINARY_SEARCH : {
+            SET_ENDPOINT ("%s/v2/search/binaries", reai->host);
+            SET_METHOD ("GET");
+
+            if (request->binary_search.page) {
+                SET_PATH_QUERY_PARAM ("page=%zu", request->binary_search.page);
+            }
+
+            if (request->binary_search.page_size) {
+                SET_PATH_QUERY_PARAM ("page_size=%zu", request->binary_search.page_size);
+            }
+
+            if (request->binary_search.partial_name) {
+                SET_PATH_QUERY_PARAM ("partial_name=%s", request->binary_search.partial_name);
+            }
+
+            if (request->binary_search.partial_sha256) {
+                SET_PATH_QUERY_PARAM ("partial_sha256=%s", request->binary_search.partial_sha256);
+            }
+
+            if (request->binary_search.tags) {
+                REAI_VEC_FOREACH (request->binary_search.tags, tag, {
+                    SET_PATH_QUERY_PARAM ("tags=%s", *tag);
+                });
+            }
+
+            if (request->binary_search.model_name) {
+                SET_PATH_QUERY_PARAM ("model_name=%s", request->binary_search.model_name);
+            }
+
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BINARY_SEARCH);
+            break;
+        }
+
         default :
             PRINT_ERR ("Invalid request.");
             break;

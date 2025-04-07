@@ -12,6 +12,7 @@
 #include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
 #include <Reai/ApiError.h>
+#include <Reai/BinarySearchResult.h>
 #include <Reai/CollectionBasicInfo.h>
 #include <Reai/CollectionSearchResult.h>
 #include <Reai/FnInfo.h>
@@ -75,6 +76,9 @@ extern "C" {
         /* collections */
         REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO = REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO,
         REAI_RESPONSE_TYPE_COLLECTION_SEARCH      = REAI_REQUEST_TYPE_COLLECTION_SEARCH,
+
+        /* binary */
+        REAI_RESPONSE_TYPE_BINARY_SEARCH,
 
         REAI_RESPONSE_TYPE_VALIDATION_ERR,
         REAI_RESPONSE_TYPE_MAX, /* enum value less than this is valid */
@@ -268,6 +272,15 @@ extern "C" {
                 CString        message;
                 ReaiApiErrors* errors;
             } collection_search;
+
+            struct {
+                Bool status;
+                struct {
+                    ReaiBinarySearchResultVec* results;
+                } data;
+                CString        message;
+                ReaiApiErrors* errors;
+            } binary_search;
         };
     } ReaiResponse;
 

@@ -646,6 +646,50 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             break;
         }
 
+        case REAI_RESPONSE_TYPE_BINARY_SEARCH : {
+            response->type = REAI_RESPONSE_TYPE_BINARY_SEARCH;
+            GET_JSON_BOOL (json, "status", response->binary_search.status);
+
+            cJSON* data = cJSON_GetObjectItem (json, "data");
+            if (data) {
+                cJSON* results = cJSON_GetObjectItem (data, "results");
+                if (results) {
+                    GET_JSON_CUSTOM_ARR (
+                        results,
+                        ReaiBinarySearchResult,
+                        binary_search_result,
+                        GET_JSON_BINARY_SEARCH_RESULT,
+                        response->binary_search.data.results
+                    );
+                }
+            }
+
+            GET_OPTIONAL_JSON_STRING (json, "message", response->binary_search.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->binary_search.errors
+                    );
+                }
+            }
+
+            break;
+        }
+
         case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
             response->type = REAI_RESPONSE_TYPE_VALIDATION_ERR;
 
@@ -1024,11 +1068,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 reai_similar_fn_vec_destroy (response->get_similar_functions.data);
                 response->get_similar_functions.data = NULL;
             }
-            if (response->poll_ai_decompilation.errors) {
-                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
-                response->poll_ai_decompilation.errors = NULL;
+            if (response->get_similar_functions.errors) {
+                reai_api_error_vec_destroy (response->get_similar_functions.errors);
+                response->get_similar_functions.errors = NULL;
             }
-            FREE (response->poll_ai_decompilation.message);
+            FREE (response->get_similar_functions.message);
             break;
         }
 
@@ -1038,11 +1082,11 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 );
                 response->basic_collection_info.data.results = NULL;
             }
-            if (response->poll_ai_decompilation.errors) {
-                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
-                response->poll_ai_decompilation.errors = NULL;
+            if (response->basic_collection_info.errors) {
+                reai_api_error_vec_destroy (response->basic_collection_info.errors);
+                response->basic_collection_info.errors = NULL;
             }
-            FREE (response->poll_ai_decompilation.message);
+            FREE (response->basic_collection_info.message);
             break;
         }
 
@@ -1052,11 +1096,24 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 );
                 response->collection_search.data.results = NULL;
             }
-            if (response->poll_ai_decompilation.errors) {
-                reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
-                response->poll_ai_decompilation.errors = NULL;
+            if (response->collection_search.errors) {
+                reai_api_error_vec_destroy (response->collection_search.errors);
+                response->collection_search.errors = NULL;
             }
-            FREE (response->poll_ai_decompilation.message);
+            FREE (response->collection_search.message);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_BINARY_SEARCH : {
+            if (response->binary_search.data.results) {
+                reai_binary_search_result_vec_destroy (response->binary_search.data.results);
+                response->binary_search.data.results = NULL;
+            }
+            if (response->binary_search.errors) {
+                reai_api_error_vec_destroy (response->binary_search.errors);
+                response->binary_search.errors = NULL;
+            }
+            FREE (response->binary_search.message);
             break;
         }
 
