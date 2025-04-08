@@ -1459,3 +1459,69 @@ ReaiCollectionSearchResultVec* reai_collection_search (
         return NULL;
     }
 }
+
+ReaiBinarySearchResultVec* reai_binary_search (
+    Reai*         reai,
+    ReaiResponse* response,
+    CString       partial_name,
+    CString       partial_sha256,
+    CStrVec*      tags,
+    CString       model_name
+) {
+    RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                  = {0};
+    request.type                         = REAI_REQUEST_TYPE_BINARY_SEARCH;
+    request.binary_search.partial_name   = partial_name;
+    request.binary_search.partial_sha256 = partial_sha256;
+    request.binary_search.tags           = tags;
+    request.binary_search.model_name     = model_name;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_BINARY_SEARCH : {
+                REAI_LOG_TRACE ("Found %llu binaries", response->binary_search.data.results->count);
+                return response->binary_search.data.results;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("Failed to find binaries. Validation Error.");
+                return NULL;
+            }
+            default : {
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return NULL;
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return NULL;
+    }
+}
+
+ReaiAnalysisId
+    reai_analysis_id_from_binary_id (Reai* reai, ReaiResponse* response, ReaiBinaryId binary_id) {
+    RETURN_VALUE_IF (!reai || !response || !binary_id, 0, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request = {0};
+    request.type        = REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID;
+    request.binary_id   = binary_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID : {
+                return response->analysis_id;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("Failed to fetch analysis id from binary id. Validation Error.");
+                return 0;
+            }
+            default : {
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return 0;
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return 0;
+    }
+}

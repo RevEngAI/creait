@@ -137,6 +137,21 @@ extern "C" {
         CString       model_name
     );
 
+    ReaiBinarySearchResultVec* reai_binary_search (
+        Reai*         reai,
+        ReaiResponse* response,
+        CString       partial_name,
+        CString       partial_sha256,
+        CStrVec*      tags,
+        CString       model_name
+    );
+
+    ReaiAnalysisId reai_analysis_id_from_binary_id (
+        Reai*         reai,
+        ReaiResponse* respomse,
+        ReaiBinaryId  binary_id
+    );
+
 #ifdef __cplusplus
 }
 #endif
