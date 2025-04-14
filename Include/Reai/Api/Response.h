@@ -69,6 +69,7 @@ extern "C" {
         /* analysis management */
         REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID =
             REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID,
+        REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS = REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS,
 
         /* function overview */
         REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS = REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
@@ -281,6 +282,15 @@ extern "C" {
                 CString        message;
                 ReaiApiErrors* errors;
             } binary_search;
+
+            struct {
+                Bool status;
+                struct {
+                    CString logs;
+                } data;
+                CString        message;
+                ReaiApiErrors* errors;
+            } get_analysis_logs;
         };
     } ReaiResponse;
 

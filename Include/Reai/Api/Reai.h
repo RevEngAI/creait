@@ -152,6 +152,8 @@ extern "C" {
         ReaiBinaryId  binary_id
     );
 
+    CString reai_get_analysis_logs (Reai* reai, ReaiResponse* respomse, ReaiAnalysisId analysis_id);
+
 #ifdef __cplusplus
 }
 #endif

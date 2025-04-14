@@ -694,6 +694,17 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
             break;
         }
 
+        case REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS : {
+            SET_ENDPOINT (
+                "%s/v2/analyses/%llu/logs",
+                reai->host,
+                request->get_analysis_logs.analysis_id
+            );
+            SET_METHOD ("GET");
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS);
+            break;
+        }
+
         default :
             PRINT_ERR ("Invalid request.");
             break;
@@ -1347,7 +1358,9 @@ ReaiSimilarFnVec* reai_get_similar_functions (
                     response->get_similar_functions.data->count,
                     fn_id
                 );
-                return response->get_similar_functions.data;
+                return response->get_similar_functions.status ?
+                           response->get_similar_functions.data :
+                           NULL;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR (
@@ -1396,7 +1409,9 @@ ReaiCollectionBasicInfoVec* reai_get_basic_collection_info (
                     response->basic_collection_info.data.results->count,
                     search_term
                 );
-                return response->basic_collection_info.data.results;
+                return response->basic_collection_info.status ?
+                           response->basic_collection_info.data.results :
+                           NULL;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR (
@@ -1443,7 +1458,9 @@ ReaiCollectionSearchResultVec* reai_collection_search (
                     "Found %llu collections",
                     response->collection_search.data.results->count
                 );
-                return response->collection_search.data.results;
+                return response->collection_search.status ?
+                           response->collection_search.data.results :
+                           NULL;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR ("Failed to find collections. Validation Error.");
@@ -1481,7 +1498,7 @@ ReaiBinarySearchResultVec* reai_binary_search (
         switch (response->type) {
             case REAI_RESPONSE_TYPE_BINARY_SEARCH : {
                 REAI_LOG_TRACE ("Found %llu binaries", response->binary_search.data.results->count);
-                return response->binary_search.data.results;
+                return response->binary_search.status ? response->binary_search.data.results : NULL;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR ("Failed to find binaries. Validation Error.");
@@ -1509,10 +1526,38 @@ ReaiAnalysisId
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_ANALYSIS_ID_FROM_BINARY_ID : {
-                return response->analysis_id;
+                return response->get_analysis_logs.status ? response->analysis_id : 0;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR ("Failed to fetch analysis id from binary id. Validation Error.");
+                return 0;
+            }
+            default : {
+                REAI_LOG_ERROR ("Unexpected respose type.");
+                return 0;
+            }
+        }
+    } else {
+        REAI_LOG_ERROR ("Failed to make reveng.ai request");
+        return 0;
+    }
+}
+
+CString reai_get_analysis_logs (Reai* reai, ReaiResponse* response, ReaiAnalysisId analysis_id) {
+    RETURN_VALUE_IF (!reai || !response || !analysis_id, 0, ERR_INVALID_ARGUMENTS);
+
+    ReaiRequest request                   = {0};
+    request.type                          = REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS;
+    request.get_analysis_logs.analysis_id = analysis_id;
+
+    if ((response = reai_request (reai, &request, response))) {
+        switch (response->type) {
+            case REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS : {
+                return response->get_analysis_logs.status ? response->get_analysis_logs.data.logs :
+                                                            0;
+            }
+            case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
+                REAI_LOG_ERROR ("Failed to fetch analysis logs. Validation Error.");
                 return 0;
             }
             default : {

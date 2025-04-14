@@ -110,6 +110,7 @@ extern "C" {
 
         /* analysis management */
         REAI_REQUEST_TYPE_ANALYSIS_ID_FROM_BINARY_ID,
+        REAI_REQUEST_TYPE_GET_ANALYSIS_LOGS,
 
         /* functions overview */
         REAI_REQUEST_TYPE_GET_SIMILAR_FUNCTIONS,
@@ -211,6 +212,7 @@ extern "C" {
             } begin_ai_decompilation, poll_ai_decompilation;
 
             /* request for analysis id from binary id */
+            // TODO: a separate struct would be nice to have
             ReaiBinaryId binary_id;
 
             struct {
@@ -249,6 +251,10 @@ extern "C" {
                 CStrVec* tags;
                 CString  model_name;
             } binary_search;
+
+            struct {
+                ReaiAnalysisId analysis_id;
+            } get_analysis_logs;
         };
     } ReaiRequest;
 

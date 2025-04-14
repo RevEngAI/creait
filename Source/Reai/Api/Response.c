@@ -458,31 +458,33 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION;
             GET_JSON_BOOL (json, "status", response->poll_ai_decompilation.status);
 
-            cJSON* data = cJSON_GetObjectItem (json, "data");
-            if (data) {
-                /* get decompilation status */
-                CString status = NULL;
-                GET_JSON_STRING (data, "status", status);
-                REAI_LOG_TRACE ("Got analysis status : %s", status);
+            if (response->poll_ai_decompilation.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    /* get decompilation status */
+                    CString status = NULL;
+                    GET_JSON_STRING (data, "status", status);
+                    REAI_LOG_TRACE ("Got analysis status : %s", status);
 
-                response->poll_ai_decompilation.data.status =
-                    reai_ai_decompilation_status_from_cstr (status);
-                FREE (status);
+                    response->poll_ai_decompilation.data.status =
+                        reai_ai_decompilation_status_from_cstr (status);
+                    FREE (status);
 
-                if (response->poll_ai_decompilation.data.status ==
-                    REAI_AI_DECOMPILATION_STATUS_SUCCESS) {
-                    GET_OPTIONAL_JSON_STRING (
-                        data,
-                        "decompilation",
-                        response->poll_ai_decompilation.data.decompilation
-                    );
+                    if (response->poll_ai_decompilation.data.status ==
+                        REAI_AI_DECOMPILATION_STATUS_SUCCESS) {
+                        GET_OPTIONAL_JSON_STRING (
+                            data,
+                            "decompilation",
+                            response->poll_ai_decompilation.data.decompilation
+                        );
 
-                    REAI_LOG_TRACE (
-                        "Got decompilation : \"%s\"",
-                        response->poll_ai_decompilation.data.decompilation
-                    );
-                } else {
-                    response->poll_ai_decompilation.data.decompilation = NULL;
+                        REAI_LOG_TRACE (
+                            "Got decompilation : \"%s\"",
+                            response->poll_ai_decompilation.data.decompilation
+                        );
+                    } else {
+                        response->poll_ai_decompilation.data.decompilation = NULL;
+                    }
                 }
             }
 
@@ -521,15 +523,17 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_GET_SIMILAR_FUNCTIONS;
             GET_JSON_BOOL (json, "status", response->get_similar_functions.status);
 
-            cJSON* data = cJSON_GetObjectItem (json, "data");
-            if (data) {
-                GET_JSON_CUSTOM_ARR (
-                    data,
-                    ReaiSimilarFn,
-                    similar_fn,
-                    GET_JSON_SIMILAR_FN,
-                    response->get_similar_functions.data
-                );
+            if (response->get_similar_functions.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    GET_JSON_CUSTOM_ARR (
+                        data,
+                        ReaiSimilarFn,
+                        similar_fn,
+                        GET_JSON_SIMILAR_FN,
+                        response->get_similar_functions.data
+                    );
+                }
             }
 
             GET_OPTIONAL_JSON_STRING (json, "message", response->get_similar_functions.message);
@@ -562,17 +566,19 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO;
             GET_JSON_BOOL (json, "status", response->basic_collection_info.status);
 
-            cJSON* data = cJSON_GetObjectItem (json, "data");
-            if (data) {
-                cJSON* results = cJSON_GetObjectItem (data, "results");
-                if (results) {
-                    GET_JSON_CUSTOM_ARR (
-                        results,
-                        ReaiCollectionBasicInfo,
-                        collection_basic_info,
-                        GET_JSON_COLLECTION_BASIC_INFO,
-                        response->basic_collection_info.data.results
-                    );
+            if (response->basic_collection_info.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    cJSON* results = cJSON_GetObjectItem (data, "results");
+                    if (results) {
+                        GET_JSON_CUSTOM_ARR (
+                            results,
+                            ReaiCollectionBasicInfo,
+                            collection_basic_info,
+                            GET_JSON_COLLECTION_BASIC_INFO,
+                            response->basic_collection_info.data.results
+                        );
+                    }
                 }
             }
 
@@ -606,17 +612,19 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_COLLECTION_SEARCH;
             GET_JSON_BOOL (json, "status", response->collection_search.status);
 
-            cJSON* data = cJSON_GetObjectItem (json, "data");
-            if (data) {
-                cJSON* results = cJSON_GetObjectItem (data, "results");
-                if (results) {
-                    GET_JSON_CUSTOM_ARR (
-                        results,
-                        ReaiCollectionSearchResult,
-                        collection_search_result,
-                        GET_JSON_COLLECTION_SEARCH_RESULT,
-                        response->collection_search.data.results
-                    );
+            if (response->collection_search.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    cJSON* results = cJSON_GetObjectItem (data, "results");
+                    if (results) {
+                        GET_JSON_CUSTOM_ARR (
+                            results,
+                            ReaiCollectionSearchResult,
+                            collection_search_result,
+                            GET_JSON_COLLECTION_SEARCH_RESULT,
+                            response->collection_search.data.results
+                        );
+                    }
                 }
             }
 
@@ -650,17 +658,56 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
             response->type = REAI_RESPONSE_TYPE_BINARY_SEARCH;
             GET_JSON_BOOL (json, "status", response->binary_search.status);
 
-            cJSON* data = cJSON_GetObjectItem (json, "data");
-            if (data) {
-                cJSON* results = cJSON_GetObjectItem (data, "results");
-                if (results) {
+            if (response->binary_search.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    cJSON* results = cJSON_GetObjectItem (data, "results");
+                    if (results) {
+                        GET_JSON_CUSTOM_ARR (
+                            results,
+                            ReaiBinarySearchResult,
+                            binary_search_result,
+                            GET_JSON_BINARY_SEARCH_RESULT,
+                            response->binary_search.data.results
+                        );
+                    }
+                }
+            }
+
+            GET_OPTIONAL_JSON_STRING (json, "message", response->binary_search.message);
+
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
                     GET_JSON_CUSTOM_ARR (
-                        results,
-                        ReaiBinarySearchResult,
-                        binary_search_result,
-                        GET_JSON_BINARY_SEARCH_RESULT,
-                        response->binary_search.data.results
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->binary_search.errors
                     );
+                }
+            }
+
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS : {
+            response->type = REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS;
+            GET_JSON_BOOL (json, "status", response->get_analysis_logs.status);
+
+            if (response->get_analysis_logs.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    GET_JSON_STRING (data, "logs", response->get_analysis_logs.data.logs);
                 }
             }
 
@@ -1114,6 +1161,18 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                 response->binary_search.errors = NULL;
             }
             FREE (response->binary_search.message);
+            break;
+        }
+
+        case REAI_RESPONSE_TYPE_GET_ANALYSIS_LOGS : {
+            if (response->get_analysis_logs.data.logs) {
+                FREE (response->get_analysis_logs.data.logs);
+            }
+            if (response->get_analysis_logs.errors) {
+                reai_api_error_vec_destroy (response->get_analysis_logs.errors);
+                response->get_analysis_logs.errors = NULL;
+            }
+            FREE (response->get_analysis_logs.message);
             break;
         }
 
