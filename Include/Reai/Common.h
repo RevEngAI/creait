@@ -15,9 +15,16 @@
 /********************************** CONVINIENT WRAPPER MACROS *************************************/
 
 
+#ifdef _MSC_VER
+#define CONSTRUCTOR
+#define DESTRUCTOR
+#define FORCE_INLINE
+#else
 #define CONSTRUCTOR  __attribute__ ((constructor))
 #define DESTRUCTOR   __attribute__ ((destructor))
 #define FORCE_INLINE __attribute__ ((always_inline))
+#endif
+
 #define UNUSED(x)    ((void)(x))
 #ifdef __cplusplus
 #    define NEW(type)                reinterpret_cast<type *> (calloc (1, sizeof (type)))
