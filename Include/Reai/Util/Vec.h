@@ -40,13 +40,13 @@ extern "C" {
 
 #define REAI_VEC_FOREACH(vec, iter, body)                                                          \
     do {                                                                                           \
-        if (!vec) {                                                                                \
+        if (!(vec)) {                                                                                \
             break;                                                                                 \
         }                                                                                          \
                                                                                                    \
-        TYPE_OF (vec->items) iter = (TYPE_OF (vec->items))NULL;                              \
+        TYPE_OF ((vec)->items) iter = (TYPE_OF ((vec)->items))NULL;                              \
         for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
-            iter = vec->items + ___idx;                                                            \
+            iter = (vec)->items + ___idx;                                                            \
             { body; };                                                                             \
         }                                                                                          \
     } while (0)
