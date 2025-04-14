@@ -30,10 +30,8 @@ static FILE* log_fd = NULL;
 
 /**
  * @b Destroy given logger object and close attached file handle.
- *
- * @param logger
  * */
-__attribute__ ((destructor)) void reai_log_destroy() {
+DESTRUCTOR void reai_log_destroy() {
     if (log_fd) {
         fclose (log_fd);
     }
@@ -42,14 +40,10 @@ __attribute__ ((destructor)) void reai_log_destroy() {
 /**
  * @b Create a new logger
  *
- * @param file_name Name/Path of file to log to. If NULL is provided, then
- *        a new file name will automatically be generated and be stored in
- *        platform's temp directory.
- *
  * @return @c ReaiLog on success.
  * @return @c NULL otherwise.
  * */
-__attribute__ ((constructor)) void reai_log_create (CString file_name) {
+CONSTRUCTOR void reai_log_create () {
     CString log_file_name = generate_new_log_file_name();
     if (log_file_name) {
         log_fd = fopen (log_file_name, "w");
@@ -69,6 +63,20 @@ __attribute__ ((constructor)) void reai_log_create (CString file_name) {
 
     setbuf (log_fd, NULL);
 }
+
+#ifdef _MSC_VER
+// SOURCE: https://stackoverflow.com/a/20724874
+BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
+{
+    if (fdwReason == DLL_PROCESS_ATTACH) {
+        reai_log_create();
+    } else if (fdwReason == DLL_PROCESS_DETACH) {
+        reai_log_destroy();
+    }
+
+    return TRUE;
+}
+#endif
 
 /**
  * @b Write to log file with given log level.
