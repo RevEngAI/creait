@@ -38,7 +38,7 @@ extern "C" {
     } ReaiBinaryScope;
 
     typedef Uint8 ReaiCollectionBasicInfoFilterFlags;
-    typedef enum ReaiCollectionBasicInfoFilterFlagBits : ReaiCollectionBasicInfoFilterFlags {
+    typedef enum ReaiCollectionBasicInfoFilterFlagBits {
         REAI_COLLECTION_BASIC_INFO_FILTER_NONE       = 0,
         REAI_COLLECTION_BASIC_INFO_FILTER_OFFICIAL   = 1 << 0,
         REAI_COLLECTION_BASIC_INFO_FILTER_USER       = 1 << 1,
