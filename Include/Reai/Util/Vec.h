@@ -25,6 +25,12 @@ extern "C" {
 #include <memory.h>
 #include <string.h>
 
+#ifdef __cplusplus
+#    define TYPE_OF(x) decltype((x))
+#else
+#    define TYPE_OF(x) __typeof__((x))
+#endif
+
 #ifndef REAI_VEC_INITIAL_ITEM_CAPACITY
 #    define REAI_VEC_INITIAL_ITEM_CAPACITY 32
 #endif
@@ -38,7 +44,7 @@ extern "C" {
             break;                                                                                 \
         }                                                                                          \
                                                                                                    \
-        __typeof__ (vec->items) iter = (__typeof__ (vec->items))NULL;                              \
+        TYPE_OF (vec->items) iter = (TYPE_OF (vec->items))NULL;                              \
         for (Size ___idx = 0; ___idx < (vec)->count; ___idx++) {                                   \
             iter = vec->items + ___idx;                                                            \
             { body; };                                                                             \
