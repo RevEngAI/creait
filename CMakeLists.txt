@@ -36,7 +36,6 @@ include_directories(
 
 # Add library source
 add_subdirectory(Source)
-add_subdirectory(Test)
 
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)
