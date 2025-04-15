@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 4.0)
+cmake_minimum_required(VERSION 3.5)
 
 project(CREAIT LANGUAGES C VERSION 0.1.1)
 include(FetchContent)
