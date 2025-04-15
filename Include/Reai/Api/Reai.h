@@ -53,7 +53,14 @@ extern "C" {
         CString        sha_256_hash,
         CString        file_name,
         CString        cmdline_args,
-        Size           size_in_bytes
+        Size           size_in_bytes,
+        Bool           dynamic_execution,
+        Bool           skip_scraping,
+        Bool           skip_cves,
+        Bool           skip_sbom,
+        Bool           skip_capabilities,
+        Bool           ignore_cache,
+        Bool           do_advanced_analysis
     );
     ReaiAnalysisInfoVec* reai_get_recent_analyses (
         Reai*              reai,

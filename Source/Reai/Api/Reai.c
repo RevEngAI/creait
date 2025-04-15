@@ -844,7 +844,14 @@ ReaiBinaryId reai_create_analysis (
     CString        sha_256_hash,
     CString        file_name,
     CString        cmdline_args,
-    Size           size_in_bytes
+    Size           size_in_bytes,
+    Bool           dynamic_execution,
+    Bool           skip_scraping,
+    Bool           skip_cves,
+    Bool           skip_sbom,
+    Bool           skip_capabilities,
+    Bool           ignore_cache,
+    Bool           do_advanced_analysis
 ) {
     RETURN_VALUE_IF (
         !reai || !response || !ai_model || !strlen (ai_model) || !sha_256_hash ||
@@ -861,7 +868,6 @@ ReaiBinaryId reai_create_analysis (
     request.create_analysis.platform_opt = NULL;
     request.create_analysis.isa_opt      = NULL;
     request.create_analysis.file_opt     = REAI_FILE_OPTION_DEFAULT;
-    request.create_analysis.dyn_exec     = false;
     request.create_analysis.tags         = NULL;
     request.create_analysis.tags_count   = 0;
     request.create_analysis.base_addr    = base_addr;
@@ -874,6 +880,14 @@ ReaiBinaryId reai_create_analysis (
     request.create_analysis.sha_256_hash  = sha_256_hash;
     request.create_analysis.debug_hash    = NULL;
     request.create_analysis.size_in_bytes = size_in_bytes;
+
+    request.create_analysis.dynamic_execution = dynamic_execution;
+    request.create_analysis.skip_scraping     = skip_scraping;
+    request.create_analysis.skip_cves         = skip_cves;
+    request.create_analysis.skip_sbom         = skip_sbom;
+    request.create_analysis.skip_capabilities = skip_capabilities;
+    request.create_analysis.ignore_cache      = ignore_cache;
+    request.create_analysis.advanced_analysis = do_advanced_analysis;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {

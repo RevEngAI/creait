@@ -147,7 +147,6 @@ extern "C" {
                 CString         platform_opt; /**< @b Idk the possible values of this enum. */
                 CString         isa_opt;      /**< @b Idk possible values of this one as well. */
                 ReaiFileOption  file_opt;     /**< @b Info about file type. */
-                Bool            dyn_exec;     /**< @b Whether to perform dynamic execution or not */
                 CString*        tags;         /**< @b Some tags info to help searching later on. */
                 Size            tags_count;   /**< @b Number of tags in the tags array. */
                 ReaiBinaryScope bin_scope;    /**< @b Scope of binary : public/private. */
@@ -162,6 +161,14 @@ extern "C" {
                 CString sha_256_hash;     /**< @b SHA256 hash returned when binary was uploaded. */
                 CString debug_hash;       /**< @b Idk what this really is */
                 Size    size_in_bytes;    /**< @b Size of file in bytes. */
+
+                Bool dynamic_execution;   /**< @b Whether to perform dynamic execution or not */
+                Bool skip_scraping;
+                Bool skip_cves;
+                Bool skip_sbom;
+                Bool skip_capabilities;
+                Bool ignore_cache;
+                Bool advanced_analysis;
             } create_analysis;
 
             struct {

@@ -132,7 +132,13 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
                 JSON_ADD_STRING (json, "file_options", file_opt);
             }
 
-            JSON_ADD_BOOL (json, "dynamic_execution", request->create_analysis.dyn_exec);
+            JSON_ADD_BOOL (json, "dynamic_execution", request->create_analysis.dynamic_execution);
+            JSON_ADD_BOOL (json, "skip_scraping", request->create_analysis.skip_scraping);
+            JSON_ADD_BOOL (json, "skip_cves", request->create_analysis.skip_cves);
+            JSON_ADD_BOOL (json, "skip_sbom", request->create_analysis.skip_sbom);
+            JSON_ADD_BOOL (json, "skip_capabilities", request->create_analysis.skip_capabilities);
+            JSON_ADD_BOOL (json, "ignore_cache", request->create_analysis.ignore_cache);
+            JSON_ADD_BOOL (json, "advanced_analysis", request->create_analysis.advanced_analysis);
 
             /* optional */
             if (request->create_analysis.tags) {
