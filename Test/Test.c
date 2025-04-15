@@ -79,7 +79,14 @@ int main() {
             "sha256 hash",
             "filename",
             "cmdlineargs",
-            0x4000
+            0x4000,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false,
+            false
         ) && response.type == REAI_RESPONSE_TYPE_CREATE_ANALYSIS &&
             !(response.create_analysis.success ^ !!response.create_analysis.binary_id)
     );
