@@ -216,7 +216,12 @@ extern "C" {
 
             struct {
                 ReaiFunctionId function_id;
-            } begin_ai_decompilation, poll_ai_decompilation;
+            } begin_ai_decompilation;
+
+            struct {
+                ReaiFunctionId function_id;
+                Bool           summarise;
+            } poll_ai_decompilation;
 
             /* request for analysis id from binary id */
             // TODO: a separate struct would be nice to have

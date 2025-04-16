@@ -485,6 +485,9 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                 request->poll_ai_decompilation.function_id
             );
             SET_METHOD ("GET");
+            if (request->poll_ai_decompilation.summarise) {
+                SET_PATH_QUERY_PARAM ("summarise=%s", "true");
+            }
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_POLL_AI_DECOMPILATION);
             break;
         }
@@ -1305,8 +1308,12 @@ Reai* reai_begin_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunct
     }
 }
 
-ReaiAiDecompilationStatus
-    reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id) {
+ReaiAiDecompilationStatus reai_poll_ai_decompilation (
+    Reai*          reai,
+    ReaiResponse*  response,
+    ReaiFunctionId fn_id,
+    Bool           summarise
+) {
     RETURN_VALUE_IF (
         !reai || !response || !fn_id,
         REAI_AI_DECOMPILATION_STATUS_ERROR,
@@ -1316,6 +1323,7 @@ ReaiAiDecompilationStatus
     ReaiRequest request                       = {0};
     request.type                              = REAI_REQUEST_TYPE_POLL_AI_DECOMPILATION;
     request.poll_ai_decompilation.function_id = fn_id;
+    request.poll_ai_decompilation.summarise   = summarise;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {

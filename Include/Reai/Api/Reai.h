@@ -109,8 +109,12 @@ extern "C" {
     CStrVec* reai_get_available_models (Reai* reai, ReaiResponse* response);
 
     Reai* reai_begin_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
-    ReaiAiDecompilationStatus
-        reai_poll_ai_decompilation (Reai* reai, ReaiResponse* response, ReaiFunctionId fn_id);
+    ReaiAiDecompilationStatus reai_poll_ai_decompilation (
+        Reai*          reai,
+        ReaiResponse*  response,
+        ReaiFunctionId fn_id,
+        Bool           summarise
+    );
 
     ReaiSimilarFnVec* reai_get_similar_functions (
         Reai*          reai,

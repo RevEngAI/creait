@@ -477,11 +477,25 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                             "decompilation",
                             response->poll_ai_decompilation.data.decompilation
                         );
-
-                        REAI_LOG_TRACE (
-                            "Got decompilation : \"%s\"",
-                            response->poll_ai_decompilation.data.decompilation
+                        GET_OPTIONAL_JSON_STRING (
+                            data,
+                            "summary",
+                            response->poll_ai_decompilation.data.summary
                         );
+
+                        if (response->poll_ai_decompilation.data.summary) {
+                            REAI_LOG_TRACE (
+                                "Got summary: \"%s\"",
+                                response->poll_ai_decompilation.data.summary
+                            );
+                        }
+
+                        if (response->poll_ai_decompilation.data.decompilation) {
+                            REAI_LOG_TRACE (
+                                "Got decompilation : \"%s\"",
+                                response->poll_ai_decompilation.data.decompilation
+                            );
+                        }
                     } else {
                         response->poll_ai_decompilation.data.decompilation = NULL;
                     }
@@ -1107,6 +1121,7 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             }
             FREE (response->poll_ai_decompilation.message);
             FREE (response->poll_ai_decompilation.data.decompilation);
+            FREE (response->poll_ai_decompilation.data.summary);
             break;
         }
 

@@ -240,6 +240,7 @@ extern "C" {
                 struct {
                     ReaiAiDecompilationStatus status;
                     CString                   decompilation;
+                    CString                   summary;
                     // TODO: function mapping?
                 } data;
                 CString        message;
