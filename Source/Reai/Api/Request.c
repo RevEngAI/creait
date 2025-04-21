@@ -233,35 +233,6 @@ HIDDEN CString reai_request_to_json_cstr (ReaiRequest* request) {
             break;
         }
 
-        case REAI_REQUEST_TYPE_RECENT_ANALYSIS : {
-            if (request->recent_analysis.status) {
-                RETURN_VALUE_IF (
-                    request->recent_analysis.status >= REAI_ANALYSIS_STATUS_MAX,
-                    NULL,
-                    "Invalid analysis status\n"
-                );
-
-                JSON_ADD_STRING (
-                    json,
-                    "status",
-                    reai_analysis_status_to_cstr (request->recent_analysis.status)
-                );
-            }
-
-            if (request->recent_analysis.scope) {
-                CString bin_scope =
-                    request->create_analysis.bin_scope == REAI_BINARY_SCOPE_PRIVATE ? "PRIVATE" :
-                                                                                      "PUBLIC";
-                JSON_ADD_STRING (json, "scope", bin_scope);
-            }
-
-            if (request->recent_analysis.count) {
-                JSON_ADD_U64 (json, "n", request->recent_analysis.count);
-            }
-
-            break;
-        }
-
         case REAI_REQUEST_TYPE_SEARCH : {
             if (request->search.sha_256_hash) {
                 JSON_ADD_STRING (json, "sha_256_hash", request->search.sha_256_hash);

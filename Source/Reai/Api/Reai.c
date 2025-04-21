@@ -410,9 +410,56 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
         /* GET : api.local/v1/analyse/recent */
         case REAI_REQUEST_TYPE_RECENT_ANALYSIS : {
-            SET_ENDPOINT ("%s/v1/analyse/recent", reai->host);
+            SET_ENDPOINT ("%s/v2/analyses/list", reai->host);
             SET_METHOD ("GET");
-            MAKE_JSON_REQUEST (200, REAI_RESPONSE_TYPE_RECENT_ANALYSIS);
+
+            CString st = request->recent_analysis.search_term;
+            if (st && strlen (st)) {
+                SET_PATH_QUERY_PARAM ("search_term=%s", request->recent_analysis.search_term);
+            }
+
+            // default is personal
+            ReaiWorkspace ws = request->recent_analysis.workspace;
+            if (ws != REAI_WORKSPACE_PERSONAL && ws < REAI_WORKSPACE_MAX) {
+                SET_PATH_QUERY_PARAM (
+                    "workspace=%s",
+                    ws == REAI_WORKSPACE_PUBLIC ? "public" : "team"
+                );
+            }
+
+            CString mn = request->recent_analysis.model_name;
+            if (mn && strlen (mn)) {
+                SET_PATH_QUERY_PARAM ("model_name=%s", mn);
+            }
+
+            ReaiDynExecStatus des = request->recent_analysis.dynamic_execution_status;
+            if (des < REAI_DYN_EXEC_STATUS_MAX) {
+                CString s[] = {"PENDING", "ERROR", "SUCCESS", "ALL"};
+                SET_PATH_QUERY_PARAM ("dynamic_execution_status=%s", s[des]);
+            }
+
+            CStrVec* uns = request->recent_analysis.usernames;
+            if (uns && uns->count) {
+                REAI_VEC_FOREACH (uns, un, { SET_PATH_QUERY_PARAM ("usernames=%s", *un); });
+            }
+
+            Uint32 l = request->recent_analysis.limit;
+            SET_PATH_QUERY_PARAM ("limit=%u", l < 5 ? 5 : l > 50 ? 50 : l);
+
+            SET_PATH_QUERY_PARAM ("offset=%u", request->recent_analysis.offset);
+
+            ReaiRecentAnalysisOrderBy ob = request->recent_analysis.order_by;
+            if (ob && ob < REAI_RECENT_ANALYSIS_ORDER_BY_MAX) {
+                CString s[] = {"created", "name", "size"};
+                SET_PATH_QUERY_PARAM ("order_by=%s", s[ob]);
+            }
+
+            SET_PATH_QUERY_PARAM (
+                "order=%s",
+                request->recent_analysis.order_in_asc ? "ASC" : "DESC"
+            );
+
+            MAKE_REQUEST (200, REAI_RESPONSE_TYPE_RECENT_ANALYSIS);
             break;
         }
 
@@ -606,10 +653,7 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
             SET_PATH_QUERY_PARAM (
                 "order=%s",
-                request->basic_collections_info.order_in ==
-                        REAI_COLLECTION_BASIC_INFO_ORDER_IN_DESC ?
-                    "DESC" :
-                    "ASC"
+                request->basic_collections_info.order_in_asc ? "ASC" : "DESC"
             );
 
             MAKE_REQUEST (200, REAI_RESPONSE_TYPE_BASIC_COLLECTIONS_INFO);
@@ -972,21 +1016,34 @@ ReaiFnInfoVec*
  * @return @c NULL otherwise.
  * */
 ReaiAnalysisInfoVec* reai_get_recent_analyses (
-    Reai*              reai,
-    ReaiResponse*      response,
-    ReaiAnalysisStatus status,
-    ReaiBinaryScope    scope,
-    Size               count
+    Reai*                     reai,
+    ReaiResponse*             response,
+    CString                   search_term,
+    ReaiWorkspace             workspace,
+    ReaiAnalysisStatus        status,
+    CString                   model_name,
+    ReaiDynExecStatus         dynamic_execution_status,
+    CStrVec*                  usernames,
+    Uint32                    limit,
+    Uint32                    offset,
+    ReaiRecentAnalysisOrderBy order_by,
+    Bool                      order_in_asc
 ) {
     RETURN_VALUE_IF (!reai || !response, NULL, ERR_INVALID_ARGUMENTS);
 
     /* prepare new request to get recent analysis */
-    ReaiRequest request = {0};
-    request.type        = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
-
-    request.recent_analysis.count  = count;
-    request.recent_analysis.scope  = scope;
-    request.recent_analysis.status = status;
+    ReaiRequest request                              = {0};
+    request.type                                     = REAI_REQUEST_TYPE_RECENT_ANALYSIS;
+    request.recent_analysis.search_term              = search_term;
+    request.recent_analysis.workspace                = workspace;
+    request.recent_analysis.status                   = status;
+    request.recent_analysis.model_name               = model_name;
+    request.recent_analysis.dynamic_execution_status = dynamic_execution_status;
+    request.recent_analysis.usernames                = usernames;
+    request.recent_analysis.limit                    = limit;
+    request.recent_analysis.offset                   = offset;
+    request.recent_analysis.order_by                 = order_by;
+    request.recent_analysis.order_in_asc             = order_in_asc;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
@@ -1410,18 +1467,18 @@ ReaiCollectionBasicInfoVec* reai_get_basic_collection_info (
     Uint64                             limit,
     Uint64                             offset,
     ReaiCollectionBasicInfoOrderBy     order_by,
-    ReaiCollectionBasicInfoOrderIn     order_in
+    Bool                               order_in_asc
 ) {
     RETURN_VALUE_IF (!reai || !response || !search_term, NULL, ERR_INVALID_ARGUMENTS);
 
-    ReaiRequest request                        = {0};
-    request.type                               = REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO;
-    request.basic_collections_info.search_term = search_term;
-    request.basic_collections_info.filters     = filters;
-    request.basic_collections_info.limit       = limit;
-    request.basic_collections_info.offset      = offset;
-    request.basic_collections_info.order_by    = order_by;
-    request.basic_collections_info.order_in    = order_in;
+    ReaiRequest request                         = {0};
+    request.type                                = REAI_REQUEST_TYPE_BASIC_COLLECTIONS_INFO;
+    request.basic_collections_info.search_term  = search_term;
+    request.basic_collections_info.filters      = filters;
+    request.basic_collections_info.limit        = limit;
+    request.basic_collections_info.offset       = offset;
+    request.basic_collections_info.order_by     = order_by;
+    request.basic_collections_info.order_in_asc = order_in_asc;
 
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {

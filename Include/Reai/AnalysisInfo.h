@@ -34,13 +34,19 @@ extern "C" {
      * representing analysis status for associated binary id.
      * */
     typedef struct ReaiAnalysisInfo {
-        Uint64             binary_id;
-        CString            binary_name;
-        CString            creation;
+        ReaiBinaryId       binary_id;
+        ReaiAnalysisId     analysis_id;
+        Bool               is_public;
         Uint64             model_id;
-        CString            model_name;
-        CString            sha_256_hash;
         ReaiAnalysisStatus status;
+        CString            creation;
+        Bool               is_owner;
+        CString            binary_name;
+        CString            sha_256_hash;
+        Size               binary_size;
+        CString            username;
+        CString            dynamic_execution_status;
+        Uint64             dynamic_execution_task_id;
     } ReaiAnalysisInfo;
 
     ReaiAnalysisInfo* reai_analysis_info_clone_deinit (ReaiAnalysisInfo* clone);

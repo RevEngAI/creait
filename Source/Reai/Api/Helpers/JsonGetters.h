@@ -141,12 +141,15 @@
 
 #define GET_JSON_ANALYSIS_INFO(json_analysis_info, ainfo)                                          \
     do {                                                                                           \
+        GET_JSON_U64 (json_analysis_info, "analysis_id", (ainfo).analysis_id);                     \
         GET_JSON_U64 (json_analysis_info, "binary_id", (ainfo).binary_id);                         \
-        GET_JSON_STRING (json_analysis_info, "binary_name", (ainfo).binary_name);                  \
-        GET_JSON_STRING (json_analysis_info, "creation", (ainfo).creation);                        \
         GET_JSON_U64 (json_analysis_info, "model_id", (ainfo).model_id);                           \
-        GET_JSON_STRING (json_analysis_info, "model_name", (ainfo).model_name);                    \
+        GET_JSON_STRING (json_analysis_info, "creation", (ainfo).creation);                        \
+        GET_JSON_BOOL (json_analysis_info, "is_owner", (ainfo).is_owner);                          \
+        GET_JSON_STRING (json_analysis_info, "binary_name", (ainfo).binary_name);                  \
         GET_JSON_STRING (json_analysis_info, "sha_256_hash", (ainfo).sha_256_hash);                \
+        GET_JSON_U64 (json_analysis_info, "binary_size", (ainfo).binary_size);                     \
+        GET_JSON_STRING (json_analysis_info, "username", (ainfo).username);                        \
                                                                                                    \
         CString            status  = NULL;                                                         \
         ReaiAnalysisStatus estatus = 0;                                                            \
@@ -156,6 +159,12 @@
             goto INIT_FAILED;                                                                      \
         }                                                                                          \
         (ainfo).status = estatus;                                                                  \
+        FREE (status);                                                                             \
+                                                                                                   \
+        CString scope = NULL;                                                                      \
+        GET_JSON_STRING (json_analysis_info, "analysis_scope", scope);                             \
+        (ainfo).status = !!strcmp (scope, "PUBLIC");                                               \
+        FREE (scope);                                                                              \
     } while (0)
 
 #define GET_JSON_QUERY_RESULT(json_query_res, qres)                                                \
@@ -177,6 +186,7 @@
             goto INIT_FAILED;                                                                      \
         }                                                                                          \
         (qres).status = estatus;                                                                   \
+        FREE (status);                                                                             \
     } while (0)
 
 #define GET_JSON_ANN_FN_MATCH(json_fn_match, fn_match)                                             \

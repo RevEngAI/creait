@@ -30,6 +30,21 @@ extern "C" {
         REAI_FILE_OPTION_MAX
     } ReaiFileOption;
 
+    typedef enum ReaiWorkspace {
+        REAI_WORKSPACE_PERSONAL,
+        REAI_WORKSPACE_TEAM,
+        REAI_WORKSPACE_PUBLIC,
+        REAI_WORKSPACE_MAX
+    } ReaiWorkspace;
+
+    typedef enum ReaiDynExecStatus {
+        REAI_DYN_EXEC_STATUS_PENDING,
+        REAI_DYN_EXEC_STATUS_ERROR,
+        REAI_DYN_EXEC_STATUS_SUCCESS,
+        REAI_DYN_EXEC_STATUS_ALL,
+        REAI_DYN_EXEC_STATUS_MAX
+    } ReaiDynExecStatus;
+
     typedef enum ReaiBinaryScope {
         REAI_BINARY_SCOPE_DEFAULT,
         REAI_BINARY_SCOPE_PRIVATE,
@@ -58,11 +73,13 @@ extern "C" {
         REAI_COLLECTION_BASIC_INFO_ORDER_BY_MAX
     } ReaiCollectionBasicInfoOrderBy;
 
-    typedef enum ReaiColectionInfoOrderIn {
-        REAI_COLLECTION_BASIC_INFO_ORDER_IN_ASC = 0,
-        REAI_COLLECTION_BASIC_INFO_ORDER_IN_DESC,
-        REAI_COLLECTION_BASIC_INFO_ORDER_IN_MAX
-    } ReaiCollectionBasicInfoOrderIn;
+    typedef enum ReaiRecentAnalysisOrderBy {
+        REAI_RECENT_ANALYSIS_ORDER_BY_INVALID = 0,
+        REAI_RECENT_ANALYSIS_ORDER_BY_CREATED,
+        REAI_RECENT_ANALYSIS_ORDER_BY_NAME,
+        REAI_RECENT_ANALYSIS_ORDER_BY_SIZE,
+        REAI_RECENT_ANALYSIS_ORDER_BY_MAX
+    } ReaiRecentAnalysisOrderBy;
 
     /**
      * @b Each request types represents a unique API endpoint it'll communicate
@@ -176,9 +193,16 @@ extern "C" {
             } delete_analysis, basic_function_info, analysis_status;
 
             struct {
-                ReaiAnalysisStatus status;
-                ReaiBinaryScope    scope;
-                Size               count;
+                CString                   search_term;
+                ReaiWorkspace             workspace;
+                ReaiAnalysisStatus        status;
+                CString                   model_name;
+                ReaiDynExecStatus         dynamic_execution_status;
+                CStrVec*                  usernames;
+                Uint32                    limit;
+                Uint32                    offset;
+                ReaiRecentAnalysisOrderBy order_by;
+                Bool                      order_in_asc;
             } recent_analysis;
 
             struct {
@@ -242,7 +266,7 @@ extern "C" {
                 Size                               limit;
                 Size                               offset;
                 ReaiCollectionBasicInfoOrderBy     order_by;
-                ReaiCollectionBasicInfoOrderIn     order_in;
+                Bool                               order_in_asc;
             } basic_collections_info;
 
             struct {

@@ -63,11 +63,18 @@ extern "C" {
         Bool           do_advanced_analysis
     );
     ReaiAnalysisInfoVec* reai_get_recent_analyses (
-        Reai*              reai,
-        ReaiResponse*      response,
-        ReaiAnalysisStatus status,
-        ReaiBinaryScope    scope,
-        Size               count
+        Reai*                     reai,
+        ReaiResponse*             response,
+        CString                   search_term,
+        ReaiWorkspace             workspace,
+        ReaiAnalysisStatus        status,
+        CString                   model_name,
+        ReaiDynExecStatus         dynamic_execution_status,
+        CStrVec*                  usernames,
+        Uint32                    limit,
+        Uint32                    offset,
+        ReaiRecentAnalysisOrderBy order_by,
+        Bool                      order_in_asc
     );
     ReaiFnInfoVec*
          reai_get_basic_function_info (Reai* reai, ReaiResponse* response, ReaiBinaryId bin_id);
@@ -135,7 +142,7 @@ extern "C" {
         Uint64                             limit,
         Uint64                             offset,
         ReaiCollectionBasicInfoOrderBy     order_by,
-        ReaiCollectionBasicInfoOrderIn     order_in
+        Bool                               order_in_asc
     );
 
     ReaiCollectionSearchResultVec* reai_collection_search (
