@@ -83,6 +83,7 @@ CString reai_analysis_status_to_cstr (ReaiAnalysisStatus status) {
         [REAI_ANALYSIS_STATUS_QUEUED]     = "Queued",
         [REAI_ANALYSIS_STATUS_PROCESSING] = "Processing",
         [REAI_ANALYSIS_STATUS_COMPLETE]   = "Complete",
+        [REAI_ANALYSIS_STATUS_UPLOADED]   = "Uploaded",
         [REAI_ANALYSIS_STATUS_ERROR]      = "Error",
         [REAI_ANALYSIS_STATUS_ALL]        = "All"
     };
@@ -106,6 +107,7 @@ ReaiAnalysisStatus reai_analysis_status_from_cstr (CString str) {
         {    "Queued",     REAI_ANALYSIS_STATUS_QUEUED},
         {"Processing", REAI_ANALYSIS_STATUS_PROCESSING},
         {  "Complete",   REAI_ANALYSIS_STATUS_COMPLETE},
+        {  "Uploaded",   REAI_ANALYSIS_STATUS_UPLOADED},
         {     "Error",      REAI_ANALYSIS_STATUS_ERROR},
         {       "All",        REAI_ANALYSIS_STATUS_ALL}
     };

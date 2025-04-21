@@ -432,11 +432,12 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
                 SET_PATH_QUERY_PARAM ("model_name=%s", mn);
             }
 
-            ReaiDynExecStatus des = request->recent_analysis.dynamic_execution_status;
-            if (des < REAI_DYN_EXEC_STATUS_MAX) {
-                CString s[] = {"PENDING", "ERROR", "SUCCESS", "ALL"};
-                SET_PATH_QUERY_PARAM ("dynamic_execution_status=%s", s[des]);
-            }
+            // NOTE: uncomment this when adding support for dynamic execution
+            // ReaiDynExecStatus des = request->recent_analysis.dynamic_execution_status;
+            // if (des < REAI_DYN_EXEC_STATUS_MAX) {
+            //     CString s[] = {"PENDING", "ERROR", "SUCCESS", "ALL"};
+            //     SET_PATH_QUERY_PARAM ("dynamic_execution_status=%s", s[des]);
+            // }
 
             CStrVec* uns = request->recent_analysis.usernames;
             if (uns && uns->count) {
@@ -1048,7 +1049,7 @@ ReaiAnalysisInfoVec* reai_get_recent_analyses (
     if ((response = reai_request (reai, &request, response))) {
         switch (response->type) {
             case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
-                return response->recent_analysis.analysis_infos;
+                return response->recent_analysis.data.results;
             }
             case REAI_RESPONSE_TYPE_VALIDATION_ERR : {
                 REAI_LOG_ERROR ("reveng.ai request returned validation error.");

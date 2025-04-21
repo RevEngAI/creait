@@ -194,8 +194,12 @@ extern "C" {
             } basic_function_info;
 
             struct {
-                Bool                 success;
-                ReaiAnalysisInfoVec* analysis_infos;
+                Bool status;
+                struct {
+                    ReaiAnalysisInfoVec* results;
+                } data;
+                CString        message;
+                ReaiApiErrors* errors;
             } recent_analysis;
 
             struct {

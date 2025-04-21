@@ -204,25 +204,55 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
         case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
             response->type = REAI_RESPONSE_TYPE_RECENT_ANALYSIS;
 
-            GET_JSON_BOOL (json, "success", response->recent_analysis.success);
-            if (!response->recent_analysis.success) {
-                break;
+            GET_JSON_BOOL (json, "status", response->recent_analysis.status);
+            GOTO_HANDLER_IF (
+                !response->recent_analysis.status,
+                INIT_FAILED,
+                "Recent analysis endpoint returned \"false\" status"
+            );
+
+            if (response->recent_analysis.status) {
+                cJSON* data = cJSON_GetObjectItem (json, "data");
+                if (data) {
+                    cJSON* results = cJSON_GetObjectItem (data, "results");
+                    GOTO_HANDLER_IF (
+                        !results,
+                        INIT_FAILED,
+                        "Failed to get recent analysis results"
+                    );
+
+                    GET_JSON_CUSTOM_ARR (
+                        results,
+                        ReaiAnalysisInfo,
+                        analysis_info,
+                        GET_JSON_ANALYSIS_INFO,
+                        response->recent_analysis.data.results
+                    );
+                }
             }
 
-            cJSON* analysis = cJSON_GetObjectItem (json, "analysis");
-            GOTO_HANDLER_IF (
-                !cJSON_IsObject (analysis) && !cJSON_IsArray (analysis),
-                INIT_FAILED,
-                "Expected array or object for analysis."
-            );
+            GET_OPTIONAL_JSON_STRING (json, "message", response->recent_analysis.message);
 
-            GET_JSON_CUSTOM_ARR (
-                analysis,
-                ReaiAnalysisInfo,
-                analysis_info,
-                GET_JSON_ANALYSIS_INFO,
-                response->recent_analysis.analysis_infos
-            );
+            cJSON* errors = cJSON_GetObjectItem (json, "errors");
+            if (errors) {
+                Size numerr = 0;
+
+                if (cJSON_IsObject (errors)) {
+                    numerr = 1;
+                } else if (cJSON_IsArray (errors)) {
+                    numerr = cJSON_GetArraySize (errors);
+                }
+
+                if (numerr) {
+                    GET_JSON_CUSTOM_ARR (
+                        json,
+                        ReaiApiError,
+                        api_error,
+                        GET_JSON_API_ERROR,
+                        response->recent_analysis.errors
+                    );
+                }
+            }
 
             break;
         }
@@ -1059,9 +1089,9 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
         }
 
         case REAI_RESPONSE_TYPE_RECENT_ANALYSIS : {
-            if (response->recent_analysis.analysis_infos) {
-                reai_analysis_info_vec_destroy (response->recent_analysis.analysis_infos);
-                response->recent_analysis.analysis_infos = NULL;
+            if (response->recent_analysis.data.results) {
+                reai_analysis_info_vec_destroy (response->recent_analysis.data.results);
+                response->recent_analysis.data.results = NULL;
             }
             break;
         }
