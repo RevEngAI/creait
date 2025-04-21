@@ -37,14 +37,6 @@ extern "C" {
         REAI_WORKSPACE_MAX
     } ReaiWorkspace;
 
-    typedef enum ReaiDynExecStatus {
-        REAI_DYN_EXEC_STATUS_PENDING,
-        REAI_DYN_EXEC_STATUS_ERROR,
-        REAI_DYN_EXEC_STATUS_SUCCESS,
-        REAI_DYN_EXEC_STATUS_ALL,
-        REAI_DYN_EXEC_STATUS_MAX
-    } ReaiDynExecStatus;
-
     typedef enum ReaiBinaryScope {
         REAI_BINARY_SCOPE_DEFAULT,
         REAI_BINARY_SCOPE_PRIVATE,

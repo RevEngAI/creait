@@ -161,9 +161,18 @@
         (ainfo).status = estatus;                                                                  \
         FREE (status);                                                                             \
                                                                                                    \
+        ReaiDynExecStatus dstatus = 0;                                                             \
+        GET_JSON_STRING (json_analysis_info, "status", status);                                    \
+        if (!(dstatus = reai_dyn_exec_status_from_cstr (status))) {                                \
+            PRINT_ERR ("Failed to convert analysis status to enum");                               \
+            goto INIT_FAILED;                                                                      \
+        }                                                                                          \
+        (ainfo).dynamic_execution_status = dstatus;                                                \
+        FREE (status);                                                                             \
+                                                                                                   \
         CString scope = NULL;                                                                      \
         GET_JSON_STRING (json_analysis_info, "analysis_scope", scope);                             \
-        (ainfo).status = !!strcmp (scope, "PUBLIC");                                               \
+        (ainfo).is_public = !strcmp (scope, "PUBLIC");                                             \
         FREE (scope);                                                                              \
     } while (0)
 

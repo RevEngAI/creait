@@ -16,6 +16,17 @@
 extern "C" {
 #endif
 
+    typedef enum ReaiDynExecStatus {
+        REAI_DYN_EXEC_STATUS_PENDING,
+        REAI_DYN_EXEC_STATUS_ERROR,
+        REAI_DYN_EXEC_STATUS_SUCCESS,
+        REAI_DYN_EXEC_STATUS_ALL,
+        REAI_DYN_EXEC_STATUS_MAX
+    } ReaiDynExecStatus;
+
+    CString           reai_dyn_exec_status_to_cstr (ReaiDynExecStatus status);
+    ReaiDynExecStatus reai_dyn_exec_status_from_cstr (CString status);
+
     typedef enum ReaiAnalysisStatus {
         REAI_ANALYSIS_STATUS_INVALID,
         REAI_ANALYSIS_STATUS_QUEUED,
@@ -46,7 +57,7 @@ extern "C" {
         CString            sha_256_hash;
         Size               binary_size;
         CString            username;
-        CString            dynamic_execution_status;
+        ReaiDynExecStatus  dynamic_execution_status;
         Uint64             dynamic_execution_task_id;
     } ReaiAnalysisInfo;
 

@@ -58,9 +58,15 @@ PUBLIC ReaiAnalysisInfo*
     CREATE_CSTR_CLONE (dst->sha_256_hash, src->sha_256_hash);
     CREATE_CSTR_CLONE (dst->username, src->username);
 
-    dst->binary_id = src->binary_id;
-    dst->model_id  = src->model_id;
-    dst->status    = src->status;
+    dst->binary_id                 = src->binary_id;
+    dst->analysis_id               = src->analysis_id;
+    dst->is_public                 = src->is_public;
+    dst->model_id                  = src->model_id;
+    dst->status                    = src->status;
+    dst->is_owner                  = src->is_owner;
+    dst->binary_size               = src->binary_size;
+    dst->dynamic_execution_status  = src->dynamic_execution_status;
+    dst->dynamic_execution_task_id = src->dynamic_execution_task_id;
 
     return dst;
 
@@ -119,6 +125,38 @@ ReaiAnalysisStatus reai_analysis_status_from_cstr (CString str) {
     }
 
     return REAI_ANALYSIS_STATUS_INVALID;
+}
+
+CString reai_dyn_exec_status_to_cstr (ReaiDynExecStatus status) {
+    RETURN_VALUE_IF (!status, NULL, ERR_INVALID_ARGUMENTS);
+
+    switch (status) {
+        case REAI_DYN_EXEC_STATUS_PENDING :
+            return "PENDING";
+        case REAI_DYN_EXEC_STATUS_ERROR :
+            return "ERROR";
+        case REAI_DYN_EXEC_STATUS_SUCCESS :
+            return "SUCCESS";
+        case REAI_DYN_EXEC_STATUS_ALL :
+            return "ALL";
+        default :
+            return NULL;
+    }
+}
+
+ReaiDynExecStatus reai_dyn_exec_status_from_cstr (CString status) {
+    RETURN_VALUE_IF (!status, REAI_DYN_EXEC_STATUS_ERROR, ERR_INVALID_ARGUMENTS);
+
+    if (strcmp (status, "PENDING") == 0)
+        return REAI_DYN_EXEC_STATUS_PENDING;
+    if (strcmp (status, "ERROR") == 0)
+        return REAI_DYN_EXEC_STATUS_ERROR;
+    if (strcmp (status, "SUCCESS") == 0)
+        return REAI_DYN_EXEC_STATUS_SUCCESS;
+    if (strcmp (status, "ALL") == 0)
+        return REAI_DYN_EXEC_STATUS_ALL;
+
+    return REAI_DYN_EXEC_STATUS_ERROR;
 }
 
 #undef DESTROY_CSTR_CLONE
