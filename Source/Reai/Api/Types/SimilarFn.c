@@ -5,7 +5,7 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#include <Reai/SimilarFn.h>
+#include <Reai/Api/Types/SimilarFn.h>
 
 /* libc */
 #include <string.h>

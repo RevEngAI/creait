@@ -5,7 +5,7 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#include <Reai/ApiError.h>
+#include <Reai/Api/Types/ApiError.h>
 
 /**
  * @b Create clone of given Api error object.

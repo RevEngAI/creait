@@ -1,12 +1,12 @@
 /**
- * @file CollectionBasicInfo.c
+ * @file BinarySearchResult.c
  * @date 1st April 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
 /* reai */
-#include <Reai/CollectionBasicInfo.h>
+#include <Reai/Api/Types/BinarySearchResult.h>
 
 /* libc */
 #include <string.h>
@@ -28,20 +28,18 @@
  * @return @c clone on success.
  * @return @c NULL otherwise.
  * */
-PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_deinit (
-    ReaiCollectionBasicInfo* clone
+PUBLIC ReaiBinarySearchResult* reai_binary_search_result_clone_deinit (ReaiBinarySearchResult* clone
 ) {
     RETURN_VALUE_IF (!clone, NULL, ERR_INVALID_ARGUMENTS);
 
-    DESTROY_CSTR_CLONE (clone->collection_name);
-    DESTROY_CSTR_CLONE (clone->description);
-    DESTROY_CSTR_CLONE (clone->collection_scope);
-    DESTROY_CSTR_CLONE (clone->collection_owner);
-    DESTROY_CSTR_CLONE (clone->creation);
+    DESTROY_CSTR_CLONE (clone->binary_name);
+    DESTROY_CSTR_CLONE (clone->sha_256_hash);
+    DESTROY_CSTR_CLONE (clone->owned_by);
+    DESTROY_CSTR_CLONE (clone->created_at);
     DESTROY_CSTR_CLONE (clone->model_name);
 
-    if (clone->collection_tags) {
-        reai_cstr_vec_destroy (clone->collection_tags);
+    if (clone->tags) {
+        reai_cstr_vec_destroy (clone->tags);
     }
 
     memset (clone, 0, sizeof (*clone));
@@ -49,7 +47,7 @@ PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_deinit (
 }
 
 /**
- * @b Method to clone collection info items.
+ * @b Method to clone binary info items.
  *
  * @param dst Memory pointer where cloned data must be placed
  * @param src Memory pointer where source data is stored.
@@ -57,29 +55,26 @@ PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_deinit (
  * @return @c dst on success.
  * @return @c NULL otherwise.
  * */
-PUBLIC ReaiCollectionBasicInfo* reai_collection_basic_info_clone_init (
-    ReaiCollectionBasicInfo* dst,
-    ReaiCollectionBasicInfo* src
+PUBLIC ReaiBinarySearchResult* reai_binary_search_result_clone_init (
+    ReaiBinarySearchResult* dst,
+    ReaiBinarySearchResult* src
 ) {
     RETURN_VALUE_IF (!dst || !src, NULL, ERR_INVALID_ARGUMENTS);
 
-    CREATE_CSTR_CLONE (dst->collection_name, src->collection_name);
-    CREATE_CSTR_CLONE (dst->description, src->description);
-    CREATE_CSTR_CLONE (dst->collection_scope, src->collection_scope);
-    CREATE_CSTR_CLONE (dst->collection_owner, src->collection_owner);
-    dst->official_collection = src->official_collection;
-    dst->collection_tags =
-        src->collection_tags ? reai_cstr_vec_clone_create (src->collection_tags) : NULL;
-    dst->collection_size = src->collection_size;
-    dst->collection_id   = src->collection_id;
-    CREATE_CSTR_CLONE (dst->creation, src->creation);
-    dst->team_id = src->team_id;
+    dst->binary_id = src->binary_id;
+    CREATE_CSTR_CLONE (dst->binary_name, src->binary_name);
+    dst->analysis_id = src->analysis_id;
+    CREATE_CSTR_CLONE (dst->sha_256_hash, src->sha_256_hash);
+    dst->tags = src->tags ? reai_cstr_vec_clone_create (src->tags) : NULL;
+    CREATE_CSTR_CLONE (dst->created_at, src->created_at);
+    dst->model_id = src->model_id;
     CREATE_CSTR_CLONE (dst->model_name, src->model_name);
+    CREATE_CSTR_CLONE (dst->owned_by, src->owned_by);
 
     return dst;
 
 CLONE_FAILED:
-    reai_collection_basic_info_clone_deinit (dst);
+    reai_binary_search_result_clone_deinit (dst);
     return NULL;
 }
 

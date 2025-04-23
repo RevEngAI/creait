@@ -6,7 +6,7 @@
  * */
 
 /* reai */
-#include <Reai/AnalysisInfo.h>
+#include <Reai/Api/Types/AnalysisInfo.h>
 
 /* libc */
 #include <string.h>

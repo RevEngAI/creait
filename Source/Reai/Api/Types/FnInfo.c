@@ -5,7 +5,7 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#include <Reai/FnInfo.h>
+#include <Reai/Api/Types/FnInfo.h>
 
 /* libc */
 #include <string.h>

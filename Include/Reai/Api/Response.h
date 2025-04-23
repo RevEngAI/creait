@@ -8,16 +8,8 @@
 #ifndef REAI_API_RESPONSE_H
 #define REAI_API_RESPONSE_H
 
-#include <Reai/AnalysisInfo.h>
-#include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
-#include <Reai/ApiError.h>
-#include <Reai/BinarySearchResult.h>
-#include <Reai/CollectionBasicInfo.h>
-#include <Reai/CollectionSearchResult.h>
-#include <Reai/FnInfo.h>
-#include <Reai/QueryResult.h>
-#include <Reai/SimilarFn.h>
+#include <Reai/Api/Types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -245,7 +237,7 @@ extern "C" {
                     ReaiAiDecompilationStatus status;
                     CString                   decompilation;
                     CString                   summary;
-                    // TODO: function mapping?
+                    ReaiAiDecompFnMapVec*     function_mapping;
                 } data;
                 CString        message;
                 ReaiApiErrors* errors;
