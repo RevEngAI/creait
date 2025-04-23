@@ -238,6 +238,7 @@ extern "C" {
                     CString                   decompilation;
                     CString                   summary;
                     ReaiAiDecompFnMapVec*     function_mapping;
+                    CStrVec*                  unmatched_custom_types;
                 } data;
                 CString        message;
                 ReaiApiErrors* errors;

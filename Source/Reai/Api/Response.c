@@ -534,7 +534,6 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
 
                                     // BUG: API endpoint returns irregular type for "addr"
                                     // Sometimes it's a string, sometime's it's a number
-                                    GET_OPTIONAL_JSON_U64 (it, "addr", fn_map.addr);
                                     cJSON* j_addr = cJSON_GetObjectItem (it, "addr");
                                     if (cJSON_IsString (j_addr)) {
                                         CString s_addr = cJSON_GetStringValue (j_addr);
@@ -565,8 +564,57 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                             );
                             response->poll_ai_decompilation.data.function_mapping = NULL;
                         }
+
+                        // Get custom types
+                        cJSON* function_mapping_full =
+                            cJSON_GetObjectItem (data, "function_mapping_full");
+                        cJSON* unmatched_custom_types =
+                            cJSON_GetObjectItem (function_mapping_full, "unmatched_custom_types");
+
+                        if (unmatched_custom_types) {
+                            // create vector to append items to
+                            response->poll_ai_decompilation.data.unmatched_custom_types =
+                                reai_cstr_vec_create();
+
+                            Size i         = 0;
+                            char oname[64] = {0};
+                            while (true) {
+                                // try to get a name at current index
+                                snprintf (oname, sizeof (oname), "<CUSTOM_TYPE_%zu>", i);
+                                cJSON* it = cJSON_GetObjectItem (unmatched_custom_types, oname);
+
+                                // if we got an object, then all good, read object and repeat the process,
+                                // otherwise we've read all objects there are to read.
+                                CString value = NULL;
+                                if (it && cJSON_IsObject (it)) {
+                                    GET_OPTIONAL_JSON_STRING (it, "value", value);
+                                    reai_cstr_vec_append (
+                                        response->poll_ai_decompilation.data.unmatched_custom_types,
+                                        &value
+                                    );
+                                    FREE (value);
+                                } else {
+                                    break;
+                                }
+
+                                // next name
+                                i++;
+                            }
+
+                            REAI_LOG_TRACE (
+                                "Got custom types with %llu entries.",
+                                response->poll_ai_decompilation.data.unmatched_custom_types->count
+                            );
+                        } else {
+                            REAI_LOG_ERROR (
+                                "Failed to get custom types from poll ai decompilation endpoint"
+                            );
+                            response->poll_ai_decompilation.data.unmatched_custom_types = NULL;
+                        }
                     } else {
-                        response->poll_ai_decompilation.data.decompilation = NULL;
+                        response->poll_ai_decompilation.data.decompilation    = NULL;
+                        response->poll_ai_decompilation.data.summary          = NULL;
+                        response->poll_ai_decompilation.data.function_mapping = NULL;
                     }
                 }
             }
@@ -1193,6 +1241,10 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
                     response->poll_ai_decompilation.data.function_mapping
                 );
                 response->poll_ai_decompilation.data.function_mapping = NULL;
+            }
+            if (response->poll_ai_decompilation.data.unmatched_custom_types) {
+                reai_cstr_vec_destroy (response->poll_ai_decompilation.data.unmatched_custom_types);
+                response->poll_ai_decompilation.data.unmatched_custom_types = NULL;
             }
             FREE (response->poll_ai_decompilation.message);
             FREE (response->poll_ai_decompilation.data.decompilation);
