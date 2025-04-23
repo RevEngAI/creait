@@ -8,7 +8,6 @@
 #ifndef REAI_QUERY_RESULT_H
 #define REAI_QUERY_RESULT_H
 
-#include <Reai/AnalysisInfo.h>
 #include <Reai/Api/Request.h>
 #include <Reai/Types.h>
 #include <Reai/Util/CStrVec.h>

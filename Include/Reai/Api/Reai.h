@@ -8,10 +8,9 @@
 #ifndef REAI_API_REAI_H
 #define REAI_API_REAI_H
 
-#include <Reai/AnalysisInfo.h>
-#include <Reai/AnnFnMatch.h>
 #include <Reai/Api/Request.h>
 #include <Reai/Api/Response.h>
+#include <Reai/Api/Types.h>
 #include <Reai/Common.h>
 #include <Reai/Types.h>
 #include <Reai/Util/CStrVec.h>
