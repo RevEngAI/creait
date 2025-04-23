@@ -131,7 +131,7 @@
         (var) = 0;                                                                                 \
     }
 
-#define GET_JSON_FN_INFO(json_fn_info, fn)                                                         \
+#define GET_JSON_FN_INFO(json_fn_info, fn, item_idx)                                               \
     do {                                                                                           \
         GET_JSON_U64 (json_fn_info, "function_id", (fn).id);                                       \
         GET_JSON_STRING (json_fn_info, "function_name", (fn).name);                                \
@@ -139,7 +139,7 @@
         GET_JSON_U64 (json_fn_info, "function_vaddr", (fn).vaddr);                                 \
     } while (0)
 
-#define GET_JSON_ANALYSIS_INFO(json_analysis_info, ainfo)                                          \
+#define GET_JSON_ANALYSIS_INFO(json_analysis_info, ainfo, item_idx)                                \
     do {                                                                                           \
         GET_JSON_U64 (json_analysis_info, "analysis_id", (ainfo).analysis_id);                     \
         GET_JSON_U64 (json_analysis_info, "binary_id", (ainfo).binary_id);                         \
@@ -176,7 +176,7 @@
         FREE (scope);                                                                              \
     } while (0)
 
-#define GET_JSON_QUERY_RESULT(json_query_res, qres)                                                \
+#define GET_JSON_QUERY_RESULT(json_query_res, qres, item_idx)                                      \
     do {                                                                                           \
         GET_JSON_U64 (json_query_res, "binary_id", (qres).binary_id);                              \
         GET_JSON_STRING (json_query_res, "binary_name", (qres).binary_name);                       \
@@ -198,7 +198,7 @@
         FREE (status);                                                                             \
     } while (0)
 
-#define GET_JSON_ANN_FN_MATCH(json_fn_match, fn_match)                                             \
+#define GET_JSON_ANN_FN_MATCH(json_fn_match, fn_match, item_idx)                                   \
     do {                                                                                           \
         GET_OPTIONAL_JSON_F64 (json_fn_match, "confidence", (fn_match).confidence);                \
         GET_OPTIONAL_JSON_U64 (                                                                    \
@@ -230,7 +230,7 @@
         );                                                                                         \
     } while (0)
 
-#define GET_JSON_SIMILAR_FN(json_similar_fn, similar_fn)                                                \
+#define GET_JSON_SIMILAR_FN(json_similar_fn, similar_fn, item_idx)                                      \
     do {                                                                                                \
         GET_OPTIONAL_JSON_U64 (json_similar_fn, "function_id", (similar_fn).function_id);               \
         GET_OPTIONAL_JSON_STRING (json_similar_fn, "function_name", (similar_fn).function_name);        \
@@ -259,7 +259,7 @@
         GET_OPTIONAL_JSON_STRING (json_similar_fn, "sha_256_hash", (similar_fn).sha_256_hash);          \
     } while (0)
 
-#define GET_JSON_COLLECTION_BASIC_INFO(json_collection_info, collection_info)                      \
+#define GET_JSON_COLLECTION_BASIC_INFO(json_collection_info, collection_info, item_idx)            \
     do {                                                                                           \
         GET_OPTIONAL_JSON_STRING (                                                                 \
             json_collection_info,                                                                  \
@@ -310,7 +310,11 @@
         GET_OPTIONAL_JSON_U64 (json_collection_info, "team_id", (collection_info).team_id);        \
     } while (0)
 
-#define GET_JSON_COLLECTION_SEARCH_RESULT(json_collection_search_result, collection_search_result) \
+#define GET_JSON_COLLECTION_SEARCH_RESULT(                                                         \
+    json_collection_search_result,                                                                 \
+    collection_search_result,                                                                      \
+    item_idx                                                                                       \
+)                                                                                                  \
     do {                                                                                           \
         GET_OPTIONAL_JSON_U64 (                                                                    \
             json_collection_search_result,                                                         \
@@ -354,7 +358,7 @@
         );                                                                                         \
     } while (0)
 
-#define GET_JSON_BINARY_SEARCH_RESULT(json_binary_search_result, binary_search_result)             \
+#define GET_JSON_BINARY_SEARCH_RESULT(json_binary_search_result, binary_search_result, item_idx)   \
     do {                                                                                           \
         GET_OPTIONAL_JSON_U64 (                                                                    \
             json_binary_search_result,                                                             \
@@ -404,12 +408,23 @@
     } while (0)
 
 
-#define GET_JSON_AI_MODEL(json_ai_model, model_name)                                               \
+#define GET_JSON_AI_MODEL(json_ai_model, model_name, item_idx)                                     \
     do {                                                                                           \
         GET_JSON_STRING (json_ai_model, "model_name", model_name);                                 \
     } while (0)
 
-#define GET_JSON_API_ERROR(json_api_error, api_error)                                              \
+#define GET_JSON_AI_DECOMP_FN_MAP(json_fn_map, fn_map, item_idx)                                   \
+    do {                                                                                           \
+        char oname[64] = {0};                                                                      \
+        snprintf (oname, sizeof (oname), "<DISASM_FUNCTION_%zu>", (Size)item_idx);                 \
+        cJSON* it = cJSON_GetObjectItem (json_fn_map, oname);                                      \
+        if (it) {                                                                                  \
+            GET_JSON_STRING (it, "name", (fn_map).name);                                           \
+            GET_JSON_U64 (it, "addr", (fn_map).addr);                                              \
+        }                                                                                          \
+    } while (0)
+
+#define GET_JSON_API_ERROR(json_api_error, api_error, item_idx)                                    \
     do {                                                                                           \
         GET_OPTIONAL_JSON_STRING (json_api_error, "code", (api_error).code);                       \
         GET_OPTIONAL_JSON_STRING (json_api_error, "message", (api_error).message);                 \
@@ -421,8 +436,10 @@
         GOTO_HANDLER_IF (!(vec), INIT_FAILED, "Failed to create " #type_name " vector.");          \
                                                                                                    \
         if (cJSON_IsObject (json_arr)) {                                                           \
+            REAI_LOG_TRACE ("Reading " #type_name " as a single object");                          \
+                                                                                                   \
             type_name item = {0};                                                                  \
-            reader (json_arr, item);                                                               \
+            reader (json_arr, item, 0);                                                            \
                                                                                                    \
             if (!reai_##type_infix##_vec_append ((vec), &item)) {                                  \
                 PRINT_ERR ("Failed to insert " #type_name " object into vector.");                 \
@@ -430,10 +447,14 @@
                 goto INIT_FAILED;                                                                  \
             }                                                                                      \
         } else {                                                                                   \
+            REAI_LOG_TRACE ("Reading " #type_name " an array of objects");                         \
+                                                                                                   \
             cJSON* arr_item = NULL;                                                                \
+            Size   i        = 0;                                                                   \
             cJSON_ArrayForEach (arr_item, json_arr) {                                              \
                 type_name item = {0};                                                              \
-                reader (arr_item, item);                                                           \
+                reader (arr_item, item, i);                                                        \
+                i++;                                                                               \
                                                                                                    \
                 if (!reai_##type_infix##_vec_append ((vec), &item)) {                              \
                     PRINT_ERR ("Failed to insert " #type_name " object into vector.");             \

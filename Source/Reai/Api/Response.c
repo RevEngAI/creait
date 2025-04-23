@@ -513,18 +513,57 @@ HIDDEN ReaiResponse* reai_response_init_for_type (ReaiResponse* response, ReaiRe
                             response->poll_ai_decompilation.data.summary
                         );
 
-                        if (response->poll_ai_decompilation.data.summary) {
-                            REAI_LOG_TRACE (
-                                "Got summary: \"%s\"",
-                                response->poll_ai_decompilation.data.summary
-                            );
-                        }
+                        cJSON* function_mapping = cJSON_GetObjectItem (data, "function_mapping");
+                        if (function_mapping) {
+                            // create vector to append items to
+                            response->poll_ai_decompilation.data.function_mapping =
+                                reai_ai_decomp_fn_map_vec_create();
 
-                        if (response->poll_ai_decompilation.data.decompilation) {
+                            Size i         = 0;
+                            char oname[64] = {0};
+                            while (true) {
+                                // try to get a name at current index
+                                snprintf (oname, sizeof (oname), "<DISASM_FUNCTION_%zu>", i);
+                                cJSON* it = cJSON_GetObjectItem (function_mapping, oname);
+
+                                // if we got an object, then all good, read object and repeat the process,
+                                // otherwise we've read all objects there are to read.
+                                ReaiAiDecompFnMap fn_map = {0};
+                                if (it && cJSON_IsObject (it)) {
+                                    GET_OPTIONAL_JSON_STRING (it, "name", fn_map.name);
+
+                                    // BUG: API endpoint returns irregular type for "addr"
+                                    // Sometimes it's a string, sometime's it's a number
+                                    GET_OPTIONAL_JSON_U64 (it, "addr", fn_map.addr);
+                                    cJSON* j_addr = cJSON_GetObjectItem (it, "addr");
+                                    if (cJSON_IsString (j_addr)) {
+                                        CString s_addr = cJSON_GetStringValue (j_addr);
+                                        fn_map.addr    = strtoull (s_addr, NULL, 10);
+                                    } else {
+                                        fn_map.addr = cJSON_GetNumberValue (j_addr);
+                                    }
+
+                                    reai_ai_decomp_fn_map_vec_append (
+                                        response->poll_ai_decompilation.data.function_mapping,
+                                        &fn_map
+                                    );
+                                } else {
+                                    break;
+                                }
+
+                                // next name
+                                i++;
+                            }
+
                             REAI_LOG_TRACE (
-                                "Got decompilation : \"%s\"",
-                                response->poll_ai_decompilation.data.decompilation
+                                "Got function mapping with %llu entries.",
+                                response->poll_ai_decompilation.data.function_mapping->count
                             );
+                        } else {
+                            REAI_LOG_ERROR (
+                                "Failed to get function mapping from poll ai decompilation endpoint"
+                            );
+                            response->poll_ai_decompilation.data.function_mapping = NULL;
                         }
                     } else {
                         response->poll_ai_decompilation.data.decompilation = NULL;
@@ -1148,6 +1187,12 @@ HIDDEN ReaiResponse* reai_response_reset (ReaiResponse* response) {
             if (response->poll_ai_decompilation.errors) {
                 reai_api_error_vec_destroy (response->poll_ai_decompilation.errors);
                 response->poll_ai_decompilation.errors = NULL;
+            }
+            if (response->poll_ai_decompilation.data.function_mapping) {
+                reai_ai_decomp_fn_map_vec_destroy (
+                    response->poll_ai_decompilation.data.function_mapping
+                );
+                response->poll_ai_decompilation.data.function_mapping = NULL;
             }
             FREE (response->poll_ai_decompilation.message);
             FREE (response->poll_ai_decompilation.data.decompilation);
