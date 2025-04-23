@@ -8,7 +8,7 @@ have a better idea of how the code is structured.
 - All headers are in `Include/Reai` and when headers are installed they go to some place like `/usr/include/Reai` or `/usr/local/include/Reai` or any other `<PREFIX>/Reai`
   depending on where you're installing.
 - All sources exist in `Source/Reai`
-- Some headers in `Include/Reai/` are custom structures for which there also exist an array. These arrays are used to store information when the JSON in response to a request
+- Some headers in `Include/Reai/Api/Types` are custom structures for which there also exist an array. These arrays are used to store information when the JSON in response to a request
   returns an array. Usage of these structures and corresponding vectors can be found in `Include/Reai/Api/Request.h` and `Source/Reai/Api/Request.c`.
 - Headers like `Config.h` and `Log.h` don't have any vector representations and are there for easy loading of config file and creating logs in plugins. There are several macros
   to issue different levels of log severity messages.
