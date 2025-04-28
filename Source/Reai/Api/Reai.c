@@ -451,7 +451,11 @@ ReaiResponse* reai_request (Reai* reai, ReaiRequest* request, ReaiResponse* resp
 
             ReaiRecentAnalysisOrderBy ob = request->recent_analysis.order_by;
             if (ob && ob < REAI_RECENT_ANALYSIS_ORDER_BY_MAX) {
-                CString s[] = {"created", "name", "size"};
+                CString s[] = {
+                    [REAI_RECENT_ANALYSIS_ORDER_BY_CREATED] = "created",
+                    [REAI_RECENT_ANALYSIS_ORDER_BY_NAME]    = "name",
+                    [REAI_RECENT_ANALYSIS_ORDER_BY_SIZE]    = "size"
+                };
                 SET_PATH_QUERY_PARAM ("order_by=%s", s[ob]);
             }
 
