@@ -6,6 +6,7 @@ include(ExternalProject)
 include(CTest)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
+option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
 
 # set output directories of binary and library files
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
@@ -15,6 +16,12 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 if(UNIX)
   set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fPIC")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fPIC")
+endif()
+
+if (ENABLE_ASAN)
+    message(STATUS "Address Sanitizer enabled")
+    add_compile_options(-fsanitize=address -fno-omit-frame-pointer)
+    add_link_options(-fsanitize=address)
 endif()
 
 # generate a compile_commands.json for LSP clients
