@@ -6,63 +6,37 @@
  * */
 
 #include <Reai/Api/Types/AnnFnMatch.h>
+#include <Reai/Log.h>
 
 /* libc */
 #include <string.h>
 
-/**
- * @b Deinitialize a cloned ReaiAnnFnMatch object.
- *
- * @param clone
- *
- * @return @c clone on success.
- * @return @c NULL otherwise.
- * */
-ReaiAnnFnMatch* reai_ann_fn_match_clone_deinit (ReaiAnnFnMatch* clone) {
-    RETURN_VALUE_IF (!clone, (ReaiAnnFnMatch*)NULL, ERR_INVALID_ARGUMENTS);
-
-    if (clone->nn_binary_name) {
-        FREE (clone->nn_binary_name);
+void AnnFnMatchDeinit (AnnFnMatch* afn) {
+    if (!afn) {
+        LOG_FATAL ("Invalid arguments. Aborting...");
     }
 
-    if (clone->nn_function_name) {
-        FREE (clone->nn_function_name);
-    }
+    StrDeinit (&afn->binary_name);
+    StrDeinit (&afn->function_name);
+    StrDeinit (&afn->sha256);
 
-    if (clone->nn_sha_256_hash) {
-        FREE (clone->nn_sha_256_hash);
-    }
-
-    memset (clone, 0, sizeof (ReaiAnnFnMatch));
-    return clone;
+    memset (afn, 0, sizeof (AnnFnMatch));
 }
 
-/**
- * @b Create clone of given ReaiAnnFnMatch object.
- *
- * @param dst
- * @param src
- *
- * @return @c dst on success.
- * @return @c src otherwise.
- * */
-ReaiAnnFnMatch* reai_ann_fn_match_clone_init (ReaiAnnFnMatch* dst, ReaiAnnFnMatch* src) {
-    RETURN_VALUE_IF (!dst || !src, (ReaiAnnFnMatch*)NULL, ERR_INVALID_ARGUMENTS);
+AnnFnMatch* ann_fn_match_clone_init (AnnFnMatch* dst, AnnFnMatch* src) {
+    if (!dst || !src) {
+        LOG_FATAL ("Invalid arguments. Aborting...");
+    }
+
+    StrInitCopy (&dst->binary_name, &src->binary_name);
+    StrInitCopy (&dst->function_name, &src->function_name);
+    StrInitCopy (&dst->sha256, &src->sha256);
 
     dst->confidence         = src->confidence;
-    dst->nn_binary_id       = src->nn_binary_id;
-    dst->nn_binary_name     = src->nn_binary_name ? strdup (src->nn_binary_name) : NULL;
-    dst->nn_debug           = src->nn_debug;
-    dst->nn_function_id     = src->nn_function_id;
-    dst->nn_function_name   = src->nn_function_name ? strdup (src->nn_function_name) : NULL;
-    dst->nn_sha_256_hash    = src->nn_sha_256_hash ? strdup (src->nn_sha_256_hash) : NULL;
+    dst->binary_id          = src->binary_id;
+    dst->debug              = src->debug;
+    dst->function_id        = src->function_id;
     dst->origin_function_id = src->origin_function_id;
-
-    if (!dst->nn_binary_name || !dst->nn_function_name || !dst->nn_sha_256_hash) {
-        PRINT_ERR ("Out of memory or invalid function match object");
-        reai_ann_fn_match_clone_deinit (dst);
-        return (ReaiAnnFnMatch*)NULL;
-    }
 
     return dst;
 }
