@@ -1,5 +1,6 @@
 #include <Reai/Config.h>
 #include <Reai/Log.h>
+#include <Reai/Sys.h>
 
 /* libc  */
 #include <ctype.h>
@@ -16,16 +17,7 @@
 
 #define CONFIG_FILE_NAME ".creait"
 
-/**
- * @b Get default file path where .reait.toml is supposed to be present.
- *
- * @param buf Buffer to get full path into
- * @param buf_cap Buffer capacity
- *
- * @return @c buf on success
- * @return @c NULL otherwise.
- * */
-const char *get_default_config_path() {
+const char *defaultConfigPath() {
     static char buf[1024]        = {0};
     static bool default_path_set = false;
 
@@ -64,7 +56,7 @@ char *trim (char *str) {
 Config ConfigRead (const char *path) {
     if (!path) {
         LOG_INFO ("Config file path not provided. Using default path.");
-        path = get_default_config_path();
+        path = defaultConfigPath();
     }
 
 
@@ -108,6 +100,28 @@ Config ConfigRead (const char *path) {
     }
 }
 
+void ConfigWrite (Config *c, const char *path) {
+    if (!c) {
+        LOG_FATAL ("Invalid arguments");
+    }
+
+    if (!path) {
+        path = defaultConfigPath();
+    }
+
+    FILE *outfile = fopen (path, "w");
+    if (!outfile) {
+        Str syserr;
+        StrInitStack (&syserr, 128, {
+            LOG_ERROR ("Error opening file for writing %s", SysStrError (errno, &syserr)->data);
+        });
+    }
+
+    VecForeach (c, kv, { fprintf (outfile, "%s = %s\n", kv.key.data, kv.value.data); });
+
+    fclose (outfile);
+}
+
 Str *ConfigFind (Config *cfg, const char *key) {
     VecForeachPtr (cfg, kv, {
         if (!StrCmpZstr (&kv->key, key)) {
@@ -115,4 +129,21 @@ Str *ConfigFind (Config *cfg, const char *key) {
         }
     });
     return NULL; // Key not found
+}
+
+void KvPairDeinit (KvPair *c) {
+    if (!c) {
+        LOG_FATAL ("Invalid argument");
+    }
+    StrDeinit (&c->key);
+    StrDeinit (&c->value);
+}
+
+bool KvPairInitClone (KvPair *d, KvPair *s) {
+    if (!d || !s) {
+        LOG_FATAL ("Invalid arguments");
+    }
+    StrInitCopy (&d->key, &s->key);
+    StrInitCopy (&d->value, &s->value);
+    return true;
 }
