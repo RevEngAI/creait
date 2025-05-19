@@ -25,15 +25,20 @@ bool Authenticate (Connection conn) {
     return res;
 }
 
-BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest request) {
+BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return 0;
     }
 
-    if (request.file_opt >= FILE_OPTION_MAX) {
+    if (!request) {
+        LOG_ERROR ("Invalid request");
+        return 0;
+    }
+
+    if (request->file_opt >= FILE_OPTION_MAX) {
         LOG_ERROR ("Invalid file option in create new analysis request. Using default value");
-        request.file_opt = FILE_OPTION_AUTO;
+        request->file_opt = FILE_OPTION_AUTO;
     }
 
     Str url = StrInit();
@@ -52,14 +57,14 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest request) {
     };
 
     JW_OBJ (sj, {
-        JW_STR_KV (sj, "model_name", request.ai_model);
-        JW_STR_KV (sj, "platform_options", request.platform_opt);
-        JW_STR_KV (sj, "isa_options", request.isa_opt);
-        JW_ZSTR_KV (sj, "file_options", file_opt_to_str[request.file_opt]);
-        JW_BOOL_KV (sj, "dynamic_execution", request.dynamic_execution);
-        JW_ARR_KV (sj, "tags", request.tags, tag, { JW_STR (sj, tag); });
-        JW_ZSTR_KV (sj, "binary_scope", request.is_private ? "PRIVATE" : "PUBLIC");
-        JW_ARR_KV (sj, "symbols", request.functions, function, {
+        JW_STR_KV (sj, "model_name", request->ai_model);
+        JW_STR_KV (sj, "platform_options", request->platform_opt);
+        JW_STR_KV (sj, "isa_options", request->isa_opt);
+        JW_ZSTR_KV (sj, "file_options", file_opt_to_str[request->file_opt]);
+        JW_BOOL_KV (sj, "dynamic_execution", request->dynamic_execution);
+        JW_ARR_KV (sj, "tags", request->tags, tag, { JW_STR (sj, tag); });
+        JW_ZSTR_KV (sj, "binary_scope", request->is_private ? "PRIVATE" : "PUBLIC");
+        JW_ARR_KV (sj, "symbols", request->functions, function, {
             if (!function.symbol.is_addr) {
                 LOG_ERROR (
                     "Function \"%s\" symbol expected to be an address value.",
@@ -73,18 +78,18 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest request) {
                 JW_INT_KV (sj, "end_ddr", function.symbol.value.addr + function.size);
             });
         });
-        JW_STR_KV (sj, "file_name", request.file_name);
-        JW_STR_KV (sj, "command_line_args", request.cmdline_args);
-        JW_INT_KV (sj, "priority", request.priority);
-        JW_STR_KV (sj, "sha_256_hash", request.sha256);
-        JW_STR_KV (sj, "debug_hash", request.debug_hash);
-        JW_INT_KV (sj, "size_in_bytes", request.file_size);
-        JW_BOOL_KV (sj, "skip_scraping", request.skip_scraping);
-        JW_BOOL_KV (sj, "skip_cves", request.skip_cves);
-        JW_BOOL_KV (sj, "skip_sbom", request.skip_sbom);
-        JW_BOOL_KV (sj, "skip_capabilities", request.skip_capabilities);
-        JW_BOOL_KV (sj, "ignore_cache", request.ignore_cache);
-        JW_BOOL_KV (sj, "advanced_analysis", request.advanced_analysis);
+        JW_STR_KV (sj, "file_name", request->file_name);
+        JW_STR_KV (sj, "command_line_args", request->cmdline_args);
+        JW_INT_KV (sj, "priority", request->priority);
+        JW_STR_KV (sj, "sha_256_hash", request->sha256);
+        JW_STR_KV (sj, "debug_hash", request->debug_hash);
+        JW_INT_KV (sj, "size_in_bytes", request->file_size);
+        JW_BOOL_KV (sj, "skip_scraping", request->skip_scraping);
+        JW_BOOL_KV (sj, "skip_cves", request->skip_cves);
+        JW_BOOL_KV (sj, "skip_sbom", request->skip_sbom);
+        JW_BOOL_KV (sj, "skip_capabilities", request->skip_capabilities);
+        JW_BOOL_KV (sj, "ignore_cache", request->ignore_cache);
+        JW_BOOL_KV (sj, "advanced_analysis", request->advanced_analysis);
     });
 
     Str gj = StrInit(); // get json
@@ -105,6 +110,17 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest request) {
         });
 
         StrDeinit (&gj);
+
+        StrDeinit (&request->ai_model);
+        StrDeinit (&request->platform_opt);
+        StrDeinit (&request->isa_opt);
+        VecDeinit (&request->tags);
+        VecDeinit (&request->functions);
+        StrDeinit (&request->file_name);
+        StrDeinit (&request->cmdline_args);
+        StrDeinit (&request->sha256);
+        StrDeinit (&request->debug_hash);
+        memset (request, 0, sizeof (NewAnalysisRequest));
 
         return binary_id;
     } else {
@@ -156,20 +172,25 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection conn, BinaryId binar
 
 // TODO: GetBasicFunctionInfoUsingAnalysisId
 
-AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest request) {
+AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (AnalysisInfos) {0};
     }
 
-    if (request.workspace >= WORKSPACE_MAX) {
-        LOG_ERROR ("Invalid 'workspace'. Defaulting to 'personal'");
-        request.workspace = WORKSPACE_PERSONAL;
+    if (!request) {
+        LOG_ERROR ("Invalid request");
+        return (AnalysisInfos) {0};
     }
 
-    if (request.order_by >= ORDER_BY_MAX) {
+    if (request->workspace >= WORKSPACE_MAX) {
+        LOG_ERROR ("Invalid 'workspace'. Defaulting to 'personal'");
+        request->workspace = WORKSPACE_PERSONAL;
+    }
+
+    if (request->order_by >= ORDER_BY_MAX) {
         LOG_ERROR ("Invalid 'order_by'. Defaulting to 'created'");
-        request.order_by = ORDER_BY_CREATED;
+        request->order_by = ORDER_BY_CREATED;
     }
 
     Str url = StrInit();
@@ -180,17 +201,17 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest request)
     bool        is_first          = true;
     const char* ws[WORKSPACE_MAX] = {"personal", "public", "team"};
 
-    UrlAddQueryStr (&url, "search_term", request.search_term.data, &is_first);
-    UrlAddQueryStr (&url, "model_name", request.model_name.data, &is_first);
-    UrlAddQueryStr (&url, "workspace", ws[request.workspace], &is_first);
-    VecForeach (&request.usernames, username, {
+    UrlAddQueryStr (&url, "search_term", request->search_term.data, &is_first);
+    UrlAddQueryStr (&url, "model_name", request->model_name.data, &is_first);
+    UrlAddQueryStr (&url, "workspace", ws[request->workspace], &is_first);
+    VecForeach (&request->usernames, username, {
         UrlAddQueryStr (&url, "usernames", username.data, &is_first);
     });
-    UrlAddQueryInt (&url, "limit", CLAMP (request.limit, 5, 50), &is_first);
-    UrlAddQueryInt (&url, "offset", request.offset, &is_first);
-    UrlAddQueryStr (&url, "order", request.order_in_asc ? "ASC" : "DESC", &is_first);
+    UrlAddQueryInt (&url, "limit", CLAMP (request->limit, 5, 50), &is_first);
+    UrlAddQueryInt (&url, "offset", request->offset, &is_first);
+    UrlAddQueryStr (&url, "order", request->order_in_asc ? "ASC" : "DESC", &is_first);
 
-    switch (request.order_by) {
+    switch (request->order_by) {
         case ORDER_BY_NAME :
             UrlAddQueryStr (&url, "order_by", "name", &is_first);
             break;
@@ -249,15 +270,25 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest request)
 
         StrDeinit (&gj);
 
+        StrDeinit (&request->search_term);
+        StrDeinit (&request->model_name);
+        VecDeinit (&request->usernames);
+        memset (request, 0, sizeof (RecentAnalysisRequest));
+
         return infos;
     } else {
         return (AnalysisInfos) {0};
     }
 }
 
-BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest request) {
+BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
+        return (BinaryInfos) {0};
+    }
+
+    if (!request) {
+        LOG_ERROR ("Invalid request");
         return (BinaryInfos) {0};
     }
 
@@ -268,12 +299,12 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest request) {
 
     bool is_first = true;
 
-    UrlAddQueryInt (&url, "page", request.page, &is_first);
-    UrlAddQueryInt (&url, "page_size", request.page_size, &is_first);
-    UrlAddQueryStr (&url, "partial_name", request.partial_name.data, &is_first);
-    UrlAddQueryStr (&url, "partial_sha256", request.partial_sha256.data, &is_first);
-    UrlAddQueryStr (&url, "model_name", request.model_name.data, &is_first);
-    VecForeach (&request.tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
+    UrlAddQueryInt (&url, "page", request->page, &is_first);
+    UrlAddQueryInt (&url, "page_size", request->page_size, &is_first);
+    UrlAddQueryStr (&url, "partial_name", request->partial_name.data, &is_first);
+    UrlAddQueryStr (&url, "partial_sha256", request->partial_sha256.data, &is_first);
+    UrlAddQueryStr (&url, "model_name", request->model_name.data, &is_first);
+    VecForeach (&request->tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
 
     if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
@@ -311,21 +342,33 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest request) {
         });
 
         StrDeinit (&gj);
+
+        StrDeinit (&request->partial_name);
+        StrDeinit (&request->partial_sha256);
+        StrDeinit (&request->model_name);
+        VecDeinit (&request->tags);
+        memset (request, 0, sizeof (SearchBinaryRequest));
+
         return infos;
     } else {
         return (BinaryInfos) {0};
     }
 }
 
-CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest request) {
+CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (CollectionInfos) {0};
     }
 
-    if (request.order_by >= ORDER_BY_MAX) {
+    if (!request) {
+        LOG_ERROR ("Invalid request");
+        return (CollectionInfos) {0};
+    }
+
+    if (request->order_by >= ORDER_BY_MAX) {
         LOG_ERROR ("Invalid order_by search query parameter. Using default value.");
-        request.order_by = ORDER_BY_CREATED;
+        request->order_by = ORDER_BY_CREATED;
     }
 
     static const char* order_by_to_str[] = {
@@ -345,23 +388,23 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest reque
     bool is_first = true;
 
 #define ADD_FILTER(f, v)                                                                           \
-    if (request.f)                                                                                 \
+    if (request->f)                                                                                \
     UrlAddQueryStr (&url, "filters", v, &is_first)
 
-    UrlAddQueryInt (&url, "page", request.page, &is_first);
-    UrlAddQueryInt (&url, "page_size", request.page_size, &is_first);
+    UrlAddQueryInt (&url, "page", request->page, &is_first);
+    UrlAddQueryInt (&url, "page_size", request->page_size, &is_first);
     UrlAddQueryStr (
         &url,
         "partial_collection_name",
-        request.partial_collection_name.data,
+        request->partial_collection_name.data,
         &is_first
     );
-    UrlAddQueryStr (&url, "partial_binary_name", request.partial_binary_name.data, &is_first);
-    UrlAddQueryStr (&url, "partial_binary_sha256", request.partial_binary_sha256.data, &is_first);
-    VecForeach (&request.tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
-    UrlAddQueryStr (&url, "model_name", request.model_name.data, &is_first);
-    UrlAddQueryStr (&url, "order_by", order_by_to_str[request.order_by], &is_first);
-    UrlAddQueryStr (&url, "order_by_direction", request.order_in_asc ? "ASC" : "DESC", &is_first);
+    UrlAddQueryStr (&url, "partial_binary_name", request->partial_binary_name.data, &is_first);
+    UrlAddQueryStr (&url, "partial_binary_sha256", request->partial_binary_sha256.data, &is_first);
+    VecForeach (&request->tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
+    UrlAddQueryStr (&url, "model_name", request->model_name.data, &is_first);
+    UrlAddQueryStr (&url, "order_by", order_by_to_str[request->order_by], &is_first);
+    UrlAddQueryStr (&url, "order_by_direction", request->order_in_asc ? "ASC" : "DESC", &is_first);
     ADD_FILTER (filter_official, "official_only");
     ADD_FILTER (filter_user, "user_only");
     ADD_FILTER (filter_team, "team_only");
@@ -412,6 +455,14 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest reque
         });
 
         StrDeinit (&gj);
+
+        StrDeinit (&request->partial_collection_name);
+        StrDeinit (&request->partial_binary_name);
+        StrDeinit (&request->partial_binary_sha256);
+        StrDeinit (&request->model_name);
+        StrDeinit (&request->model_name);
+        memset (request, 0, sizeof (SearchBinaryRequest));
+
         return infos;
     } else {
         return (CollectionInfos) {0};
@@ -498,13 +549,18 @@ bool RenameFunction (Connection conn, FunctionId fn_id, Str new_name) {
     }
 }
 
-AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest request) {
+AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (AnnSymbols) {0};
     }
 
-    if (!request.analysis_id) {
+    if (!request) {
+        LOG_ERROR ("Invalid request");
+        return (AnnSymbols) {0};
+    }
+
+    if (!request->analysis_id) {
         LOG_ERROR ("Invalid analysis id.");
         return (AnnSymbols) {0};
     }
@@ -516,20 +572,20 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest request) {
         &url,
         "%s/v2/analyses/%llu/similarity/functions",
         conn.host.data,
-        request.analysis_id
+        request->analysis_id
     );
 
     JW_OBJ (sj, {
-        JW_INT_KV (sj, "limit", request.limit);
-        JW_FLT_KV (sj, "distance", request.distance);
-        JW_ARR_KV (sj, "analysis_search_ids", request.search.analysis_ids, id, {
+        JW_INT_KV (sj, "limit", request->limit);
+        JW_FLT_KV (sj, "distance", request->distance);
+        JW_ARR_KV (sj, "analysis_search_ids", request->search.analysis_ids, id, {
             JW_INT (sj, id);
         });
-        JW_ARR_KV (sj, "collection_search_ids", request.search.collection_ids, id, {
+        JW_ARR_KV (sj, "collection_search_ids", request->search.collection_ids, id, {
             JW_INT (sj, id);
         });
-        JW_ARR_KV (sj, "search_binary_ids", request.search.binary_ids, id, { JW_INT (sj, id); });
-        JW_ARR_KV (sj, "search_function_ids", request.search.function_ids, id, {
+        JW_ARR_KV (sj, "search_binary_ids", request->search.binary_ids, id, { JW_INT (sj, id); });
+        JW_ARR_KV (sj, "search_function_ids", request->search.function_ids, id, {
             JW_INT (sj, id);
         });
     });
@@ -583,6 +639,12 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest request) {
         });
 
         StrDeinit (&gj);
+
+        VecDeinit (&request->search.analysis_ids);
+        VecDeinit (&request->search.collection_ids);
+        VecDeinit (&request->search.binary_ids);
+        VecDeinit (&request->search.function_ids);
+        memset (request, 0, sizeof (BatchAnnSymbolRequest));
 
         return syms;
     } else {
@@ -915,13 +977,18 @@ AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, boo
     }
 }
 
-SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest request) {
+SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* request) {
     if (!conn.api_key.length || !conn.host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (SimilarFunctions) {0};
     }
 
-    if (!request.function_id) {
+    if (!request) {
+        LOG_ERROR ("Invalid request");
+        return (SimilarFunctions) {0};
+    }
+
+    if (!request->function_id) {
         LOG_ERROR ("Invalid function id.");
         return (SimilarFunctions) {0};
     }
@@ -929,29 +996,34 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest r
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/%llu/similar-functions", conn.host.data, request.function_id);
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/similar-functions",
+        conn.host.data,
+        request->function_id
+    );
 
     bool is_first = true;
-    UrlAddQueryInt (&url, "limit", request.limit, &is_first);
-    UrlAddQueryFloat (&url, "distance", request.distance, &is_first);
-    VecForeach (&request.collection_ids, id, {
+    UrlAddQueryInt (&url, "limit", request->limit, &is_first);
+    UrlAddQueryFloat (&url, "distance", request->distance, &is_first);
+    VecForeach (&request->collection_ids, id, {
         UrlAddQueryInt (&url, "collection_ids", id, &is_first);
     });
-    VecForeach (&request.binary_ids, id, { UrlAddQueryInt (&url, "binary_ids", id, &is_first); });
+    VecForeach (&request->binary_ids, id, { UrlAddQueryInt (&url, "binary_ids", id, &is_first); });
     UrlAddQueryBool (
         &url,
         "debug",
-        (request.debug_include.external_symbols || request.debug_include.system_symbols ||
-         request.debug_include.user_symbols),
+        (request->debug_include.external_symbols || request->debug_include.system_symbols ||
+         request->debug_include.user_symbols),
         &is_first
     );
-    if (request.debug_include.user_symbols) {
+    if (request->debug_include.user_symbols) {
         UrlAddQueryStr (&url, "debug_types", "USER", &is_first);
     }
-    if (request.debug_include.system_symbols) {
+    if (request->debug_include.system_symbols) {
         UrlAddQueryStr (&url, "debug_types", "SYSTEM", &is_first);
     }
-    if (request.debug_include.external_symbols) {
+    if (request->debug_include.external_symbols) {
         UrlAddQueryStr (&url, "debug_types", "EXTERNAL", &is_first);
     }
 
@@ -987,6 +1059,10 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest r
         });
 
         StrDeinit (&gj);
+
+        VecDeinit (&request->collection_ids);
+        VecDeinit (&request->binary_ids);
+
         return functions;
     } else {
         return (SimilarFunctions) {0};
@@ -1220,7 +1296,7 @@ bool MakeRequest (
         if (request_json && request_json->length) {
             headers = curl_slist_append (headers, "Content-Type: application/json");
             curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-            LOG_INFO ("REQUEST.JSON: '%s'", request_json->data);
+            LOG_INFO ("request->JSON: '%s'", request_json->data);
         }
 
         curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
@@ -1333,7 +1409,7 @@ bool MakeUploadRequest (
         if (request_json && request_json->length) {
             headers = curl_slist_append (headers, "Content-Type: application/json");
             curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-            LOG_INFO ("REQUEST.JSON: '%s'", request_json->data);
+            LOG_INFO ("request->JSON: '%s'", request_json->data);
         }
 
         curl_easy_setopt (curl, CURLOPT_MIMEPOST, mime);

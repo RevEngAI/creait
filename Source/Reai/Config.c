@@ -14,7 +14,7 @@
 #    error "Unsupported OS"
 #endif
 
-#define CONFIG_FILE_NAME ".creait.toml"
+#define CONFIG_FILE_NAME ".creait"
 
 /**
  * @b Get default file path where .reait.toml is supposed to be present.
@@ -61,7 +61,7 @@ char *trim (char *str) {
     return str;
 }
 
-Config ConfigLoad (const char *path) {
+Config ConfigRead (const char *path) {
     if (!path) {
         LOG_INFO ("Config file path not provided. Using default path.");
         path = get_default_config_path();

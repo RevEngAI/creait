@@ -37,7 +37,7 @@ extern "C" {
     /// SUCCESS : Contents of config file loaded into Config object.
     /// FAILURE : Empty object.
     ///
-    Config ConfigLoad (const char* path);
+    Config ConfigRead (const char* path);
 
     ///
     /// Look for a certain key in config

@@ -36,7 +36,7 @@ extern "C" {
         WORKSPACE_MAX
     } Workspace;
 
-    typedef enum {
+    typedef enum OrderBy {
         ORDER_BY_CREATED = 0,
         ORDER_BY_NAME,
         ORDER_BY_MODEL,
@@ -46,18 +46,17 @@ extern "C" {
         ORDER_BY_MAX
     } OrderBy;
 
-    typedef struct {
+    typedef struct Connection {
         Str host;
         Str api_key;
     } Connection;
 
-    typedef struct {
+    typedef struct NewAnalysisRequest {
         Str           ai_model;          /**< @b BinNet model to be used */
         Str           platform_opt;      /**< @b Idk the possible values of this enum. */
         Str           isa_opt;           /**< @b Idk possible values of this one as well. */
         FileOption    file_opt;          /**< @b Info about file type. */
         Tags          tags;              /**< @b Some tags info to help searching later on. */
-        size          tags_count;        /**< @b Number of tags in the tags array. */
         bool          is_private;        /**< @b Scope of binary : public/private. */
         u64           base_addr;         /**< @b Base address where binary is loaded. */
         FunctionInfos functions;         /**< @b Vector of function information structures. */
@@ -76,7 +75,7 @@ extern "C" {
         bool          advanced_analysis;
     } NewAnalysisRequest;
 
-    typedef struct {
+    typedef struct RecentAnalysisRequest {
         Str       search_term;
         Workspace workspace;
         Status    analysis_status;
@@ -89,7 +88,7 @@ extern "C" {
         bool    order_in_asc;
     } RecentAnalysisRequest;
 
-    typedef struct {
+    typedef struct BatchAnnSymbolRequest {
         AnalysisId analysis_id;
         size       limit;
         f64        distance;
@@ -102,7 +101,7 @@ extern "C" {
         } search;
     } BatchAnnSymbolRequest;
 
-    typedef struct {
+    typedef struct SearchBinaryRequest {
         size page;
         size page_size;
         Str  partial_name;
@@ -111,7 +110,7 @@ extern "C" {
         Str  model_name;
     } SearchBinaryRequest;
 
-    typedef struct {
+    typedef struct SearchCollectionRequest {
         size    page;
         size    page_size;
         Str     partial_collection_name;
@@ -128,7 +127,7 @@ extern "C" {
         bool    order_in_asc;
     } SearchCollectionRequest;
 
-    typedef struct {
+    typedef struct SimilarFunctionsRequest {
         FunctionId    function_id;
         u32           limit;
         f32           distance;
@@ -165,11 +164,12 @@ extern "C" {
     ///
     /// conn[in]    : A valid connection object with host and API key set.
     /// request[in] : The request object to serialize and send to the server.
+    ///               Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS : A non-zero binary ID corresponding to newly created analysis.
     /// FAILURE : 0, error messages logged.
     ///
-    BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest request);
+    BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request);
 
     ///
     /// Retrieves basic function information using the provided binary ID.
@@ -178,8 +178,8 @@ extern "C" {
     /// a response containing basic function information. The response is parsed into a `BasicFunctionInfoResponse`
     /// structure, which includes the success flag and a list of functions associated with the binary ID.
     ///
-    /// conn[in]         : A valid connection object with host and API key set for making the request.
-    /// binary_id[in]    : The binary ID used to identify the binary for which function information is to be fetched.
+    /// conn[in]      : A valid connection object with host and API key set for making the request.
+    /// binary_id[in] : The binary ID used to identify the binary for which function information is to be fetched.
     ///
     /// SUCCESS : FunctionInfos vector filled with function symbol information retrieved from analysis.
     /// FAILURE : Empty FunctionInfos vector.
@@ -192,35 +192,36 @@ extern "C" {
     /// This function serializes the given `RecentAnalysisRequest` struct into a JSON string, sends it to the server
     /// through a GET request, and parses the returned response into a `RecentAnalysisResponse` struct.
     ///
-    /// conn[in]      : A valid connection object with host and API key set.
-    /// request[in]   : The request object that contains the filters and parameters for retrieving recent analysis data.
+    /// conn[in]    : A valid connection object with host and API key set.
+    /// request[in] : The request object that contains the filters and parameters for retrieving recent analysis data.
+    ///               Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS :  A populated `AnalysisInfos` struct on success.
     /// FAILURE :  An empty struct (all fields set to 0) on failure.
     ///
-    AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest request);
+    AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request);
 
     ///
     /// Search for binaries with given filters
     ///
     /// conn[in]    : Connection information.
-    /// request[in] : Request info.
+    /// request[in] : Request info. Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS : BinaryInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest request);
+    BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request);
 
     ///
     /// Search for collection with given filters
     ///
     /// conn[in]    : Connection info.
-    /// request[in] : Request info.
+    /// request[in] : Request info. Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS : CollectionInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest request);
+    CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* request);
 
     ///
     /// Perform a batch function renaming operation for RevEngAI.
@@ -250,12 +251,12 @@ extern "C" {
     /// Get mapping of functions in analysis to corresponding similar functions.
     ///
     /// conn[in]    : Connection
-    /// request[in] : Request data
+    /// request[in] : Request data. Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS: A populated `AnnSymbols` vector struct on success.
     /// FAILURE: An empty struct (all fields set to 0) on failure.
     ///
-    AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest request);
+    AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request);
 
     /// Retrieves the status of an analysis job for a given binary ID.
     ///
@@ -335,12 +336,13 @@ extern "C" {
     ///
     /// conn[in]    : Valid connection object
     /// request[in] : Parameters controlling search criteria and filters
+    ///               Request object is deinited automatically after use on successful return.
     ///
     /// RETURNS:
     ///   - Vector of SimilarFunction structures containing match details
     ///   - Empty vector if no matches found or connection failure
     ///
-    SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest request);
+    SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* request);
 
     /// Maps a binary ID to its corresponding analysis ID.
     ///
