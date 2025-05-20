@@ -66,7 +66,7 @@ Config ConfigRead (const char *path) {
         size_t  len  = 0;
         ssize_t read;
 
-        Config cfg = VecInit();
+        Config cfg = ConfigInit();
 
         while ((read = getline (&line, &len, file)) != -1) {
             // Remove trailing newline character if present
@@ -122,7 +122,7 @@ void ConfigWrite (Config *c, const char *path) {
     fclose (outfile);
 }
 
-Str *ConfigFind (Config *cfg, const char *key) {
+Str *ConfigGet (Config *cfg, const char *key) {
     VecForeachPtr (cfg, kv, {
         if (!StrCmpZstr (&kv->key, key)) {
             return &kv->value;

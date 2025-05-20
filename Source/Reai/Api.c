@@ -111,17 +111,6 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
 
         StrDeinit (&gj);
 
-        StrDeinit (&request->ai_model);
-        StrDeinit (&request->platform_opt);
-        StrDeinit (&request->isa_opt);
-        VecDeinit (&request->tags);
-        VecDeinit (&request->functions);
-        StrDeinit (&request->file_name);
-        StrDeinit (&request->cmdline_args);
-        StrDeinit (&request->sha256);
-        StrDeinit (&request->debug_hash);
-        memset (request, 0, sizeof (NewAnalysisRequest));
-
         return binary_id;
     } else {
         return 0;
@@ -270,11 +259,6 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request
 
         StrDeinit (&gj);
 
-        StrDeinit (&request->search_term);
-        StrDeinit (&request->model_name);
-        VecDeinit (&request->usernames);
-        memset (request, 0, sizeof (RecentAnalysisRequest));
-
         return infos;
     } else {
         return (AnalysisInfos) {0};
@@ -342,12 +326,6 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
         });
 
         StrDeinit (&gj);
-
-        StrDeinit (&request->partial_name);
-        StrDeinit (&request->partial_sha256);
-        StrDeinit (&request->model_name);
-        VecDeinit (&request->tags);
-        memset (request, 0, sizeof (SearchBinaryRequest));
 
         return infos;
     } else {
@@ -455,13 +433,6 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
         });
 
         StrDeinit (&gj);
-
-        StrDeinit (&request->partial_collection_name);
-        StrDeinit (&request->partial_binary_name);
-        StrDeinit (&request->partial_binary_sha256);
-        StrDeinit (&request->model_name);
-        StrDeinit (&request->model_name);
-        memset (request, 0, sizeof (SearchBinaryRequest));
 
         return infos;
     } else {
@@ -639,12 +610,6 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
         });
 
         StrDeinit (&gj);
-
-        VecDeinit (&request->search.analysis_ids);
-        VecDeinit (&request->search.collection_ids);
-        VecDeinit (&request->search.binary_ids);
-        VecDeinit (&request->search.function_ids);
-        memset (request, 0, sizeof (BatchAnnSymbolRequest));
 
         return syms;
     } else {
@@ -1059,10 +1024,6 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* 
         });
 
         StrDeinit (&gj);
-
-        VecDeinit (&request->collection_ids);
-        VecDeinit (&request->binary_ids);
-
         return functions;
     } else {
         return (SimilarFunctions) {0};

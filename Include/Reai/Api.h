@@ -51,6 +51,8 @@ extern "C" {
         Str api_key;
     } Connection;
 
+#define ConnectionInit() {.host = StrInit(), .api_key = StrInit()}
+
     typedef struct NewAnalysisRequest {
         Str           ai_model;          /**< @b BinNet model to be used */
         Str           platform_opt;      /**< @b Idk the possible values of this enum. */
@@ -81,11 +83,11 @@ extern "C" {
         Status    analysis_status;
         Str       model_name;
         Status    dyn_exec_status;
-        Vec (Str) usernames;
-        u32     limit;
-        u32     offset;
-        OrderBy order_by;
-        bool    order_in_asc;
+        Strs      usernames;
+        u32       limit;
+        u32       offset;
+        OrderBy   order_by;
+        bool      order_in_asc;
     } RecentAnalysisRequest;
 
     typedef struct BatchAnnSymbolRequest {
@@ -140,6 +142,8 @@ extern "C" {
         BinaryIds binary_ids;
     } SimilarFunctionsRequest;
 
+
+
     ///
     /// Authenticates a connection using the provided API key and host.
     ///
@@ -164,7 +168,6 @@ extern "C" {
     ///
     /// conn[in]    : A valid connection object with host and API key set.
     /// request[in] : The request object to serialize and send to the server.
-    ///               Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS : A non-zero binary ID corresponding to newly created analysis.
     /// FAILURE : 0, error messages logged.
@@ -194,7 +197,6 @@ extern "C" {
     ///
     /// conn[in]    : A valid connection object with host and API key set.
     /// request[in] : The request object that contains the filters and parameters for retrieving recent analysis data.
-    ///               Request object is deinited automatically after use on successful return.
     ///
     /// SUCCESS :  A populated `AnalysisInfos` struct on success.
     /// FAILURE :  An empty struct (all fields set to 0) on failure.
@@ -205,7 +207,7 @@ extern "C" {
     /// Search for binaries with given filters
     ///
     /// conn[in]    : Connection information.
-    /// request[in] : Request info. Request object is deinited automatically after use on successful return.
+    /// request[in] : Request info.
     ///
     /// SUCCESS : BinaryInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
@@ -216,7 +218,7 @@ extern "C" {
     /// Search for collection with given filters
     ///
     /// conn[in]    : Connection info.
-    /// request[in] : Request info. Request object is deinited automatically after use on successful return.
+    /// request[in] : Request info.
     ///
     /// SUCCESS : CollectionInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
@@ -251,7 +253,7 @@ extern "C" {
     /// Get mapping of functions in analysis to corresponding similar functions.
     ///
     /// conn[in]    : Connection
-    /// request[in] : Request data. Request object is deinited automatically after use on successful return.
+    /// request[in] : Request data.
     ///
     /// SUCCESS: A populated `AnnSymbols` vector struct on success.
     /// FAILURE: An empty struct (all fields set to 0) on failure.
@@ -336,7 +338,6 @@ extern "C" {
     ///
     /// conn[in]    : Valid connection object
     /// request[in] : Parameters controlling search criteria and filters
-    ///               Request object is deinited automatically after use on successful return.
     ///
     /// RETURNS:
     ///   - Vector of SimilarFunction structures containing match details
@@ -491,6 +492,147 @@ extern "C" {
         const char* request_method,
         Str*        file_path
     );
+
+#define NewAnalysisRequestInit()                                                                   \
+    {                                                                                              \
+        .ai_model          = StrInit(),                                                            \
+        .platform_opt      = StrInit(),                                                            \
+        .isa_opt           = StrInit(),                                                            \
+        .file_opt          = FILE_OPTION_AUTO,                                                     \
+        .tags              = VecInitWithDeepCopy (NULL, StrDeinit),                                \
+        .is_private        = false,                                                                \
+        .base_addr         = 0,                                                                    \
+        .functions         = VecInitWithDeepCopy (NULL, FunctionInfoDeinit),                       \
+        .file_name         = StrInit(),                                                            \
+        .cmdline_args      = StrInit(),                                                            \
+        .priority          = 0,                                                                    \
+        .sha256            = StrInit(),                                                            \
+        .debug_hash        = StrInit(),                                                            \
+        .file_size         = 0,                                                                    \
+        .dynamic_execution = false,                                                                \
+        .skip_scraping     = true,                                                                 \
+        .skip_cves         = true,                                                                 \
+        .skip_sbom         = true,                                                                 \
+        .skip_capabilities = true,                                                                 \
+        .ignore_cache      = false,                                                                \
+        .advanced_analysis = false,                                                                \
+    }
+
+#define NewAnalysisRequestDeinit(r)                                                                \
+    do {                                                                                           \
+        StrDeinit (&r->ai_model);                                                                  \
+        StrDeinit (&r->platform_opt);                                                              \
+        StrDeinit (&r->isa_opt);                                                                   \
+        VecDeinit (&r->tags);                                                                      \
+        VecDeinit (&r->functions);                                                                 \
+        StrDeinit (&r->file_name);                                                                 \
+        StrDeinit (&r->cmdline_args);                                                              \
+        StrDeinit (&r->sha256);                                                                    \
+        StrDeinit (&r->debug_hash);                                                                \
+        memset (r, 0, sizeof (NewAnalysisRequest));                                                \
+    } while (0)
+
+#define RecentAnalysisRequestInit()                                                                \
+    {                                                                                              \
+        .search_term     = StrInit(),                                                              \
+        .workspace       = WORKSPACE_PERSONAL,                                                     \
+        .analysis_status = STATUS_COMPLETE,                                                        \
+        .model_name      = StrInit(),                                                              \
+        .dyn_exec_status = STATUS_COMPLETE,                                                        \
+        .usernames       = VecInitWithDeepCopy (NULL, StrDeinit),                                  \
+        .limit           = 50,                                                                     \
+        .offset          = 0,                                                                      \
+        .order_by        = ORDER_BY_CREATED,                                                       \
+        .order_in_asc    = false,                                                                  \
+    }
+
+#define RecentAnalysisRequestDeinit(r)                                                             \
+    do {                                                                                           \
+        StrDeinit (&r->search_term);                                                               \
+        StrDeinit (&r->model_name);                                                                \
+        VecDeinit (&r->usernames);                                                                 \
+        memset (r, 0, sizeof (RecentAnalysisRequest))                                              \
+    } while (0)
+
+#define BatchAnnSymbolRequestInit()                                                                \
+    {                                                                                              \
+        .analysis_id = 0, .limit = 50, .distance = 0.1, .debug_symbols_only = true, .search = {    \
+            .analysis_ids   = VecInit(),                                                           \
+            .collection_ids = VecInit(),                                                           \
+            .binary_ids     = VecInit(),                                                           \
+            .function_ids   = VecInit(),                                                           \
+        }                                                                                          \
+    }
+
+#define BatchAnnSymbolRequestDeinit(r)                                                             \
+    do {                                                                                           \
+        VecDeinit (&r->search.analysis_ids);                                                       \
+        VecDeinit (&r->search.collection_ids);                                                     \
+        VecDeinit (&r->search.binary_ids);                                                         \
+        VecDeinit (&r->search.function_ids);                                                       \
+        memset (r, 0, sizeof (BatchAnnSymbolRequest));                                             \
+    } while (0)
+
+#define SearchBinaryRequestInit()                                                                  \
+    {.page           = 0,                                                                          \
+     .page_size      = 50,                                                                         \
+     .partial_name   = StrInit(),                                                                  \
+     .partial_sha256 = StrInit(),                                                                  \
+     .tags           = VecInitWithDeepCopy (NULL, StrDeinit),                                      \
+     .model_name     = StrInit()}
+
+#define SearchBinaryRequestDeinit(r)                                                               \
+    do {                                                                                           \
+        StrDeinit (&r->partial_name);                                                              \
+        StrDeinit (&r->partial_sha256);                                                            \
+        VecDeinit (&r->tags);                                                                      \
+        StrDeinit (&r->model_name);                                                                \
+        memset (r, 0, sizeof (SearchBinaryRequest));                                               \
+    } while (0)
+
+#define SearchCollectionRequestInit()                                                              \
+    {                                                                                              \
+        .page                    = 0,                                                              \
+        .page_size               = 50,                                                             \
+        .partial_collection_name = StrInit(),                                                      \
+        .partial_binary_name     = StrInit(),                                                      \
+        .partial_binary_sha256   = StrInit(),                                                      \
+        .tags                    = VecInitWithDeepCopy (NULL, StrDeinit),                          \
+        .model_name              = StrInit(),                                                      \
+        .filter_official         = false,                                                          \
+        .filter_user             = false,                                                          \
+        .filter_team             = false,                                                          \
+        .filter_public           = false,                                                          \
+        .hide_empty              = true,                                                           \
+        .order_by                = ORDER_BY_SIZE,                                                  \
+        .order_in_asc            = false,                                                          \
+    }
+
+#define SearchCollectionRequestDeinit(r)                                                           \
+    do {                                                                                           \
+        StrDeinit (&r->partial_collection_name);                                                   \
+        StrDeinit (&r->partial_binary_name);                                                       \
+        StrDeinit (&r->partial_binary_sha256);                                                     \
+        VecDeinit (&r->tags);                                                                      \
+        StrDeinit (&r->model_name);                                                                \
+        memset (r, 0, sizeof (SearchCollectionRequest));                                           \
+    } while (0)
+
+#define SimilarFunctionsRequestInit()                                                               \
+    {                                                                                               \
+        .function_id    = 0,                                                                        \
+        .limit          = 50,                                                                       \
+        .distance       = 0.1,                                                                      \
+        .collection_ids = VecInit(),                                                                \
+        .debug_include  = {.user_symbols = true, .system_symbols = true, .external_symbols = true}, \
+        .binary_ids     = VecInit()                                                                 \
+}
+
+#define SimilarFunctionsRequestDeinit(r)                                                           \
+    do {                                                                                           \
+        VecDeinit (&r->collection_ids);                                                            \
+        VecDeinit (&r->binary_ids);                                                                \
+    } while (0)
 
 #ifdef __cplusplus
 }

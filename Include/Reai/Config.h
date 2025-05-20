@@ -32,8 +32,8 @@ extern "C" {
     void KvPairDeinit (KvPair* c);
     bool KvPairInitClone (KvPair* d, KvPair* s);
 
-#define ConfigInit()    VecInitWithDeepCopy (NULL, KvPairDeinit)
-#define ConfigInit_T(c) VecInitWithDeepCopy_T (c, NULL, KvPairDeinit)
+#define ConfigInit()    (Config) VecInitWithDeepCopy (NULL, KvPairDeinit)
+#define ConfigDeinit(c) VecDeinit (c)
 
     ///
     /// Load config from given path
@@ -77,7 +77,7 @@ extern "C" {
     /// SUCCESS : Str object with value corresponding to key. Don't ever deinit!
     /// FAILURE : NULL.
     ///
-    Str* ConfigFind (Config* c, const char* key);
+    Str* ConfigGet (Config* c, const char* key);
 
 #ifdef __cplusplus
 }

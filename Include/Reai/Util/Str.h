@@ -29,6 +29,9 @@ static inline char* strndup (const char* s, size n) {
 }
 #endif
 
+///
+/// Initialize a Str object using a string of known length
+///
 #define StrInitFromCstr(cstr, len)                                                                 \
     ((Str) {.data        = strndup ((char*)(cstr), (len)),                                         \
             .length      = (len),                                                                  \
@@ -37,7 +40,15 @@ static inline char* strndup (const char* s, size n) {
             .copy_deinit = NULL,                                                                   \
             .alignment   = 1})
 
+///
+/// Initialize a Str object using a zero-terminated string
+///
 #define StrInitFromZstr(zstr) StrInitFromCstr ((zstr), strlen (zstr))
+
+///
+/// Initialize a Str object using another one
+///
+#define StrInitFromStr(str) StrInitFromCstr ((str)->data, (str)->length)
 
 ///
 /// Init the string using the given format string and arguments.
@@ -59,7 +70,7 @@ Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StrInit() ((Str)VecInit());
+#define StrInit() ((Str)VecInit())
 
 ///
 /// Initialize given string but use memory from stack.
