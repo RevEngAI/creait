@@ -24,7 +24,9 @@ typedef unsigned long size;
 typedef float  f32;
 typedef double f64;
 
+#ifndef bool
 typedef i8 bool;
+#endif
 
 #define MIN2(x, y) ((x) < (y) ? (x) : (y))
 #define MAX2(x, y) ((x) > (y) ? (x) : (y))

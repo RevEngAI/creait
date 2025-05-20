@@ -147,3 +147,12 @@ bool KvPairInitClone (KvPair *d, KvPair *s) {
     StrInitCopy (&d->value, &s->value);
     return true;
 }
+
+void ConfigAdd (Config *c, const char *key, const char *value) {
+    if (!c || !key || !value) {
+        LOG_FATAL ("Invalid arguments");
+    }
+
+    KvPair kv = {.key = StrInitFromZstr (key), .value = StrInitFromZstr (value)};
+    VecPushBack (c, kv);
+}
