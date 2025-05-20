@@ -520,15 +520,15 @@ extern "C" {
 
 #define NewAnalysisRequestDeinit(r)                                                                \
     do {                                                                                           \
-        StrDeinit (&r->ai_model);                                                                  \
-        StrDeinit (&r->platform_opt);                                                              \
-        StrDeinit (&r->isa_opt);                                                                   \
-        VecDeinit (&r->tags);                                                                      \
-        VecDeinit (&r->functions);                                                                 \
-        StrDeinit (&r->file_name);                                                                 \
-        StrDeinit (&r->cmdline_args);                                                              \
-        StrDeinit (&r->sha256);                                                                    \
-        StrDeinit (&r->debug_hash);                                                                \
+        StrDeinit (&(r)->ai_model);                                                                \
+        StrDeinit (&(r)->platform_opt);                                                            \
+        StrDeinit (&(r)->isa_opt);                                                                 \
+        VecDeinit (&(r)->tags);                                                                    \
+        VecDeinit (&(r)->functions);                                                               \
+        StrDeinit (&(r)->file_name);                                                               \
+        StrDeinit (&(r)->cmdline_args);                                                            \
+        StrDeinit (&(r)->sha256);                                                                  \
+        StrDeinit (&(r)->debug_hash);                                                              \
         memset (r, 0, sizeof (NewAnalysisRequest));                                                \
     } while (0)
 
@@ -548,10 +548,10 @@ extern "C" {
 
 #define RecentAnalysisRequestDeinit(r)                                                             \
     do {                                                                                           \
-        StrDeinit (&r->search_term);                                                               \
-        StrDeinit (&r->model_name);                                                                \
-        VecDeinit (&r->usernames);                                                                 \
-        memset (r, 0, sizeof (RecentAnalysisRequest))                                              \
+        StrDeinit (&(r)->search_term);                                                             \
+        StrDeinit (&(r)->model_name);                                                              \
+        VecDeinit (&(r)->usernames);                                                               \
+        memset (r, 0, sizeof (RecentAnalysisRequest));                                             \
     } while (0)
 
 #define BatchAnnSymbolRequestInit()                                                                \
@@ -566,10 +566,10 @@ extern "C" {
 
 #define BatchAnnSymbolRequestDeinit(r)                                                             \
     do {                                                                                           \
-        VecDeinit (&r->search.analysis_ids);                                                       \
-        VecDeinit (&r->search.collection_ids);                                                     \
-        VecDeinit (&r->search.binary_ids);                                                         \
-        VecDeinit (&r->search.function_ids);                                                       \
+        VecDeinit (&(r)->search.analysis_ids);                                                     \
+        VecDeinit (&(r)->search.collection_ids);                                                   \
+        VecDeinit (&(r)->search.binary_ids);                                                       \
+        VecDeinit (&(r)->search.function_ids);                                                     \
         memset (r, 0, sizeof (BatchAnnSymbolRequest));                                             \
     } while (0)
 
@@ -583,10 +583,10 @@ extern "C" {
 
 #define SearchBinaryRequestDeinit(r)                                                               \
     do {                                                                                           \
-        StrDeinit (&r->partial_name);                                                              \
-        StrDeinit (&r->partial_sha256);                                                            \
-        VecDeinit (&r->tags);                                                                      \
-        StrDeinit (&r->model_name);                                                                \
+        StrDeinit (&(r)->partial_name);                                                            \
+        StrDeinit (&(r)->partial_sha256);                                                          \
+        VecDeinit (&(r)->tags);                                                                    \
+        StrDeinit (&(r)->model_name);                                                              \
         memset (r, 0, sizeof (SearchBinaryRequest));                                               \
     } while (0)
 
@@ -610,11 +610,11 @@ extern "C" {
 
 #define SearchCollectionRequestDeinit(r)                                                           \
     do {                                                                                           \
-        StrDeinit (&r->partial_collection_name);                                                   \
-        StrDeinit (&r->partial_binary_name);                                                       \
-        StrDeinit (&r->partial_binary_sha256);                                                     \
-        VecDeinit (&r->tags);                                                                      \
-        StrDeinit (&r->model_name);                                                                \
+        StrDeinit (&(r)->partial_collection_name);                                                 \
+        StrDeinit (&(r)->partial_binary_name);                                                     \
+        StrDeinit (&(r)->partial_binary_sha256);                                                   \
+        VecDeinit (&(r)->tags);                                                                    \
+        StrDeinit (&(r)->model_name);                                                              \
         memset (r, 0, sizeof (SearchCollectionRequest));                                           \
     } while (0)
 
@@ -630,8 +630,8 @@ extern "C" {
 
 #define SimilarFunctionsRequestDeinit(r)                                                           \
     do {                                                                                           \
-        VecDeinit (&r->collection_ids);                                                            \
-        VecDeinit (&r->binary_ids);                                                                \
+        VecDeinit (&(r)->collection_ids);                                                          \
+        VecDeinit (&(r)->binary_ids);                                                              \
     } while (0)
 
 #ifdef __cplusplus

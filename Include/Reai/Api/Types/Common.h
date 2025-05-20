@@ -4,8 +4,8 @@
 #include <Reai/Util/Str.h>
 #include <Reai/Util/Vec.h>
 
-typedef Vec (Str) Tags;
-typedef Vec (Str) Collections;
+typedef Strs Tags;
+typedef Strs Collections;
 
 typedef u64 BinaryId;
 typedef u64 AnalysisId;
@@ -14,11 +14,13 @@ typedef u64 CollectionId;
 typedef u64 ModelId;
 typedef u64 TeamId;
 
-typedef Vec (BinaryId) BinaryIds;
-typedef Vec (AnalysisId) AnalysisIds;
-typedef Vec (FunctionId) FunctionIds;
-typedef Vec (CollectionId) CollectionIds;
-typedef Vec (ModelId) ModelIds;
-typedef Vec (TeamId) TeamIds;
+typedef Vec (u64) IdsVec;
+
+typedef IdsVec BinaryIds;
+typedef IdsVec AnalysisIds;
+typedef IdsVec FunctionIds;
+typedef IdsVec CollectionIds;
+typedef IdsVec ModelIds;
+typedef IdsVec TeamIds;
 
 #endif // REAI_API_TYPES_COMMON_H
