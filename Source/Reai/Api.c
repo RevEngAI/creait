@@ -626,7 +626,7 @@ Status GetAnalysisStatus (Connection conn, BinaryId binary_id) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v1/models", conn.host.data);
+    StrPrintf (&url, "%s/v1/analyse/status/%llu", conn.host.data, binary_id);
 
     if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
@@ -645,7 +645,9 @@ Status GetAnalysisStatus (Connection conn, BinaryId binary_id) {
 
         StrDeinit (&gj);
 
-        return StatusFromStr (&status);
+        Status analysis_status = StatusFromStr (&status);
+        StrDeinit (&status);
+        return analysis_status;
     } else {
         return STATUS_INVALID;
     }
