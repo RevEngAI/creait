@@ -36,7 +36,7 @@ i64 getline_compat(char **restrict lineptr, size *restrict n, FILE *restrict str
         (*lineptr)[sz++] = (char)c;
     }
 
-    if (size == 0 && c == EOF)
+    if (sz == 0 && c == EOF)
         return -1;
 
     if(sz) {
