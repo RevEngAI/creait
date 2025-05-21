@@ -18,10 +18,34 @@
 
 #define CONFIG_FILE_NAME ".creait"
 
-#if defined(_MSC_VER)
-#include <BaseTsd.h>
-typedef SSIZE_T ssize_t;
-#endif
+i64 getline_compat(char **restrict lineptr, size *restrict n, FILE *restrict stream) {
+    if (!lineptr || !n || !stream) return -1;
+
+    size sz = 0;
+    int c = 0;
+
+    while (((c = getc(stream)) != EOF) && (c != '\n')) {
+        if (sz + 1 >= *n) {
+            size new_sz = *n ? (*n * 2) : 128;
+            char *new_buf = realloc(*lineptr, new_sz);
+            if (!new_buf)
+                return -1;
+            *lineptr = new_buf;
+            *n = new_sz;
+        }
+        (*lineptr)[sz++] = (char)c;
+    }
+
+    if (size == 0 && c == EOF)
+        return -1;
+
+    if(sz) {
+        (*lineptr)[sz] = '\0';
+    }
+
+    return sz;
+}
+
 
 const char *defaultConfigPath() {
     static char buf[1024]        = {0};
@@ -69,12 +93,12 @@ Config ConfigRead (const char *path) {
     FILE *file = fopen (path, "r");
     if (file) {
         char   *line = NULL;
-        size_t  len  = 0;
-        ssize_t read;
+        size  len    = 0;
+        i64 read     = 0;
 
         Config cfg = ConfigInit();
 
-        while ((read = getline (&line, &len, file)) != -1) {
+        while ((read = getline_compat (&line, &len, file)) > 0) {
             // Remove trailing newline character if present
             if (line[read - 1] == '\n') {
                 line[read - 1] = '\0';
