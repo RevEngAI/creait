@@ -90,10 +90,10 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
             JW_STR_KV (sj, "command_line_args", request->cmdline_args);
         }
         JW_INT_KV (sj, "priority", request->priority);
+        JW_STR_KV (sj, "sha_256_hash", request->sha256);
         if (request->debug_hash.length) {
-            JW_STR_KV (sj, "sha_256_hash", request->sha256);
+            JW_STR_KV (sj, "debug_hash", request->debug_hash);
         }
-        JW_STR_KV (sj, "debug_hash", request->debug_hash);
         JW_INT_KV (sj, "size_in_bytes", request->file_size);
         JW_BOOL_KV (sj, "skip_scraping", request->skip_scraping);
         JW_BOOL_KV (sj, "skip_cves", request->skip_cves);
