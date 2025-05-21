@@ -222,7 +222,7 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request
         AnalysisInfos infos   = VecInitWithDeepCopy (NULL, AnalysisInfoDeinit);
         bool          success = false;
         JR_OBJ (j, {
-            JR_BOOL_KV (j, "success", success);
+            JR_BOOL_KV (j, "status", success);
             if (success) {
                 JR_OBJ_KV (j, "data", {
                     JR_ARR_KV (j, "results", {
