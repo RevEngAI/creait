@@ -6,6 +6,7 @@
 #include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
+#include <string.h>
 
 #if defined(_WIN32) || defined(_WIN64)
 #    define CONFIG_DIR_PATH getenv ("USERPROFILE")
