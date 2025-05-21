@@ -17,6 +17,11 @@
 
 #define CONFIG_FILE_NAME ".creait"
 
+#if defined(_MSC_VER)
+#include <BaseTsd.h>
+typedef SSIZE_T ssize_t;
+#endif
+
 const char *defaultConfigPath() {
     static char buf[1024]        = {0};
     static bool default_path_set = false;
