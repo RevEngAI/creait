@@ -361,7 +361,7 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/search/binaries", conn.host.data);
+    StrPrintf (&url, "%s/v2/search/collections", conn.host.data);
 
     bool is_first = true;
 
