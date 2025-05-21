@@ -917,7 +917,10 @@ StrIter JSkipValue (StrIter si);
 ///
 #define JW_STR(j, s)                                                                               \
     do {                                                                                           \
-        StrAppendf (&(j), "\"%s\"", (s).data);                                                     \
+        if ((s).data)                                                                              \
+            StrAppendf (&(j), "\"%s\"", (s).data);                                                 \
+        else                                                                                       \
+            StrAppendf (&(j), "null");                                                             \
     } while (0)
 
 ///
@@ -962,7 +965,10 @@ StrIter JSkipValue (StrIter si);
 ///
 #define JW_ZSTR(j, s)                                                                              \
     do {                                                                                           \
-        StrAppendf (&(j), "\"%s\"", (s));                                                          \
+        if ((s))                                                                                   \
+            StrAppendf (&(j), "\"%s\"", (s));                                                      \
+        else                                                                                       \
+            StrAppendf (&(j), "null");                                                             \
     } while (0)
 
 ///
@@ -1007,7 +1013,7 @@ StrIter JSkipValue (StrIter si);
 ///
 #define JW_BOOL(j, b)                                                                              \
     do {                                                                                           \
-        StrAppendf (&(j), "\"%b\"", b);                                                            \
+        StrAppendf (&(j), (b) ? "true" : "false");                                                 \
     } while (0)
 
 ///

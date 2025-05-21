@@ -58,30 +58,41 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
 
     JW_OBJ (sj, {
         JW_STR_KV (sj, "model_name", request->ai_model);
-        JW_STR_KV (sj, "platform_options", request->platform_opt);
-        JW_STR_KV (sj, "isa_options", request->isa_opt);
+        if (request->platform_opt.length) {
+            JW_STR_KV (sj, "platform_options", request->platform_opt);
+        }
+        if (request->isa_opt.length) {
+            JW_STR_KV (sj, "isa_options", request->isa_opt);
+        }
         JW_ZSTR_KV (sj, "file_options", file_opt_to_str[request->file_opt]);
         JW_BOOL_KV (sj, "dynamic_execution", request->dynamic_execution);
         JW_ARR_KV (sj, "tags", request->tags, tag, { JW_STR (sj, tag); });
         JW_ZSTR_KV (sj, "binary_scope", request->is_private ? "PRIVATE" : "PUBLIC");
-        JW_ARR_KV (sj, "symbols", request->functions, function, {
-            if (!function.symbol.is_addr) {
-                LOG_ERROR (
-                    "Function \"%s\" symbol expected to be an address value.",
-                    function.symbol.name
-                );
-                continue;
-            }
-            JW_OBJ (sj, {
-                JW_STR_KV (sj, "name", function.symbol.name);
-                JW_INT_KV (sj, "start_addr", function.symbol.value.addr);
-                JW_INT_KV (sj, "end_ddr", function.symbol.value.addr + function.size);
+        JW_OBJ_KV (sj, "symbols", {
+            JW_INT_KV (sj, "base_addr", request->base_addr);
+            JW_ARR_KV (sj, "functions", request->functions, function, {
+                if (!function.symbol.is_addr) {
+                    LOG_ERROR (
+                        "Function \"%s\" symbol expected to be an address value.",
+                        function.symbol.name
+                    );
+                    continue;
+                }
+                JW_OBJ (sj, {
+                    JW_STR_KV (sj, "name", function.symbol.name);
+                    JW_INT_KV (sj, "start_addr", function.symbol.value.addr);
+                    JW_INT_KV (sj, "end_addr", function.symbol.value.addr + function.size);
+                });
             });
         });
         JW_STR_KV (sj, "file_name", request->file_name);
-        JW_STR_KV (sj, "command_line_args", request->cmdline_args);
+        if (request->cmdline_args.length) {
+            JW_STR_KV (sj, "command_line_args", request->cmdline_args);
+        }
         JW_INT_KV (sj, "priority", request->priority);
-        JW_STR_KV (sj, "sha_256_hash", request->sha256);
+        if (request->debug_hash.length) {
+            JW_STR_KV (sj, "sha_256_hash", request->sha256);
+        }
         JW_STR_KV (sj, "debug_hash", request->debug_hash);
         JW_INT_KV (sj, "size_in_bytes", request->file_size);
         JW_BOOL_KV (sj, "skip_scraping", request->skip_scraping);
@@ -1336,7 +1347,8 @@ bool MakeUploadRequest (
 
     if (!file_path || !file_path->length) {
         LOG_ERROR (
-            "Invalid file path. If uploading a file is not intended, then use MakeRequest method "
+            "Invalid file path. If uploading a file is not intended, then use MakeRequest "
+            "method "
             "instead."
         );
         return false;
