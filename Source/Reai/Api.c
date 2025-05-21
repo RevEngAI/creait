@@ -310,7 +310,7 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
                             JR_INT_KV (j, "analysis_id", info.analysis_id);
                             JR_STR_KV (j, "sha_256_hash", info.sha256);
                             JR_ARR_KV (j, "tags", {
-                                Str tag;
+                                Str tag = StrInit();
                                 JR_STR (j, tag);
                                 VecPushBack (&info.tags, tag);
                             });
@@ -416,7 +416,7 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
                             JR_STR_KV (j, "model_name", info.model_name);
                             JR_STR_KV (j, "owned_by", info.owned_by);
                             JR_ARR_KV (j, "tags", {
-                                Str tag;
+                                Str tag = StrInit();
                                 JR_STR (j, tag);
                                 VecPushBack (&info.tags, tag);
                             });
@@ -822,6 +822,8 @@ AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, boo
 
         bool            status = false;
         AiDecompilation decomp = {0};
+        decomp.decompilation   = StrInit();
+        decomp.summary         = StrInit();
         decomp.functions       = VecInitWithDeepCopy_T (&decomp.functions, NULL, SymbolInfoDeinit);
         decomp.strings         = VecInitWithDeepCopy_T (&decomp.strings, NULL, SymbolInfoDeinit);
         decomp.unmatched.strings =
@@ -848,87 +850,92 @@ AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, boo
             JR_BOOL_KV (j, "status", status);
             if (status) {
                 JR_OBJ_KV (j, "data", {
-                    JR_STR_KV (j, "decompilation", decomp.decompilation);
+                    JR_STR_KV (j, "raw_decompilation", decomp.decompilation);
+                    JR_STR_KV (j, "summary", decomp.summary);
                     JR_OBJ_KV (j, "function_mapping_full", {
-                        JR_ARR_KV (j, "inverse_string_map", {
+                        JR_OBJ_KV (j, "inverse_string_map", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = true;
-                            JR_STR_KV (j, "string", sym.string);
-                            JR_INT_KV (j, "addr", sym.value.addr);
+                            JR_OBJ (j, {
+                                JR_STR_KV (j, "string", sym.string);
+                                JR_INT_KV (j, "addr", sym.value.addr);
+                            });
                             VecPushBack (&decomp.strings, sym);
                         });
 
-                        JR_ARR_KV (j, "inverse_function_map", {
+                        JR_OBJ_KV (j, "inverse_function_map", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = true;
-                            JR_STR_KV (j, "name", sym.name);
-                            JR_INT_KV (j, "addr", sym.value.addr);
-                            JR_BOOL_KV (j, "is_external", sym.is_external);
+                            JR_OBJ (j, {
+                                JR_STR_KV (j, "name", sym.name);
+                                JR_INT_KV (j, "addr", sym.value.addr);
+                                JR_BOOL_KV (j, "is_external", sym.is_external);
+                            });
                             VecPushBack (&decomp.functions, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_functions", {
+                        JR_OBJ_KV (j, "unmatched_functions", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.functions, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_external_vars", {
+                        JR_OBJ_KV (j, "unmatched_external_vars", {
                             SymbolInfo sym  = {0};
                             sym.is_addr     = false;
                             sym.is_external = true;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.external_vars, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_custom_types", {
+                        JR_OBJ_KV (j, "unmatched_custom_types", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.custom_types, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_strings", {
+                        JR_OBJ_KV (j, "unmatched_strings", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.strings, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_vars", {
+                        JR_OBJ_KV (j, "unmatched_vars", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.vars, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_go_to_labels", {
+                        JR_OBJ_KV (j, "unmatched_go_to_labels", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.go_to_labels, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_custom_function_pointers", {
+                        JR_OBJ_KV (j, "unmatched_custom_function_pointers", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.custom_function_pointers, sym);
                         });
 
-                        JR_ARR_KV (j, "unmatched_variadic_lists", {
+                        JR_OBJ_KV (j, "unmatched_variadic_lists", {
                             SymbolInfo sym = {0};
                             sym.is_addr    = false;
                             StrInitCopy (&sym.name, &key);
-                            JR_STR_KV (j, "value", sym.value.str);
+                            JR_OBJ (j, { JR_STR_KV (j, "value", sym.value.str); });
                             VecPushBack (&decomp.unmatched.variadic_lists, sym);
                         });
                     });
@@ -1149,7 +1156,8 @@ Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_firs
         return url;
     }
 
-    StrPushBack (url, *is_first ? '?' : '&');
+    char sep = !is_first ? '?' : *is_first ? '?' : '&';
+    StrPushBack (url, sep);
     StrAppendf (url, "%s=%s", key, value);
 
     if (is_first) {
@@ -1165,7 +1173,7 @@ Str* UrlAddQueryInt (Str* url, const char* key, i64 value, bool* is_first) {
         return NULL;
     }
 
-    char sep = !(is_first && *is_first) ? '&' : '?';
+    char sep = !is_first ? '?' : *is_first ? '?' : '&';
     StrPushBack (url, sep);
     StrAppendf (url, "%s=%lld", key, value);
 
@@ -1182,7 +1190,7 @@ Str* UrlAddQueryFloat (Str* url, const char* key, f64 value, bool* is_first) {
         return NULL;
     }
 
-    char sep = !(is_first && *is_first) ? '&' : '?';
+    char sep = !is_first ? '?' : *is_first ? '?' : '&';
     StrPushBack (url, sep);
     StrAppendf (url, "%s=%f", key, value);
 
@@ -1235,6 +1243,8 @@ bool MakeRequest (
         return false;
     }
 
+    LOG_INFO ("REQUEST.URL : %s", request_url->data);
+
     CURL* curl = curl_easy_init();
     if (!curl) {
         LOG_ERROR ("Failed to create a CURL handle. Cannot make requests.");
@@ -1242,55 +1252,54 @@ bool MakeRequest (
     }
 
     // use our own Str if none provided
-    Str my_json;
+    Str my_json = StrInit();
     if (!response_json) {
         my_json       = StrInit();
         response_json = &my_json;
     }
 
-    Str auth;
-    StrInitStack (&auth, 128, {
-        // Authorization header
-        StrPrintf (&auth, "Authorization: %s", api_key->data);
+    // Authorization header
+    Str auth = StrInit();
+    StrPrintf (&auth, "Authorization: %s", api_key->data);
 
-        struct curl_slist* headers = NULL;
-        headers                    = curl_slist_append (headers, auth.data);
+    struct curl_slist* headers = NULL;
+    headers                    = curl_slist_append (headers, auth.data);
+    StrDeinit (&auth);
 
-        if (request_json && request_json->length) {
-            headers = curl_slist_append (headers, "Content-Type: application/json");
-            curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-            LOG_INFO ("request->JSON: '%s'", request_json->data);
-        }
+    if (request_json && request_json->length) {
+        headers = curl_slist_append (headers, "Content-Type: application/json");
+        curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
+        LOG_INFO ("request->JSON: '%s'", request_json->data);
+    }
 
-        curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
-        curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, request_method);
-        curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
-        curl_easy_setopt (curl, CURLOPT_USERAGENT, "creait");
-        curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, CURLResponseWriteCallback);
-        curl_easy_setopt (curl, CURLOPT_WRITEDATA, response_json);
-        curl_easy_setopt (curl, CURLOPT_TIMEOUT, 30L);
-        curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 10L);
+    curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
+    curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, request_method);
+    curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt (curl, CURLOPT_USERAGENT, "creait");
+    curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, CURLResponseWriteCallback);
+    curl_easy_setopt (curl, CURLOPT_WRITEDATA, response_json);
+    curl_easy_setopt (curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
-        // make request
-        CURLcode retcode = curl_easy_perform (curl);
-        curl_slist_free_all (headers);
-        curl_easy_cleanup (curl);
+    // make request
+    CURLcode retcode = curl_easy_perform (curl);
+    curl_slist_free_all (headers);
+    curl_easy_cleanup (curl);
 
-        // log response always!
-        LOG_INFO ("RESPONSE.JSON: '%s'", response_json->data);
+    // log response always!
+    LOG_INFO ("RESPONSE.JSON: '%s'", response_json->data);
 
-        // if we used our json, then deinit that
-        if (my_json.length) {
-            StrDeinit (&my_json);
-        }
+    // if we used our json, then deinit that
+    if (my_json.length) {
+        StrDeinit (&my_json);
+    }
 
-        if (retcode != CURLE_OK) {
-            LOG_ERROR ("curl_easy_perform() failed: %s", curl_easy_strerror (retcode));
-            StrDeinit (response_json);
-            return false;
-        }
-    });
+    if (retcode != CURLE_OK) {
+        LOG_ERROR ("curl_easy_perform() failed: %s", curl_easy_strerror (retcode));
+        StrDeinit (response_json);
+        return false;
+    }
 
     return true;
 }
@@ -1326,6 +1335,8 @@ bool MakeUploadRequest (
         return false;
     }
 
+    LOG_INFO ("REQUEST.URL : %s", request_url->data);
+
     CURL* curl = curl_easy_init();
     if (!curl) {
         LOG_ERROR ("Failed to create a CURL handle. Cannot make requests.");
@@ -1356,54 +1367,53 @@ bool MakeUploadRequest (
     LOG_INFO ("UPLOAD FILE : '%s'", file_path->data);
 
     // use our own Str if none provided
-    Str my_json;
+    Str my_json = StrInit();
     if (!response_json) {
         my_json       = StrInit();
         response_json = &my_json;
     }
 
-    Str auth;
-    StrInitStack (&auth, 128, {
-        StrPrintf (&auth, "Authorization: %s", api_key->data);
+    Str auth = StrInit();
+    StrPrintf (&auth, "Authorization: %s", api_key->data);
 
-        struct curl_slist* headers = NULL;
-        headers                    = curl_slist_append (headers, auth.data);
+    struct curl_slist* headers = NULL;
+    headers                    = curl_slist_append (headers, auth.data);
+    StrDeinit (&auth);
 
-        if (request_json && request_json->length) {
-            headers = curl_slist_append (headers, "Content-Type: application/json");
-            curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-            LOG_INFO ("request->JSON: '%s'", request_json->data);
-        }
+    if (request_json && request_json->length) {
+        headers = curl_slist_append (headers, "Content-Type: application/json");
+        curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
+        LOG_INFO ("request->JSON: '%s'", request_json->data);
+    }
 
-        curl_easy_setopt (curl, CURLOPT_MIMEPOST, mime);
-        curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
-        curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
-        curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, request_method);
-        curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
-        curl_easy_setopt (curl, CURLOPT_USERAGENT, "creait");
-        curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, CURLResponseWriteCallback);
-        curl_easy_setopt (curl, CURLOPT_WRITEDATA, response_json);
-        curl_easy_setopt (curl, CURLOPT_TIMEOUT, 30L);
-        curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 10L);
+    curl_easy_setopt (curl, CURLOPT_MIMEPOST, mime);
+    curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
+    curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, request_method);
+    curl_easy_setopt (curl, CURLOPT_FOLLOWLOCATION, 1);
+    curl_easy_setopt (curl, CURLOPT_USERAGENT, "creait");
+    curl_easy_setopt (curl, CURLOPT_WRITEFUNCTION, CURLResponseWriteCallback);
+    curl_easy_setopt (curl, CURLOPT_WRITEDATA, response_json);
+    curl_easy_setopt (curl, CURLOPT_TIMEOUT, 30L);
+    curl_easy_setopt (curl, CURLOPT_CONNECTTIMEOUT, 10L);
 
-        CURLcode retcode = curl_easy_perform (curl);
-        curl_slist_free_all (headers);
-        curl_mime_free (mime);
-        curl_easy_cleanup (curl);
+    CURLcode retcode = curl_easy_perform (curl);
+    curl_slist_free_all (headers);
+    curl_mime_free (mime);
+    curl_easy_cleanup (curl);
 
-        LOG_INFO ("RESPONSE.JSON: '%s'", response_json->data);
+    LOG_INFO ("RESPONSE.JSON: '%s'", response_json->data);
 
-        // if we used our json, then deinit that
-        if (my_json.length) {
-            StrDeinit (&my_json);
-        }
+    // if we used our json, then deinit that
+    if (my_json.length) {
+        StrDeinit (&my_json);
+    }
 
-        if (retcode != CURLE_OK) {
-            LOG_ERROR ("curl_easy_perform() failed: %s", curl_easy_strerror (retcode));
-            StrDeinit (response_json);
-            return false;
-        }
+    if (retcode != CURLE_OK) {
+        LOG_ERROR ("curl_easy_perform() failed: %s", curl_easy_strerror (retcode));
+        StrDeinit (response_json);
+        return false;
+    }
 
-        return true;
-    });
+    return true;
 }

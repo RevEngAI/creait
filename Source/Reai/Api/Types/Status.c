@@ -121,7 +121,10 @@ Status StatusFromStr (Str* ss) {
         return STATUS_ERROR | DYN_EXEC_STATUS | AI_DECOMP_STATUS;
     }
     if (!StrCmpZstr (ss, "SUCCESS")) {
-        return STATUS_COMPLETE | DYN_EXEC_STATUS | AI_DECOMP_STATUS;
+        return STATUS_COMPLETE | DYN_EXEC_STATUS;
+    }
+    if (!StrCmpZstr (ss, "COMPLETED")) {
+        return STATUS_COMPLETE | AI_DECOMP_STATUS;
     }
     if (!StrCmpZstr (ss, "UNINITIALIZED")) {
         return STATUS_UNINITIALIZED | AI_DECOMP_STATUS;
