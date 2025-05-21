@@ -111,16 +111,18 @@ Strs StrSplit (Str* s, const char* key) {
     size keylen = strlen (key);
 
     const char* prev = s->data;
-    const char* end  = s->data + s->length;
 
-    while (prev <= end) {
-        const char* next = strstr (prev, key);
-        if (next) {
-            VecPushBack (&sv, StrInitFromCstr (prev, next - prev)); // exclude delimiter
-            prev = next + keylen;                                   // skip past delimiter
-        } else {
-            VecPushBack (&sv, StrInitFromCstr (prev, end - prev));  // remaining part
-            break;
+    if (prev) {
+        const char* end = s->data + s->length;
+        while (prev <= end) {
+            const char* next = strstr (prev, key);
+            if (next) {
+                VecPushBack (&sv, StrInitFromCstr (prev, next - prev)); // exclude delimiter
+                prev = next + keylen;                                   // skip past delimiter
+            } else {
+                VecPushBack (&sv, StrInitFromCstr (prev, end - prev));  // remaining part
+                break;
+            }
         }
     }
 

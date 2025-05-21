@@ -575,17 +575,13 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
             JR_BOOL_KV (j, "status", status);
             if (status) {
                 JR_OBJ_KV (j, "data", {
-                    AnnSymbol sym = {0};
+                    FunctionId source_function_id = strtoull (key.data, NULL, 10);
                     JR_OBJ (j, {
-                        if (!sym.source_function_id) {
-                            sym.source_function_id = strtoull (key.data, NULL, 10);
-                        }
+                        AnnSymbol sym          = {0};
+                        sym.source_function_id = source_function_id;
+                        sym.target_function_id = strtoull (key.data, NULL, 10);
 
                         JR_OBJ (j, {
-                            if (!sym.target_function_id) {
-                                sym.target_function_id = strtoull (key.data, NULL, 10);
-                            }
-
                             JR_FLT_KV (j, "distance", sym.distance);
                             JR_INT_KV (j, "nearest_neighbor_analysis_id", sym.analysis_id);
                             JR_INT_KV (j, "nearest_neighbor_binary_id", sym.binary_id);
@@ -600,10 +596,14 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
                             );
                         });
 
+                        LOG_INFO (
+                            "Source (%zu) -> Target (%zu) [%s]",
+                            sym.source_function_id,
+                            sym.target_function_id,
+                            sym.function_name.data
+                        );
+
                         VecPushBack (&syms, sym);
-                        FunctionId source_function_id = sym.source_function_id;
-                        memset (&sym, 0, sizeof (AnnSymbol));
-                        sym.source_function_id = source_function_id;
                     });
                 });
             }
@@ -1027,6 +1027,12 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* 
                         });
                         JR_STR_KV (j, "sha_256_hash", f.sha256);
                     });
+
+                    // XXX: This is a bug in API. API sends "distance" with value of "similarity"
+                    // and below is a fix for that
+                    f.distance = 1 - f.distance;
+                    LOG_INFO ("Fixed distance = %f", f.distance);
+
                     VecPushBack (&functions, f);
                 });
             }
@@ -1061,7 +1067,8 @@ AnalysisId AnalysisIdFromBinaryId (Connection conn, BinaryId binary_id) {
         StrIter j = StrIterInitFromStr (&gj);
 
         AnalysisId id = 0;
-        JR_INT (j, id);
+        JR_OBJ (j, { JR_INT_KV (j, "analysis_id", id); });
+        LOG_INFO ("Analysis ID = %zu", id);
 
         StrDeinit (&gj);
 

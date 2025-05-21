@@ -297,7 +297,7 @@ StrIter JReadNumber (StrIter si, Number* num) {
         switch (StrIterPeek (&si)) {
             case 'E' :
             case 'e' :
-                if (is_flt || has_exp) {
+                if (has_exp) {
                     LOG_ERROR ("Invalid number. Multiple exponent indicators.");
                     StrDeinit (&ns);
                     return saved_si;
@@ -336,10 +336,18 @@ StrIter JReadNumber (StrIter si, Number* num) {
             case '-' :
             case '+' :
                 // +/- can only appear after an exponent
-                if (!has_exp || has_exp_plus_minus) {
+                if (!has_exp) {
                     LOG_ERROR (
                         "Invalid number. Exponent sign indicators '+' or '-' "
                         "must appear after exponent 'E' or 'e' indicator."
+                    );
+                    StrDeinit (&ns);
+                    return saved_si;
+                }
+                if (has_exp_plus_minus) {
+                    LOG_ERROR (
+                        "Invalid number. Multiple '+' or '-' in Number. "
+                        "Expected only once after 'e' or 'E'."
                     );
                     StrDeinit (&ns);
                     return saved_si;
@@ -356,7 +364,11 @@ StrIter JReadNumber (StrIter si, Number* num) {
     }
 
     if (!ns.length) {
-        LOG_ERROR ("Failed to parse number. It's empty!");
+        LOG_ERROR (
+            "Failed to parse number. '%.*s'",
+            MIN2 (StrIterRemainingLength (&saved_si), 8),
+            saved_si.data + saved_si.pos
+        );
         StrDeinit (&ns);
         return saved_si;
     }

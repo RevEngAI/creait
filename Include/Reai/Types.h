@@ -30,7 +30,7 @@ typedef i8 bool;
 
 #define MIN2(x, y) ((x) < (y) ? (x) : (y))
 #define MAX2(x, y) ((x) > (y) ? (x) : (y))
-#define CLAMP(x, hi, lo) MIN2(MAX2(lo, x), hi)
+#define CLAMP(x, lo, hi) MIN2(MAX2(lo, x), hi)
 
 // for any general alignment value (13, 8, 17, 144, etc...)
 #define ALIGN_UP(value, alignment)                                                                 \
