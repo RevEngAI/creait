@@ -1011,7 +1011,7 @@ typedef struct {
         i64 idx               = 0;                                                                 \
         VEC_DATA_TYPE (v) var = {0};                                                               \
         if ((v) && (v)->length) {                                                                  \
-            for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
+            for ((idx) = 0; (idx) < (i64)(v)->length; ++(idx)) {                                   \
                 if ((idx) < 0) {                                                                   \
                     LOG_FATAL (                                                                    \
                         "Vector range underflow : Invalid index reached "                          \
@@ -1040,7 +1040,7 @@ typedef struct {
         i64 idx               = 0;                                                                 \
         VEC_DATA_TYPE (v) var = {0};                                                               \
         if ((v) && (v)->length) {                                                                  \
-            for ((idx) = (v)->length - 1; (idx) >= 0; --(idx)) {                                   \
+            for ((idx) = (i64)(v)->length - 1; (idx) >= 0; --(idx)) {                              \
                 if ((idx) < 0) {                                                                   \
                     LOG_FATAL (                                                                    \
                         "Vector range underflow : Invalid index reached "                          \
@@ -1077,7 +1077,7 @@ typedef struct {
         i64 idx                = 0;                                                                \
         VEC_DATA_TYPE (v) *var = {0};                                                              \
         if ((v) && (v)->length) {                                                                  \
-            for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
+            for ((idx) = 0; (idx) < (i64)(v)->length; ++(idx)) {                                   \
                 if ((idx) < 0) {                                                                   \
                     LOG_FATAL (                                                                    \
                         "Vector range underflow : Invalid index reached "                          \
@@ -1106,7 +1106,7 @@ typedef struct {
         i64 idx                = 0;                                                                \
         VEC_DATA_TYPE (v) *var = {0};                                                              \
         if ((v) && (v)->length) {                                                                  \
-            for ((idx) = (v)->length - 1; (idx) >= 0; --(idx)) {                                   \
+            for ((idx) = (i64)(v)->length - 1; (idx) >= 0; --(idx)) {                              \
                 if ((idx) < 0) {                                                                   \
                     LOG_FATAL (                                                                    \
                         "Vector range underflow : Invalid index reached "                          \
@@ -1114,7 +1114,7 @@ typedef struct {
                         "iteration."                                                               \
                     );                                                                             \
                 }                                                                                  \
-                if ((idx) >= (v)->length) {                                                        \
+                if ((idx) >= (i64)(v)->length) {                                                   \
                     LOG_FATAL (                                                                    \
                         "Vector range overflow : Invalid index reached "                           \
                         "during Foreach reverse "                                                  \

@@ -20,7 +20,7 @@
 static FILE     *stderror  = NULL;
 static SysMutex *log_mutex = NULL;
 
-static void LogInit (bool redirect) {
+void LogInit (bool redirect) {
     if (redirect) {
         // Get the current time
         time_t    raw_time;
@@ -43,7 +43,7 @@ static void LogInit (bool redirect) {
         strftime (time_buffer, sizeof (time_buffer), "%Y-%m-%d-%H-%M-%S", &time_info);
 
         // Get path to temp directory
-        Str log_dir;
+        Str log_dir = StrInit();
         if (!SysGetEnv ("TMP", &log_dir) && !SysGetEnv ("TEMP", &log_dir) &&
             !SysGetEnv ("TMPDIR", &log_dir) && !SysGetEnv ("TEMPDIR", &log_dir) &&
             !SysGetEnv ("PWD", &log_dir)) {
@@ -61,7 +61,7 @@ static void LogInit (bool redirect) {
         }
 
         // generate log file name
-        Str file_name;
+        Str file_name = StrInit();
         StrPrintf (
             &file_name,
             "%s/misra-%lu-%s",

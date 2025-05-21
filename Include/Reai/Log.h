@@ -28,6 +28,8 @@ extern "C" {
 #define LOG_ERROR(...) LogPrintf (LOG_LEVEL_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
 #define LOG_FATAL(...) (LogPrintf (LOG_LEVEL_FATAL, __FUNCTION__, __LINE__, __VA_ARGS__), abort())
 
+    void LogInit (bool redirect);
+
 #ifdef __cplusplus
 }
 #endif

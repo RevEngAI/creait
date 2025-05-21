@@ -468,15 +468,15 @@ void push_arr_vec (GenericVec *vec, size item_size, char *arr, size count, size 
         memset (vec_ptr_at (vec, pos, item_size), 0, count * aligned_size);
     }
 
-    if (vec->copy_init) {
-        char *data = vec_ptr_at (vec, pos, item_size);
-        for (size i = 0; i < count; ++i) {
+    char *data = vec_ptr_at (vec, pos, item_size);
+    for (size i = 0; i < count; ++i) {
+        if (vec->copy_init) {
             vec->copy_init (data, arr);
-            arr  += aligned_size;
-            data += aligned_size;
+        } else {
+            memcpy (data, arr, item_size);
         }
-    } else {
-        memcpy (vec_ptr_at (vec, pos, item_size), arr, count * aligned_size);
+        arr  += aligned_size;
+        data += aligned_size;
     }
 
     vec->length += count;
