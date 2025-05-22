@@ -55,8 +55,8 @@ Config ConfigRead (const char *path) {
             }
 
             KvPair kv = KvPairInit();
-            kv.key    = StrStrip (VecPtrAt (&kvsplit, 0), " \t");
-            kv.value  = StrStrip (VecPtrAt (&kvsplit, 1), " \t");
+            kv.key    = StrStrip (VecPtrAt (&kvsplit, 0), " \r\t");
+            kv.value  = StrStrip (VecPtrAt (&kvsplit, 1), " \r\t");
             VecDeinit (&kvsplit);
 
             LOG_INFO ("Config : Key ('%s') -> Value ('%s')", kv.key.data, kv.value.data);
