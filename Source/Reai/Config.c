@@ -1,4 +1,5 @@
 #include <Reai/Config.h>
+#include <Reai/File.h>
 #include <Reai/Log.h>
 #include <Reai/Sys.h>
 
@@ -18,35 +19,6 @@
 
 #define CONFIG_FILE_NAME ".creait"
 
-i64 getline_compat(char **restrict lineptr, size *restrict n, FILE *restrict stream) {
-    if (!lineptr || !n || !stream) return -1;
-
-    size sz = 0;
-    int c = 0;
-
-    while (((c = getc(stream)) != EOF) && (c != '\n')) {
-        if (sz + 1 >= *n) {
-            size new_sz = *n ? (*n * 2) : 128;
-            char *new_buf = realloc(*lineptr, new_sz);
-            if (!new_buf)
-                return -1;
-            *lineptr = new_buf;
-            *n = new_sz;
-        }
-        (*lineptr)[sz++] = (char)c;
-    }
-
-    if (sz == 0 && c == EOF)
-        return -1;
-
-    if(sz) {
-        (*lineptr)[sz] = '\0';
-    }
-
-    return sz;
-}
-
-
 const char *defaultConfigPath() {
     static char buf[1024]        = {0};
     static bool default_path_set = false;
@@ -61,69 +33,38 @@ const char *defaultConfigPath() {
     return buf;
 }
 
-// Helper function to trim leading and trailing whitespace from a string
-char *trim (char *str) {
-    char *end;
-
-    // Trim leading space
-    while (isspace ((unsigned char)*str))
-        str++;
-
-    if (*str == 0) // All spaces?
-        return str;
-
-    // Trim trailing space
-    end = str + strlen (str) - 1;
-    while (end > str && isspace ((unsigned char)*end))
-        end--;
-
-    // Write new null terminator character
-    end[1] = '\0';
-
-    return str;
-}
-
 Config ConfigRead (const char *path) {
     if (!path) {
         LOG_INFO ("Config file path not provided. Using default path.");
         path = defaultConfigPath();
     }
 
+    Str cfg = StrInit();
+    if (ReadCompleteFile (path, &cfg.data, &cfg.length, &cfg.capacity)) {
+        Strs   lines  = StrSplit (&cfg, "\n");
+        Config config = ConfigInit();
 
-    FILE *file = fopen (path, "r");
-    if (file) {
-        char   *line = NULL;
-        size  len    = 0;
-        i64 read     = 0;
-
-        Config cfg = ConfigInit();
-
-        while ((read = getline_compat (&line, &len, file)) > 0) {
-            // Remove trailing newline character if present
-            if (line[read - 1] == '\n') {
-                line[read - 1] = '\0';
+        VecForeachPtr (&lines, line, {
+            Strs kvsplit = StrSplit (line, "=");
+            if (kvsplit.length != 2) {
+                LOG_ERROR ("Config file is invalid. Each line must be in form 'key = value'");
+                StrDeinit (&cfg);
+                VecDeinit (&lines);
+                VecDeinit (&kvsplit);
+                return (Config) {0};
             }
 
-            char *eq_pos = strchr (line, '=');
-            if (eq_pos != NULL) {
-                *eq_pos = '\0'; // Split the string at the first '='
+            KvPair kv = KvPairInit();
+            kv.key    = StrStrip (VecPtrAt (&kvsplit, 0), " \t");
+            kv.value  = StrStrip (VecPtrAt (&kvsplit, 1), " \t");
+            VecDeinit (&kvsplit);
 
-                char *key_str   = trim (line);
-                char *value_str = trim (eq_pos + 1);
+            LOG_INFO ("Config : Key ('%s') -> Value ('%s')", kv.key.data, kv.value.data);
 
-                if (strlen (key_str) > 0) {
-                    KvPair pair;
-                    pair.key   = StrInitFromZstr (key_str);
-                    pair.value = StrInitFromZstr (value_str);
-                    VecPushBack (&cfg, pair);
-                }
-            }
-            // Ignore lines without '=' or empty lines after trimming
-        }
+            VecPushBack (&config, kv);
+        });
 
-        free (line);
-        fclose (file);
-        return cfg;
+        return config;
     } else {
         LOG_ERROR ("Failed to open config file at : %s", path);
         return (Config) {0};
@@ -141,10 +82,9 @@ void ConfigWrite (Config *c, const char *path) {
 
     FILE *outfile = fopen (path, "w");
     if (!outfile) {
-        Str syserr;
-        StrInitStack (&syserr, 128, {
-            LOG_ERROR ("Error opening file for writing %s", SysStrError (errno, &syserr)->data);
-        });
+        Str syserr = StrInit();
+        LOG_ERROR ("Error opening file for writing %s", SysStrError (errno, &syserr)->data);
+        StrDeinit (&syserr);
     }
 
     VecForeach (c, kv, { fprintf (outfile, "%s = %s\n", kv.key.data, kv.value.data); });

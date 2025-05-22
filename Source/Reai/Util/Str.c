@@ -107,7 +107,7 @@ Strs StrSplit (Str* s, const char* key) {
         return (Strs) {0};
     }
 
-    Strs sv     = VecInit();
+    Strs sv     = VecInitWithDeepCopy (NULL, StrDeinit);
     size keylen = strlen (key);
 
     const char* prev = s->data;
@@ -117,10 +117,12 @@ Strs StrSplit (Str* s, const char* key) {
         while (prev <= end) {
             const char* next = strstr (prev, key);
             if (next) {
-                VecPushBack (&sv, StrInitFromCstr (prev, next - prev)); // exclude delimiter
-                prev = next + keylen;                                   // skip past delimiter
+                VecPushBack (&sv, StrInitFromCstr (prev, next - prev));    // exclude delimiter
+                prev = next + keylen;                                      // skip past delimiter
             } else {
-                VecPushBack (&sv, StrInitFromCstr (prev, end - prev));  // remaining part
+                if (strncmp (prev, key, end - prev)) {
+                    VecPushBack (&sv, StrInitFromCstr (prev, end - prev)); // remaining part
+                }
                 break;
             }
         }

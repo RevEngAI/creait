@@ -32,6 +32,7 @@ extern "C" {
     void KvPairDeinit (KvPair* c);
     bool KvPairInitClone (KvPair* d, KvPair* s);
 
+#define KvPairInit()    ((KvPair) {.key = StrInit(), .value = StrInit()})
 #define ConfigInit()    (Config) VecInitWithDeepCopy (NULL, KvPairDeinit)
 #define ConfigDeinit(c) VecDeinit (c)
 
