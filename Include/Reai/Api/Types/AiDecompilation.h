@@ -1,0 +1,56 @@
+/**
+ * @file AiDecompilation.h
+ * @date 18th May 2025 
+ * @author Siddharth Mishra (admin@brightprogrammer.in)
+ * @copyright Copyright (c) RevEngAI. All Rights Reserved.
+ * */
+
+#ifndef AI_DECOMPILATION_H
+#define AI_DECOMPILATION_H
+
+#include <Reai/Api/Types/Common.h>
+#include <Reai/Api/Types/Status.h>
+#include <Reai/Api/Types/SymbolInfo.h>
+#include <Reai/Types.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    typedef struct AiDecompilation {
+        Str         decompilation;
+        Str         summary; // optional
+        SymbolInfos strings;
+        SymbolInfos functions;
+        struct {
+            SymbolInfos strings;
+            SymbolInfos functions;
+            SymbolInfos vars;
+            SymbolInfos external_vars;
+            SymbolInfos custom_types;
+            SymbolInfos go_to_labels;
+            SymbolInfos custom_function_pointers;
+            SymbolInfos variadic_lists;
+        } unmatched;
+        // TODO: fields??
+    } AiDecompilation;
+
+    void AiDecompilationDeinit (AiDecompilation* clone);
+
+    ///
+    /// Init clone of AiDecompilation object
+    /// Vectors in inited in clone will create new copies of data instead of sharing ownersip
+    ///
+    /// dst[out] : Destination of cloned data
+    /// src[in]  : Cloning source
+    ///
+    /// SUCCESS : true
+    /// FAILURE : Does not return
+    ///
+    bool AiDecompilationInitClone (AiDecompilation* dst, AiDecompilation* src);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif // AI_DECOMPILATION_H
