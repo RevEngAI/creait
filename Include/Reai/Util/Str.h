@@ -21,28 +21,42 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-static inline char* strndup (const char* s, size n) {
-    size  len     = strnlen (s, n); // Only up to n
-    char* new_str = (char*)malloc (len + 1);
-    if (!new_str)
-        return NULL;
+    static inline char* strndup (const char* s, size n) {
+        size  len     = strnlen (s, n); // Only up to n
+        char* new_str = (char*)malloc (len + 1);
+        if (!new_str)
+            return NULL;
 
-    memcpy (new_str, s, len);
-    new_str[len] = '\0'; // Null-terminate
-    return new_str;
-}
+        memcpy (new_str, s, len);
+        new_str[len] = '\0'; // Null-terminate
+        return new_str;
+    }
 #endif
 
 ///
 /// Initialize a Str object using a string of known length
 ///
-#define StrInitFromCstr(cstr, len)                                                                 \
-    ((Str) {.data        = strndup ((char*)(cstr), (len)),                                         \
+#ifdef __cplusplus
+#    define StrInitFromCstr(cstr, len)                                                             \
+        (Str {                                                                                      \
+            .data        = strndup ((char*)(cstr), (len)),                                         \
             .length      = (len),                                                                  \
             .capacity    = (len),                                                                  \
             .copy_init   = NULL,                                                                   \
             .copy_deinit = NULL,                                                                   \
-            .alignment   = 1})
+            .alignment   = 1                                                                       \
+        })
+#else
+#    define StrInitFromCstr(cstr, len)                                                             \
+        ((Str) {                                                                                    \
+            .data        = strndup ((char*)(cstr), (len)),                                         \
+            .length      = (len),                                                                  \
+            .capacity    = (len),                                                                  \
+            .copy_init   = NULL,                                                                   \
+            .copy_deinit = NULL,                                                                   \
+            .alignment   = 1                                                                       \
+        })
+#endif
 
 ///
 /// Initialize a Str object using a zero-terminated string
@@ -55,17 +69,17 @@ static inline char* strndup (const char* s, size n) {
 #define StrInitFromStr(str) StrInitFromCstr ((str)->data, (str)->length)
 #define StrDup(str)         StrInitFromStr (str)
 
-///
-/// Init the string using the given format string and arguments.
-/// Current contents of string will be cleared out
-///
-/// str[in,out] : Str to be inited with format string.
-/// fmt[in]     : Format string, with variadic arguments following.
-///
-/// SUCCESS : `str`
-/// FAILURE : NULL
-///
-Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
+    ///
+    /// Init the string using the given format string and arguments.
+    /// Current contents of string will be cleared out
+    ///
+    /// str[in,out] : Str to be inited with format string.
+    /// fmt[in]     : Format string, with variadic arguments following.
+    ///
+    /// SUCCESS : `str`
+    /// FAILURE : NULL
+    ///
+    Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 
 ///
 /// Initialize given string.
@@ -75,7 +89,11 @@ Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 /// SUCCESS : `str`
 /// FAILURE : NULL
 ///
-#define StrInit() ((Str)VecInit())
+#ifdef __cplusplus
+#    define StrInit() (Str VecInit())
+#else
+#    define StrInit() ((Str) VecInit())
+#endif
 
 ///
 /// Initialize given string but use memory from stack.
@@ -89,12 +107,12 @@ Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 ///
 #define StrInitStack(str, ne, scoped_body) VecInitStack (str, ne, scoped_body)
 
-///
-/// Deinit str by freeing all allocations.
-///
-/// str : Pointer to string to be deinited
-///
-void StrDeinit (Str* str);
+    ///
+    /// Deinit str by freeing all allocations.
+    ///
+    /// str : Pointer to string to be deinited
+    ///
+    void StrDeinit (Str* str);
 
 ///
 /// Compare two Str objects
@@ -118,16 +136,16 @@ void StrDeinit (Str* str);
 ///
 #define StrCmpZstr(str, cstr) strncmp ((str)->data, cstr, (str)->length)
 
-///
-/// Print and append into given string object with given format.
-///
-/// str[in,out] : Str to print into.
-/// fmt[in] : Format string, followed by variadic arguments.
-///
-/// SUCCESS : `str`
-/// FAILURE : NULL
-///
-Str* StrAppendf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
+    ///
+    /// Print and append into given string object with given format.
+    ///
+    /// str[in,out] : Str to print into.
+    /// fmt[in] : Format string, followed by variadic arguments.
+    ///
+    /// SUCCESS : `str`
+    /// FAILURE : NULL
+    ///
+    Str* StrAppendf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 
 ///
 /// Insert char into string of it's type.
@@ -500,22 +518,22 @@ Str* StrAppendf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 ///
 #define StrFindZstr(str, key) strstr ((str)->data, (key))
 
-///
-/// Split the given Str object into multiple Str objects stored in a vector
-/// of Str objects. Each Str object in returned vector is a new Str object
-/// and hence must be deinited after use. Calling `VecDeinit()` on the returned
-/// vector will do that for you automatically for all the objects.
-///
-/// This is best used when iterating over a delimited data is not the only goal,
-/// but also other modifications like stripping over whitespaces from returned Str objects.
-///
-/// str[in] : Str object to split
-/// key[in] : Zero-terminated char pointer value to split based on
-///
-/// SUCCESS : Strs vector of non-zero length
-/// FAILURE : Strs vector of zero-length
-///
-Strs StrSplit (Str* s, const char* key);
+    ///
+    /// Split the given Str object into multiple Str objects stored in a vector
+    /// of Str objects. Each Str object in returned vector is a new Str object
+    /// and hence must be deinited after use. Calling `VecDeinit()` on the returned
+    /// vector will do that for you automatically for all the objects.
+    ///
+    /// This is best used when iterating over a delimited data is not the only goal,
+    /// but also other modifications like stripping over whitespaces from returned Str objects.
+    ///
+    /// str[in] : Str object to split
+    /// key[in] : Zero-terminated char pointer value to split based on
+    ///
+    /// SUCCESS : Strs vector of non-zero length
+    /// FAILURE : Strs vector of zero-length
+    ///
+    Strs StrSplit (Str* s, const char* key);
 
 ///
 /// Strip leading and trailing whitespace (or optional custom characters) from
@@ -568,134 +586,134 @@ Strs StrSplit (Str* s, const char* key);
 #define StrForeachPtr(str, chrptr, body)        VecForeachPtr ((str), (chrptr), {body})
 #define StrForeachPtrReverse(str, chrptr, body) VecForeachPtrReverse ((str), (chrptr), {body})
 
-///
-/// Copy data from `src` to `dst`
-///
-/// dst[out] : Str object to copy into.
-/// src[in]  : Str object to copy from.
-///
-/// SUCCESS : true
-/// FAILURE : false
-///
-bool StrInitCopy (Str* dst, const Str* src);
+    ///
+    /// Copy data from `src` to `dst`
+    ///
+    /// dst[out] : Str object to copy into.
+    /// src[in]  : Str object to copy from.
+    ///
+    /// SUCCESS : true
+    /// FAILURE : false
+    ///
+    bool StrInitCopy (Str* dst, const Str* src);
 
-///
-/// Check if string starts with a null-terminated string (Zstr).
-///
-/// s[in]     : Str to check.
-/// prefix[in]: Null-terminated prefix string.
-///
-/// SUCCESS : Returns true if `s` starts with `prefix`.
-/// FAILURE : Returns false.
-///
-bool StrStartsWithZstr (const Str* s, const char* prefix);
+    ///
+    /// Check if string starts with a null-terminated string (Zstr).
+    ///
+    /// s[in]     : Str to check.
+    /// prefix[in]: Null-terminated prefix string.
+    ///
+    /// SUCCESS : Returns true if `s` starts with `prefix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrStartsWithZstr (const Str* s, const char* prefix);
 
-///
-/// Check if string ends with a null-terminated string (Zstr).
-///
-/// s[in]     : Str to check.
-/// suffix[in]: Null-terminated suffix string.
-///
-/// SUCCESS : Returns true if `s` ends with `suffix`.
-/// FAILURE : Returns false.
-///
-bool StrEndsWithZstr (const Str* s, const char* suffix);
+    ///
+    /// Check if string ends with a null-terminated string (Zstr).
+    ///
+    /// s[in]     : Str to check.
+    /// suffix[in]: Null-terminated suffix string.
+    ///
+    /// SUCCESS : Returns true if `s` ends with `suffix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrEndsWithZstr (const Str* s, const char* suffix);
 
-///
-/// Check if string starts with a fixed-length C-style string (Cstr).
-///
-/// s[in]         : Str to check.
-/// prefix[in]    : Pointer to prefix character array.
-/// prefix_len[in]: Length of prefix.
-///
-/// SUCCESS : Returns true if `s` starts with `prefix`.
-/// FAILURE : Returns false.
-///
-bool StrStartsWithCstr (const Str* s, const char* prefix, size prefix_len);
+    ///
+    /// Check if string starts with a fixed-length C-style string (Cstr).
+    ///
+    /// s[in]         : Str to check.
+    /// prefix[in]    : Pointer to prefix character array.
+    /// prefix_len[in]: Length of prefix.
+    ///
+    /// SUCCESS : Returns true if `s` starts with `prefix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrStartsWithCstr (const Str* s, const char* prefix, size prefix_len);
 
-///
-/// Check if string ends with a fixed-length C-style string (Cstr).
-///
-/// s[in]         : Str to check.
-/// suffix[in]    : Pointer to suffix character array.
-/// suffix_len[in]: Length of suffix.
-///
-/// SUCCESS : Returns true if `s` ends with `suffix`.
-/// FAILURE : Returns false.
-///
-bool StrEndsWithCstr (const Str* s, const char* suffix, size suffix_len);
+    ///
+    /// Check if string ends with a fixed-length C-style string (Cstr).
+    ///
+    /// s[in]         : Str to check.
+    /// suffix[in]    : Pointer to suffix character array.
+    /// suffix_len[in]: Length of suffix.
+    ///
+    /// SUCCESS : Returns true if `s` ends with `suffix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrEndsWithCstr (const Str* s, const char* suffix, size suffix_len);
 
-///
-/// Check if string starts with another Str object.
-///
-/// s[in]     : Str to check.
-/// prefix[in]: Str to check as prefix.
-///
-/// SUCCESS : Returns true if `s` starts with `prefix`.
-/// FAILURE : Returns false.
-///
-bool StrStartsWith (const Str* s, const Str* prefix);
+    ///
+    /// Check if string starts with another Str object.
+    ///
+    /// s[in]     : Str to check.
+    /// prefix[in]: Str to check as prefix.
+    ///
+    /// SUCCESS : Returns true if `s` starts with `prefix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrStartsWith (const Str* s, const Str* prefix);
 
-///
-/// Check if string ends with another Str object.
-///
-/// s[in]     : Str to check.
-/// suffix[in]: Str to check as suffix.
-///
-/// SUCCESS : Returns true if `s` ends with `suffix`.
-/// FAILURE : Returns false.
-///
-bool StrEndsWith (const Str* s, const Str* suffix);
+    ///
+    /// Check if string ends with another Str object.
+    ///
+    /// s[in]     : Str to check.
+    /// suffix[in]: Str to check as suffix.
+    ///
+    /// SUCCESS : Returns true if `s` ends with `suffix`.
+    /// FAILURE : Returns false.
+    ///
+    bool StrEndsWith (const Str* s, const Str* suffix);
 
-///
-/// Replace occurrences of a null-terminated string (Zstr) in string.
-///
-/// s[in,out]      : Str to modify.
-/// match[in]      : Null-terminated match string.
-/// replacement[in]: Null-terminated replacement string.
-/// count[in]      : Maximum number of replacements. -1 means replace all occurences.
-///
-/// SUCCESS : Modifies `s` in place.
-/// FAILURE : No replacement if `match` not found.
-///
-void StrReplaceZstr (Str* s, const char* match, const char* replacement, size count);
+    ///
+    /// Replace occurrences of a null-terminated string (Zstr) in string.
+    ///
+    /// s[in,out]      : Str to modify.
+    /// match[in]      : Null-terminated match string.
+    /// replacement[in]: Null-terminated replacement string.
+    /// count[in]      : Maximum number of replacements. -1 means replace all occurences.
+    ///
+    /// SUCCESS : Modifies `s` in place.
+    /// FAILURE : No replacement if `match` not found.
+    ///
+    void StrReplaceZstr (Str* s, const char* match, const char* replacement, size count);
 
-///
-/// Replace occurrences of a fixed-length string (Cstr) in string.
-///
-/// s[in,out]         : Str to modify.
-/// match[in]         : Match string pointer.
-/// match_len[in]     : Length of match string.
-/// replacement[in]   : Replacement string pointer.
-/// replacement_len[in]: Length of replacement string.
-/// count[in]         : Maximum number of replacements. -1 means replace all occurences.
-///
-/// SUCCESS : Modifies `s` in place.
-/// FAILURE : No replacement if `match` not found.
-///
-void StrReplaceCstr (
-    Str*        s,
-    const char* match,
-    size        match_len,
-    const char* replacement,
-    size        replacement_len,
-    size        count
-);
+    ///
+    /// Replace occurrences of a fixed-length string (Cstr) in string.
+    ///
+    /// s[in,out]         : Str to modify.
+    /// match[in]         : Match string pointer.
+    /// match_len[in]     : Length of match string.
+    /// replacement[in]   : Replacement string pointer.
+    /// replacement_len[in]: Length of replacement string.
+    /// count[in]         : Maximum number of replacements. -1 means replace all occurences.
+    ///
+    /// SUCCESS : Modifies `s` in place.
+    /// FAILURE : No replacement if `match` not found.
+    ///
+    void StrReplaceCstr (
+        Str*        s,
+        const char* match,
+        size        match_len,
+        const char* replacement,
+        size        replacement_len,
+        size        count
+    );
 
-///
-/// Replace occurrences of a Str in string with another Str.
-///
-/// s[in,out]     : Str to modify.
-/// match[in]     : Str to match.
-/// replacement[in]: Str to replace with.
-/// count[in]     : Maximum number of replacements. -1 means replace all occurences.
-///
-/// SUCCESS : Modifies `s` in place.
-/// FAILURE : No replacement if `match` not found.
-///
-void StrReplace (Str* s, const Str* match, const Str* replacement, size count);
+    ///
+    /// Replace occurrences of a Str in string with another Str.
+    ///
+    /// s[in,out]     : Str to modify.
+    /// match[in]     : Str to match.
+    /// replacement[in]: Str to replace with.
+    /// count[in]     : Maximum number of replacements. -1 means replace all occurences.
+    ///
+    /// SUCCESS : Modifies `s` in place.
+    /// FAILURE : No replacement if `match` not found.
+    ///
+    void StrReplace (Str* s, const Str* match, const Str* replacement, size count);
 
-Str strip_str (Str* s, const char* key, int split_direction);
+    Str strip_str (Str* s, const char* key, int split_direction);
 
 #ifdef __cplusplus
 }
