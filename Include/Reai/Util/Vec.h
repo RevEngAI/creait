@@ -649,6 +649,11 @@ typedef struct {
 ///
 #define VecInsertRange(v, varr, idx, count)                                                        \
     do {                                                                                           \
+        if (!varr) {                                                                               \
+            LOG_FATAL ("Provided array pointer is NULL. Expected a non-NULL value.");              \
+        }                                                                                          \
+        const VEC_DATA_TYPE (v) __t_m_p = *(varr);                                                 \
+        (void)__t_m_p;                                                                             \
         const VEC_DATA_TYPE (v) *__tmp__ptr = (varr);                                              \
         insert_range_into_vec (                                                                    \
             GENERIC_VEC (v),                                                                       \
@@ -678,6 +683,11 @@ typedef struct {
 ///
 #define VecInsertRangeFast(v, varr, idx, count)                                                    \
     do {                                                                                           \
+        if (!varr) {                                                                               \
+            LOG_FATAL ("Provided array pointer is NULL. Expected a non-NULL value.");              \
+        }                                                                                          \
+        const VEC_DATA_TYPE (v) __t_m_p = *(varr);                                                 \
+        (void)__t_m_p;                                                                             \
         VEC_DATA_TYPE (v) __tmp__ptr = (varr);                                                     \
         insert_range_fast_into_vec (                                                               \
             GENERIC_VEC (v),                                                                       \
@@ -702,6 +712,9 @@ typedef struct {
 ///
 #define VecRemove(v, ptr, idx)                                                                     \
     do {                                                                                           \
+        if (ptr) {                                                                                 \
+            *(ptr) = VecFirst (v);                                                                 \
+        }                                                                                          \
         VEC_DATA_TYPE (v) *p = (ptr);                                                              \
         remove_range_vec (GENERIC_VEC (v), (char *)p, sizeof (VEC_DATA_TYPE (v)), (idx), 1);       \
     } while (0)
@@ -721,6 +734,9 @@ typedef struct {
 ///
 #define VecRemoveFast(v, ptr, idx)                                                                 \
     do {                                                                                           \
+        if (ptr) {                                                                                 \
+            *(ptr) = VecFirst (v);                                                                 \
+        }                                                                                          \
         VEC_DATA_TYPE (v) *p = (ptr);                                                              \
         fast_remove_range_vec (                                                                    \
             GENERIC_VEC (v),                                                                       \
@@ -746,6 +762,9 @@ typedef struct {
 ///
 #define VecRemoveRange(v, ptr, start, count)                                                       \
     do {                                                                                           \
+        if (ptr) {                                                                                 \
+            *(ptr) = VecFirst (v);                                                                 \
+        }                                                                                          \
         VEC_DATA_TYPE (v) *p = (ptr);                                                              \
         remove_range_vec (                                                                         \
             GENERIC_VEC (v),                                                                       \
@@ -772,6 +791,9 @@ typedef struct {
 ///
 #define VecRemoveRangeFast(v, ptr, start, count)                                                   \
     do {                                                                                           \
+        if (ptr) {                                                                                 \
+            *(ptr) = VecFirst (v);                                                                 \
+        }                                                                                          \
         VEC_DATA_TYPE (v) *p = (ptr);                                                              \
         fast_remove_range_vec (                                                                    \
             GENERIC_VEC (v),                                                                       \
@@ -833,7 +855,7 @@ typedef struct {
 /// SUCCESS : return
 /// FAILURE : Does not return
 ///
-#define VecDeleteLast(v) VecPopBack ((v), NULL)
+#define VecDeleteLast(v) VecPopBack ((v), (VEC_DATA_TYPE (v) *)NULL)
 
 ///
 /// Delete item at given index
@@ -841,7 +863,7 @@ typedef struct {
 /// SUCCESS : return
 /// FAILURE : Does not return
 ///
-#define VecDelete(v, idx) VecRemove ((v), NULL, (idx))
+#define VecDelete(v, idx) VecRemove ((v), (VEC_DATA_TYPE (v) *)NULL, (idx))
 
 ///
 /// Delete item at given index using faster implementation.
@@ -850,7 +872,7 @@ typedef struct {
 /// SUCCESS : return
 /// FAILURE : Does not return
 ///
-#define VecDeleteFast(v, idx) VecRemoveFast ((v), NULL, (idx))
+#define VecDeleteFast(v, idx) VecRemoveFast ((v), (VEC_DATA_TYPE (v) *)NULL, (idx))
 
 ///
 /// Delete items in given range [start, start + count)
@@ -858,7 +880,8 @@ typedef struct {
 /// SUCCESS : return
 /// FAILURE : Does not return
 ///
-#define VecDeleteRange(v, start, count) VecRemoveRange ((v), NULL, (start), (count))
+#define VecDeleteRange(v, start, count)                                                            \
+    VecRemoveRange ((v), (VEC_DATA_TYPE (v) *)NULL, (start), (count))
 
 ///
 /// Delete items in given range [start, start + count) using faster implementation.
@@ -867,7 +890,8 @@ typedef struct {
 /// SUCCESS : return
 /// FAILURE : Does not return
 ///
-#define VecDeleteRangeFast(v, start, count) VecRemoveRangeFast ((v), NULL, (start), (count))
+#define VecDeleteRangeFast(v, start, count)                                                        \
+    VecRemoveRangeFast ((v), (VEC_DATA_TYPE (v) *)NULL, (start), (count))
 
 ///
 /// Sort given vector with given comparator using quicksort algorithm.
@@ -1017,13 +1041,20 @@ typedef struct {
 /// FAILURE : Does not return on failure
 ///
 #define VecPushArr(v, arr, count, pos)                                                             \
-    (push_arr_vec (                                                                                \
-        GENERIC_VEC (v),                                                                           \
-        sizeof (VEC_DATA_TYPE (v)),                                                                \
-        (char *)(void *)(arr),                                                                     \
-        (count),                                                                                   \
-        (pos)                                                                                      \
-    ))
+    do {                                                                                           \
+        if (!arr) {                                                                                \
+            LOG_FATAL ("Provided array pointer is NULL. Expected a non-NULL value.");              \
+        }                                                                                          \
+        VEC_DATA_TYPE (v) __t_m_p = *(arr);                                                        \
+        (void)__t_m_p;                                                                             \
+        push_arr_vec (                                                                             \
+            GENERIC_VEC (v),                                                                       \
+            sizeof (VEC_DATA_TYPE (v)),                                                            \
+            (char *)(void *)(arr),                                                                 \
+            (count),                                                                               \
+            (pos)                                                                                  \
+        );                                                                                         \
+    } while (0)
 
 ///
 /// Push a complete array into this vector.
@@ -1094,7 +1125,11 @@ typedef struct {
 /// SUCCESS : `vd`
 /// FAILURE : Does not return on failure
 ///
-#define VecInitClone(vd, vs) (VecDeinit (vd), VecMerge (vd, vs))
+#define VecInitClone(vd, vs)                                                                       \
+    do {                                                                                           \
+        VecDeinit (vd);                                                                            \
+        VecMerge (vd, vs);                                                                         \
+    } while (0)
 
 ///
 /// Size of vector in bytes. Use this instead of multiplying

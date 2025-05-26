@@ -1235,7 +1235,7 @@ static size CURLResponseWriteCallback (void* ptr, size sz, size nmemb, Str* raw_
     /* compute and resize buffer to required size */
     size received_size = sz * nmemb;
     size newlen        = raw_response->length + received_size;
-    StrPushBackCstr (raw_response, ptr, received_size);
+    StrPushBackCstr (raw_response, (char*)ptr, received_size);
     return received_size;
 }
 

@@ -73,7 +73,10 @@ void StatusToStr (Status status, Str* ss) {
             case STATUS_UNINITIALIZED :
                 StrPrintf (ss, "UNINITIALIZED");
                 break;
-                // NOTE: cases of pending, error and success are common with DYN_EXEC_STATUS
+            case STATUS_RUNNING :
+                StrPrintf (ss, "RUNNING");
+                break;
+                // NOTE: cases of error and success are common with DYN_EXEC_STATUS
                 // whenever these enums are provided, translation will happen from that branch
             default :
                 LOG_ERROR ("Invalid status provided.");
@@ -115,7 +118,7 @@ Status StatusFromStr (Str* ss) {
         return STATUS_ALL | ANALYSIS_STATUS;
     }
     if (!StrCmpZstr (ss, "PENDING")) {
-        return STATUS_PROCESSING | DYN_EXEC_STATUS | AI_DECOMP_STATUS;
+        return STATUS_PROCESSING | DYN_EXEC_STATUS ;
     }
     if (!StrCmpZstr (ss, "ERROR")) {
         return STATUS_ERROR | DYN_EXEC_STATUS | AI_DECOMP_STATUS;
@@ -126,7 +129,10 @@ Status StatusFromStr (Str* ss) {
     if (!StrCmpZstr (ss, "COMPLETED")) {
         return STATUS_COMPLETE | AI_DECOMP_STATUS;
     }
-    if (!StrCmpZstr (ss, "UNINITIALIZED")) {
+    if (!StrCmpZstr (ss, "RUNNING")) {
+        return STATUS_RUNNING | DYN_EXEC_STATUS ;
+    }
+    if (!StrCmpZstr (ss, "UNINITIALISED")) {
         return STATUS_UNINITIALIZED | AI_DECOMP_STATUS;
     }
     if (!StrCmpZstr (ss, "ALL")) {

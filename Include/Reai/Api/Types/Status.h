@@ -40,6 +40,7 @@ extern "C" {
         // aliases to make it usable with other status types as well
         // ai-decompilation, dynamic-execution
         STATUS_PENDING       = STATUS_PROCESSING,
+        STATUS_RUNNING       = STATUS_PROCESSING,
         STATUS_SUCCESS       = STATUS_COMPLETE,
         STATUS_UNINITIALIZED = STATUS_QUEUED,
 
