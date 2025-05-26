@@ -12,19 +12,19 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
+/**
+ * \b Function map provided in AI decompilation results.
+ * */
+typedef struct {
+    ModelId id;
+    Str     name;
+} ModelInfo;
+
+typedef Vec (ModelInfo) ModelInfos;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    /**
-     * \b Function map provided in AI decompilation results.
-     * */
-    typedef struct {
-        ModelId id;
-        Str     name;
-    } ModelInfo;
-    typedef Vec (ModelInfo) ModelInfos;
-
 
     ///
     /// Deinitalize given model info object.

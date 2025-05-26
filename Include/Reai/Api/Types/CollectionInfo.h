@@ -12,27 +12,27 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
+typedef struct CollectionInfo {
+    CollectionId id;
+    Str          name;
+    bool         is_private;
+    Str          description;
+    Str          owned_by;
+    bool         is_official;
+    Tags         tags;
+    u64          size;
+    Str          created_at;
+    Str          last_updated_at;
+    TeamId       team_id;
+    Str          model_name;
+    ModelId      model_id;
+} CollectionInfo;
+
+typedef Vec (CollectionInfo) CollectionInfos;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-
-    typedef struct CollectionInfo {
-        CollectionId id;
-        Str          name;
-        bool         is_private;
-        Str          description;
-        Str          owned_by;
-        bool         is_official;
-        Tags         tags;
-        u64          size;
-        Str          created_at;
-        Str          last_updated_at;
-        TeamId       team_id;
-        Str          model_name;
-        ModelId      model_id;
-    } CollectionInfo;
-    typedef Vec (CollectionInfo) CollectionInfos;
 
     ///
     /// Deinit cloned CollectionInfo object. Provided pointer is not freed.

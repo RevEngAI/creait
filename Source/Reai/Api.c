@@ -1,6 +1,6 @@
 /**
  * @file Api.c
- * @date 18th May 2025 
+ * @date 18th May 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
@@ -9,24 +9,24 @@
 #include <Reai/Log.h>
 #include <Reai/Util/Json.h>
 
-bool Authenticate (Connection conn) {
-    if (!conn.api_key.length || !conn.host.length) {
+bool Authenticate (Connection* conn) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return false;
     }
 
     Str url = StrInit();
-    StrPrintf (&url, "%s/v1/authenticate", conn.host.data);
+    StrPrintf (&url, "%s/v1/authenticate", conn->host.data);
 
-    bool res = MakeRequest (&conn.api_key, &url, NULL, NULL, "GET");
+    bool res = MakeRequest (&conn->api_key, &url, NULL, NULL, "GET");
 
     StrDeinit (&url);
 
     return res;
 }
 
-BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return 0;
     }
@@ -44,7 +44,7 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
     Str url = StrInit();
     Str sj  = StrInit(); // send json
 
-    StrPrintf (&url, "%s/v1/analyse/", conn.host.data);
+    StrPrintf (&url, "%s/v1/analyse/", conn->host.data);
 
     static const char* file_opt_to_str[] = {
         [FILE_OPTION_AUTO]  = "Auto",
@@ -105,7 +105,7 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
 
     Str gj = StrInit(); // get json
 
-    if (MakeRequest (&conn.api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -128,8 +128,8 @@ BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request) {
     }
 }
 
-FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection conn, BinaryId binary_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (FunctionInfos) {0};
     }
@@ -137,8 +137,8 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection conn, BinaryId binar
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v1/analyse/functions/%llu", conn.host.data, binary_id);
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    StrPrintf (&url, "%s/v1/analyse/functions/%llu", conn->host.data, binary_id);
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -172,8 +172,8 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection conn, BinaryId binar
 
 // TODO: GetBasicFunctionInfoUsingAnalysisId
 
-AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (AnalysisInfos) {0};
     }
@@ -196,7 +196,7 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/analyses/list", conn.host.data);
+    StrPrintf (&url, "%s/v2/analyses/list", conn->host.data);
 
     bool        is_first          = true;
     const char* ws[WORKSPACE_MAX] = {"personal", "public", "team"};
@@ -225,7 +225,7 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request
             break;
     }
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -276,8 +276,8 @@ AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request
     }
 }
 
-BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (BinaryInfos) {0};
     }
@@ -290,7 +290,7 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/search/binaries", conn.host.data);
+    StrPrintf (&url, "%s/v2/search/binaries", conn->host.data);
 
     bool is_first = true;
 
@@ -301,7 +301,7 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
     UrlAddQueryStr (&url, "model_name", request->model_name.data, &is_first);
     VecForeach (&request->tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -344,8 +344,8 @@ BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request) {
     }
 }
 
-CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (CollectionInfos) {0};
     }
@@ -372,7 +372,7 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/search/collections", conn.host.data);
+    StrPrintf (&url, "%s/v2/search/collections", conn->host.data);
 
     bool is_first = true;
 
@@ -402,7 +402,7 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
 
 #undef ADD_FILTER
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -451,8 +451,8 @@ CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* requ
     }
 }
 
-bool BatchRenameFunctions (Connection conn, FunctionInfos functions) {
-    if (!conn.api_key.length || !conn.host.length) {
+bool BatchRenameFunctions (Connection* conn, FunctionInfos functions) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return false;
     }
@@ -460,7 +460,7 @@ bool BatchRenameFunctions (Connection conn, FunctionInfos functions) {
     Str url = StrInit();
     Str sj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/rename/batch", conn.host.data);
+    StrPrintf (&url, "%s/v2/functions/rename/batch", conn->host.data);
 
     JW_OBJ (sj, {
         JW_ARR_KV (sj, "functions", functions, function, {
@@ -473,7 +473,7 @@ bool BatchRenameFunctions (Connection conn, FunctionInfos functions) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -490,8 +490,8 @@ bool BatchRenameFunctions (Connection conn, FunctionInfos functions) {
     }
 }
 
-bool RenameFunction (Connection conn, FunctionId fn_id, Str new_name) {
-    if (!conn.api_key.length || !conn.host.length) {
+bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return false;
     }
@@ -509,12 +509,12 @@ bool RenameFunction (Connection conn, FunctionId fn_id, Str new_name) {
     Str url = StrInit();
     Str sj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/rename/%llu", conn.host.data, fn_id);
+    StrPrintf (&url, "%s/v2/functions/rename/%llu", conn->host.data, fn_id);
     StrPrintf (&sj, "{\"new_name\":\"%s\"}", new_name.data);
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -531,8 +531,8 @@ bool RenameFunction (Connection conn, FunctionId fn_id, Str new_name) {
     }
 }
 
-AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (AnnSymbols) {0};
     }
@@ -553,7 +553,7 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
     StrPrintf (
         &url,
         "%s/v2/analyses/%llu/similarity/functions",
-        conn.host.data,
+        conn->host.data,
         request->analysis_id
     );
 
@@ -574,7 +574,7 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -628,8 +628,8 @@ AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request) 
     }
 }
 
-Status GetAnalysisStatus (Connection conn, BinaryId binary_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+Status GetAnalysisStatus (Connection* conn, BinaryId binary_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return STATUS_INVALID;
     }
@@ -637,9 +637,9 @@ Status GetAnalysisStatus (Connection conn, BinaryId binary_id) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v1/analyse/status/%llu", conn.host.data, binary_id);
+    StrPrintf (&url, "%s/v1/analyse/status/%llu", conn->host.data, binary_id);
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -665,8 +665,8 @@ Status GetAnalysisStatus (Connection conn, BinaryId binary_id) {
 }
 
 
-ModelInfos GetAiModelInfos (Connection conn) {
-    if (!conn.api_key.length || !conn.host.length) {
+ModelInfos GetAiModelInfos (Connection* conn) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (ModelInfos) {0};
     }
@@ -674,9 +674,9 @@ ModelInfos GetAiModelInfos (Connection conn) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v1/models", conn.host.data);
+    StrPrintf (&url, "%s/v1/models", conn->host.data);
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -706,8 +706,8 @@ ModelInfos GetAiModelInfos (Connection conn) {
     }
 }
 
-bool BeginAiDecompilation (Connection conn, FunctionId function_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+bool BeginAiDecompilation (Connection* conn, FunctionId function_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return false;
     }
@@ -719,11 +719,11 @@ bool BeginAiDecompilation (Connection conn, FunctionId function_id) {
 
     Str url = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation", conn.host.data, function_id);
+    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation", conn->host.data, function_id);
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -739,8 +739,8 @@ bool BeginAiDecompilation (Connection conn, FunctionId function_id) {
     }
 }
 
-Status GetAiDecompilationStatus (Connection conn, FunctionId function_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return STATUS_INVALID;
     }
@@ -753,9 +753,9 @@ Status GetAiDecompilationStatus (Connection conn, FunctionId function_id) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation/status", conn.host.data, function_id);
+    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation/status", conn->host.data, function_id);
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -779,8 +779,8 @@ Status GetAiDecompilationStatus (Connection conn, FunctionId function_id) {
     }
 }
 
-AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, bool get_ai_summary) {
-    if (!conn.api_key.length || !conn.host.length) {
+AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bool get_ai_summary) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (AiDecompilation) {0};
     }
@@ -821,12 +821,12 @@ AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, boo
 
     Str url = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation", conn.host.data, function_id);
+    StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation", conn->host.data, function_id);
     UrlAddQueryBool (&url, "summarise", get_ai_summary, NULL);
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -962,8 +962,8 @@ AiDecompilation GetAiDecompilation (Connection conn, FunctionId function_id, boo
     }
 }
 
-SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* request) {
-    if (!conn.api_key.length || !conn.host.length) {
+SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (SimilarFunctions) {0};
     }
@@ -984,7 +984,7 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* 
     StrPrintf (
         &url,
         "%s/v2/functions/%llu/similar-functions",
-        conn.host.data,
+        conn->host.data,
         request->function_id
     );
 
@@ -1012,7 +1012,7 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* 
         UrlAddQueryStr (&url, "debug_types", "EXTERNAL", &is_first);
     }
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1056,8 +1056,8 @@ SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* 
     }
 }
 
-AnalysisId AnalysisIdFromBinaryId (Connection conn, BinaryId binary_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return 0;
     }
@@ -1070,9 +1070,9 @@ AnalysisId AnalysisIdFromBinaryId (Connection conn, BinaryId binary_id) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/analyses/lookup/%llu", conn.host.data, binary_id);
+    StrPrintf (&url, "%s/v2/analyses/lookup/%llu", conn->host.data, binary_id);
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1089,8 +1089,8 @@ AnalysisId AnalysisIdFromBinaryId (Connection conn, BinaryId binary_id) {
     }
 }
 
-Str GetAnalysisLogs (Connection conn, AnalysisId analysis_id) {
-    if (!conn.api_key.length || !conn.host.length) {
+Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (Str) {0};
     }
@@ -1101,11 +1101,11 @@ Str GetAnalysisLogs (Connection conn, AnalysisId analysis_id) {
     }
 
     Str url = StrInit();
-    StrPrintf (&url, "%s/v2/analyses/%llu/logs", conn.host.data, analysis_id);
+    StrPrintf (&url, "%s/v2/analyses/%llu/logs", conn->host.data, analysis_id);
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn.api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1127,8 +1127,8 @@ Str GetAnalysisLogs (Connection conn, AnalysisId analysis_id) {
     }
 }
 
-Str UploadFile (Connection conn, Str file_path) {
-    if (!conn.api_key.length || !conn.host.length) {
+Str UploadFile (Connection* conn, Str file_path) {
+    if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (Str) {0};
     }
@@ -1139,11 +1139,11 @@ Str UploadFile (Connection conn, Str file_path) {
     }
 
     Str url = StrInit();
-    StrPrintf (&url, "%s/v1/upload", conn.host.data);
+    StrPrintf (&url, "%s/v1/upload", conn->host.data);
 
     Str gj = StrInit();
 
-    if (MakeUploadRequest (&conn.api_key, &url, NULL, &gj, "POST", &file_path)) {
+    if (MakeUploadRequest (&conn->api_key, &url, NULL, &gj, "POST", &file_path)) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);

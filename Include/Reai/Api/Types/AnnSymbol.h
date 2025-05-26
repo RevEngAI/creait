@@ -1,6 +1,6 @@
 /**
  * @file AnnSymbol.h
- * @date 31st March 2025 
+ * @date 31st March 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
@@ -9,28 +9,29 @@
 #ifndef REAI_ANN_SYMBOL_H
 #define REAI_ANN_SYMBOL_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <Reai/Api/Types/Common.h>
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
-    typedef struct AnnSymbol {
-        FunctionId source_function_id;
-        FunctionId target_function_id;
-        f64        distance;
-        AnalysisId analysis_id;
-        Str        analysis_name;
-        Str        function_name;
-        Str        function_mangled_name;
-        BinaryId   binary_id;
-        Str        sha256;
-        bool       debug;
-    } AnnSymbol;
+typedef struct AnnSymbol {
+    FunctionId source_function_id;
+    FunctionId target_function_id;
+    f64        distance;
+    AnalysisId analysis_id;
+    Str        analysis_name;
+    Str        function_name;
+    Str        function_mangled_name;
+    BinaryId   binary_id;
+    Str        sha256;
+    bool       debug;
+} AnnSymbol;
 
-    typedef Vec (AnnSymbol) AnnSymbols;
+typedef Vec (AnnSymbol) AnnSymbols;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 
     ///
     /// Deinit cloned AnnSymbol object. Provided pointer is not freed.

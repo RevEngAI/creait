@@ -13,32 +13,32 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
+/// can be used as response for query result as well
+
+/**
+ * @b Contains parsed JSON response for GET `/v2/binaries` endpoint
+ * */
+typedef struct BinaryInfo {
+    BinaryId   binary_id;
+    Str        binary_name;
+    AnalysisId analysis_id;
+    Str        sha256;
+    Tags       tags;
+    Str        created_at;
+    ModelId    model_id;
+    Str        model_name;
+    Str        owned_by;
+
+    /// XXX:
+    Collections collections;
+    Status      status;
+} BinaryInfo;
+
+typedef Vec (BinaryInfo) BinaryInfos;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    /// can be used as response for query result as well
-
-    /**
-     * @b Contains parsed JSON response for GET `/v2/binaries` endpoint
-     * */
-    typedef struct BinaryInfo {
-        BinaryId   binary_id;
-        Str        binary_name;
-        AnalysisId analysis_id;
-        Str        sha256;
-        Tags       tags;
-        Str        created_at;
-        ModelId    model_id;
-        Str        model_name;
-        Str        owned_by;
-
-        /// XXX:
-        Collections collections;
-        Status      status;
-    } BinaryInfo;
-
-    typedef Vec (BinaryInfo) BinaryInfos;
 
     ///
     /// Deinit BinaryInfo object clone. This won't free provided pointer.

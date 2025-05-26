@@ -16,17 +16,17 @@
 /* libc */
 #include <memory.h>
 
+typedef struct FunctionInfo {
+    FunctionId id;
+    u64        size;
+    SymbolInfo symbol;
+} FunctionInfo;
+
+typedef Vec (FunctionInfo) FunctionInfos;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    typedef struct FunctionInfo {
-        FunctionId id;
-        u64        size;
-        SymbolInfo symbol;
-    } FunctionInfo;
-
-    typedef Vec (FunctionInfo) FunctionInfos;
 
     ///
     /// Clone a function info object from `src` to `dst`

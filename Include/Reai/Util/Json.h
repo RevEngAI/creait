@@ -134,107 +134,115 @@ typedef struct Number {
     };
 } Number;
 
-///
-/// Skip whitespace from current reading position.
-///
-/// si[in] : Reading position to start looking for whitespace
-///
-/// SUCCESS : Returns `StrIter` advanced past all whitespace
-/// FAILURE : Returns original `StrIter` if already at end
-///
-/// TAGS: JSON, Whitespace, Parsing, Utility
-///
-StrIter JSkipWhitespace (StrIter si);
+#ifdef __cplusplus
+extern "C" {
+#endif
 
-///
-/// Read a quoted string, handling escape sequences.
-///
-/// si[in]   : Current reading position in input string
-/// str[out] : Output string to store parsed result
-///
-/// NOTE: Unicode escape sequences like `\uXXXX` are not supported.
-///
-/// SUCCESS : Returns `StrIter` advanced past closing quote
-/// FAILURE : Returns original `StrIter` on error (invalid escape, missing quote, etc.)
-///
-/// TAGS: JSON, String, Parsing, EscapeSequences
-///
-StrIter JReadString (StrIter si, Str* str);
+    ///
+    /// Skip whitespace from current reading position.
+    ///
+    /// si[in] : Reading position to start looking for whitespace
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past all whitespace
+    /// FAILURE : Returns original `StrIter` if already at end
+    ///
+    /// TAGS: JSON, Whitespace, Parsing, Utility
+    ///
+    StrIter JSkipWhitespace (StrIter si);
 
-///
-/// Read a JSON number (int or float) from input string.
-///
-/// si[in]   : Current reading position in input string
-/// num[out] : Output number object to hold parsed result
-///
-/// SUCCESS : Returns `StrIter` advanced past number
-/// FAILURE : Returns original `StrIter` on error (invalid format, empty number, etc.)
-///
-/// TAGS: JSON, Number, Parsing, Numeric
-///
-StrIter JReadNumber (StrIter si, Number* num);
+    ///
+    /// Read a quoted string, handling escape sequences.
+    ///
+    /// si[in]   : Current reading position in input string
+    /// str[out] : Output string to store parsed result
+    ///
+    /// NOTE: Unicode escape sequences like `\uXXXX` are not supported.
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past closing quote
+    /// FAILURE : Returns original `StrIter` on error (invalid escape, missing quote, etc.)
+    ///
+    /// TAGS: JSON, String, Parsing, EscapeSequences
+    ///
+    StrIter JReadString (StrIter si, Str* str);
 
-///
-/// Strictly read an integer from input string.
-///
-/// si[in]   : Current reading position in input string
-/// val[out] : Pointer to i64 to store parsed integer
-///
-/// SUCCESS : Returns `StrIter` advanced past parsed integer
-/// FAILURE : Returns original `StrIter` if float encountered or parsing fails
-///
-/// TAGS: JSON, Integer, Parsing, Strict
-///
-StrIter JReadInteger (StrIter si, i64* val);
+    ///
+    /// Read a JSON number (int or float) from input string.
+    ///
+    /// si[in]   : Current reading position in input string
+    /// num[out] : Output number object to hold parsed result
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past number
+    /// FAILURE : Returns original `StrIter` on error (invalid format, empty number, etc.)
+    ///
+    /// TAGS: JSON, Number, Parsing, Numeric
+    ///
+    StrIter JReadNumber (StrIter si, Number* num);
 
-///
-/// Read a floating-point number from input string.
-///
-/// si[in]   : Current reading position in input string
-/// val[out] : Pointer to f64 to store parsed value
-///
-/// SUCCESS : Returns `StrIter` advanced past parsed float
-/// FAILURE : Returns original `StrIter` on error
-///
-/// TAGS: JSON, Float, Parsing
-///
-StrIter JReadFloat (StrIter si, f64* val);
+    ///
+    /// Strictly read an integer from input string.
+    ///
+    /// si[in]   : Current reading position in input string
+    /// val[out] : Pointer to i64 to store parsed integer
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past parsed integer
+    /// FAILURE : Returns original `StrIter` if float encountered or parsing fails
+    ///
+    /// TAGS: JSON, Integer, Parsing, Strict
+    ///
+    StrIter JReadInteger (StrIter si, i64* val);
 
-///
-/// Read a boolean value ("true" or "false") from input string.
-///
-/// si[in]   : Current reading position in input string
-/// b[out]   : Pointer to bool to store parsed result
-///
-/// SUCCESS : Returns `StrIter` advanced past parsed boolean
-/// FAILURE : Returns original `StrIter` if invalid or unrecognized value
-///
-/// TAGS: JSON, Boolean, Parsing
-///
-StrIter JReadBool (StrIter si, bool* b);
+    ///
+    /// Read a floating-point number from input string.
+    ///
+    /// si[in]   : Current reading position in input string
+    /// val[out] : Pointer to f64 to store parsed value
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past parsed float
+    /// FAILURE : Returns original `StrIter` on error
+    ///
+    /// TAGS: JSON, Float, Parsing
+    ///
+    StrIter JReadFloat (StrIter si, f64* val);
 
-///
-/// Read a "null" value from input string.
-///
-/// si[in]       : Current reading position in input string
-/// is_null[out] : Pointer to bool set to true if "null" found
-///
-/// SUCCESS : Returns `StrIter` advanced past "null"
-/// FAILURE : Returns original `StrIter` if "null" not found
-///
-StrIter JReadNull (StrIter si, bool* is_null);
+    ///
+    /// Read a boolean value ("true" or "false") from input string.
+    ///
+    /// si[in]   : Current reading position in input string
+    /// b[out]   : Pointer to bool to store parsed result
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past parsed boolean
+    /// FAILURE : Returns original `StrIter` if invalid or unrecognized value
+    ///
+    /// TAGS: JSON, Boolean, Parsing
+    ///
+    StrIter JReadBool (StrIter si, bool* b);
 
-///
-/// Skip the current JSON value at reading position.
-///
-/// si[in] : Current position in string iterator to skip value from
-///
-/// SUCCESS : Returns updated `StrIter` after value is skipped
-/// FAILURE : Returns same `StrIter` on error (e.g. invalid type)
-///
-/// TAGS: JSON, Parsing, Utility
-///
-StrIter JSkipValue (StrIter si);
+    ///
+    /// Read a "null" value from input string.
+    ///
+    /// si[in]       : Current reading position in input string
+    /// is_null[out] : Pointer to bool set to true if "null" found
+    ///
+    /// SUCCESS : Returns `StrIter` advanced past "null"
+    /// FAILURE : Returns original `StrIter` if "null" not found
+    ///
+    StrIter JReadNull (StrIter si, bool* is_null);
+
+    ///
+    /// Skip the current JSON value at reading position.
+    ///
+    /// si[in] : Current position in string iterator to skip value from
+    ///
+    /// SUCCESS : Returns updated `StrIter` after value is skipped
+    /// FAILURE : Returns same `StrIter` on error (e.g. invalid type)
+    ///
+    /// TAGS: JSON, Parsing, Utility
+    ///
+    StrIter JSkipValue (StrIter si);
+
+#ifdef __cplusplus
+}
+#endif
 
 ///
 /// Read a JSON string value from stream and assign to target.

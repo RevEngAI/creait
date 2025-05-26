@@ -50,7 +50,7 @@ typedef struct {
         size              alignment;                                                               \
     }
 
-#define VEC_DATA_TYPE(v) __typeof__ ((v)->data[0])
+#define VEC_DATA_TYPE(v) TYPE_OF ((v)->data[0])
 
 ///
 /// Initialize vector. Default alignment is 1
@@ -81,12 +81,12 @@ typedef struct {
 ///     }
 ///
 #define VecInit_T(v)                                                                               \
-    ((__typeof__ (*v)) {.length      = 0,                                                          \
-                        .capacity    = 0,                                                          \
-                        .copy_init   = (GenericCopyInit)NULL,                                      \
-                        .copy_deinit = (GenericCopyDeinit)NULL,                                    \
-                        .data        = NULL,                                                       \
-                        .alignment   = 1})
+    ((TYPE_OF (*v)) {.length      = 0,                                                             \
+                     .capacity    = 0,                                                             \
+                     .copy_init   = (GenericCopyInit)NULL,                                         \
+                     .copy_deinit = (GenericCopyDeinit)NULL,                                       \
+                     .data        = NULL,                                                          \
+                     .alignment   = 1})
 
 ///
 /// Initialize vector. Default alignment is 1
@@ -125,12 +125,12 @@ typedef struct {
 ///     }
 ///
 #define VecInitWithDeepCopy_T(v, ci, cd)                                                           \
-    ((__typeof__ (*v)) {.length      = 0,                                                          \
-                        .capacity    = 0,                                                          \
-                        .copy_init   = (GenericCopyInit)(ci),                                      \
-                        .copy_deinit = (GenericCopyDeinit)(cd),                                    \
-                        .data        = NULL,                                                       \
-                        .alignment   = 1})
+    ((TYPE_OF (*v)) {.length      = 0,                                                             \
+                     .capacity    = 0,                                                             \
+                     .copy_init   = (GenericCopyInit)(ci),                                         \
+                     .copy_deinit = (GenericCopyDeinit)(cd),                                       \
+                     .data        = NULL,                                                          \
+                     .alignment   = 1})
 
 ///
 /// Initialize vector with given alignment.
@@ -177,12 +177,12 @@ typedef struct {
 ///     }
 ///
 #define VecInitAligned_T(v, aln)                                                                   \
-    ((__typeof__ (*v)) {.length      = 0,                                                          \
-                        .capacity    = 0,                                                          \
-                        .copy_init   = (GenericCopyInit)NULL,                                      \
-                        .copy_deinit = (GenericCopyDeinit)NULL,                                    \
-                        .data        = NULL,                                                       \
-                        .alignment   = (aln)})
+    ((TYPE_OF (*v)) {.length      = 0,                                                             \
+                     .capacity    = 0,                                                             \
+                     .copy_init   = (GenericCopyInit)NULL,                                         \
+                     .copy_deinit = (GenericCopyDeinit)NULL,                                       \
+                     .data        = NULL,                                                          \
+                     .alignment   = (aln)})
 
 ///
 /// Initialize vector with given alignment.
@@ -238,12 +238,12 @@ typedef struct {
 ///     }
 ///
 #define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                               \
-    ((__typeof__ (*v)) {.length      = 0,                                                          \
-                        .capacity    = 0,                                                          \
-                        .copy_init   = (GenericCopyInit)(ci),                                      \
-                        .copy_deinit = (GenericCopyDeinit)(cd),                                    \
-                        .data        = NULL,                                                       \
-                        .alignment   = (aln)})
+    ((TYPE_OF (*v)) {.length      = 0,                                                             \
+                     .capacity    = 0,                                                             \
+                     .copy_init   = (GenericCopyInit)(ci),                                         \
+                     .copy_deinit = (GenericCopyDeinit)(cd),                                       \
+                     .data        = NULL,                                                          \
+                     .alignment   = (aln)})
 
 ///
 /// Initialize given vector using memory from stack.
@@ -275,7 +275,7 @@ typedef struct {
     do {                                                                                           \
         VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                              \
                                                                                                    \
-        *(v)          = (__typeof__ (*v))VecInit();                                                \
+        *(v)          = (TYPE_OF (*v))VecInit();                                                   \
         (v)->capacity = (ne);                                                                      \
         (v)->data     = &___data___[0];                                                            \
                                                                                                    \
@@ -323,7 +323,7 @@ typedef struct {
     do {                                                                                           \
         char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};          \
                                                                                                    \
-        *(v)          = (__typeof__ (*v))VecInitAligned ((aln));                                   \
+        *(v)          = (TYPE_OF (*v))VecInitAligned ((aln));                                      \
         (v)->capacity = (ne);                                                                      \
         (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                       \
                                                                                                    \
@@ -364,7 +364,7 @@ typedef struct {
     do {                                                                                           \
         VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                              \
                                                                                                    \
-        *(v)          = (__typeof__ (*v))VecInit();                                                \
+        *(v)          = (TYPE_OF (*v))VecInit();                                                   \
         (v)->capacity = (ne);                                                                      \
         (v)->data     = &___data___[0];                                                            \
                                                                                                    \
@@ -417,7 +417,7 @@ typedef struct {
     do {                                                                                           \
         char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};          \
                                                                                                    \
-        *(v)          = (__typeof__ (*v))VecInitAligned ((aln));                                   \
+        *(v)          = (TYPE_OF (*v))VecInitAligned ((aln));                                      \
         (v)->capacity = (ne);                                                                      \
         (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                       \
                                                                                                    \
@@ -897,7 +897,13 @@ typedef struct {
 /// FAILURE : Does not return on failure
 ///
 #define VecPushArr(v, arr, count, pos)                                                             \
-    (push_arr_vec (GENERIC_VEC (v), sizeof (VEC_DATA_TYPE (v)), (void *)(arr), (count), (pos)))
+    (push_arr_vec (                                                                                \
+        GENERIC_VEC (v),                                                                           \
+        sizeof (VEC_DATA_TYPE (v)),                                                                \
+        (char *)(void *)(arr),                                                                     \
+        (count),                                                                                   \
+        (pos)                                                                                      \
+    ))
 
 ///
 /// Push a complete array into this vector.
@@ -1133,47 +1139,67 @@ typedef struct {
 #define VecForeachPtrReverse(v, var, body)                                                         \
     VecForeachPtrReverseIdx ((v), (var), (____iter___), {body})
 
-void init_vec (
-    GenericVec       *vec,
-    size              item_size,
-    GenericCopyInit   copy_init,
-    GenericCopyDeinit copy_deinit,
-    size              alignment
-);
-void init_vec_on_stack (
-    GenericVec       *vec,
-    char             *stack_mem,
-    size              capacity,
-    size              item_size,
-    GenericCopyInit   copy_init,
-    GenericCopyDeinit copy_deinit,
-    size              alignment
-);
-void deinit_vec (GenericVec *vec, size item_size);
-void clear_vec (GenericVec *vec, size item_size);
-void resize_vec (GenericVec *vec, size item_size, size new_size);
-void reserve_vec (GenericVec *vec, size item_size, size n);
-void reserve_pow2_vec (GenericVec *vec, size item_size, size n);
-void reduce_space_vec (GenericVec *vec, size item_size);
-void insert_range_into_vec (GenericVec *vec, char *item_data, size item_size, size idx, size count);
-void insert_range_fast_into_vec (
-    GenericVec *vec,
-    char       *item_data,
-    size        item_size,
-    size        idx,
-    size        count
-);
-void remove_range_vec (GenericVec *vec, void *removed_data, size item_size, size start, size count);
-void fast_remove_range_vec (
-    GenericVec *vec,
-    void       *removed_data,
-    size        item_size,
-    size        start,
-    size        count
-);
-void qsort_vec (GenericVec *vec, size item_size, GenericCompare comp);
-void swap_vec (GenericVec *vec, size item_size, size idx1, size idx2);
-void reverse_vec (GenericVec *vec, size item_size);
-void push_arr_vec (GenericVec *vec, size item_size, char *arr, size count, size pos);
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+    void init_vec (
+        GenericVec       *vec,
+        size              item_size,
+        GenericCopyInit   copy_init,
+        GenericCopyDeinit copy_deinit,
+        size              alignment
+    );
+    void init_vec_on_stack (
+        GenericVec       *vec,
+        char             *stack_mem,
+        size              capacity,
+        size              item_size,
+        GenericCopyInit   copy_init,
+        GenericCopyDeinit copy_deinit,
+        size              alignment
+    );
+    void deinit_vec (GenericVec *vec, size item_size);
+    void clear_vec (GenericVec *vec, size item_size);
+    void resize_vec (GenericVec *vec, size item_size, size new_size);
+    void reserve_vec (GenericVec *vec, size item_size, size n);
+    void reserve_pow2_vec (GenericVec *vec, size item_size, size n);
+    void reduce_space_vec (GenericVec *vec, size item_size);
+    void insert_range_into_vec (
+        GenericVec *vec,
+        char       *item_data,
+        size        item_size,
+        size        idx,
+        size        count
+    );
+    void insert_range_fast_into_vec (
+        GenericVec *vec,
+        char       *item_data,
+        size        item_size,
+        size        idx,
+        size        count
+    );
+    void remove_range_vec (
+        GenericVec *vec,
+        void       *removed_data,
+        size        item_size,
+        size        start,
+        size        count
+    );
+    void fast_remove_range_vec (
+        GenericVec *vec,
+        void       *removed_data,
+        size        item_size,
+        size        start,
+        size        count
+    );
+    void qsort_vec (GenericVec *vec, size item_size, GenericCompare comp);
+    void swap_vec (GenericVec *vec, size item_size, size idx1, size idx2);
+    void reverse_vec (GenericVec *vec, size item_size);
+    void push_arr_vec (GenericVec *vec, size item_size, char *arr, size count, size pos);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MISRA_STD_CONTAINER_VEC_H

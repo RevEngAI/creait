@@ -14,135 +14,133 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+typedef enum FileOption {
+    FILE_OPTION_AUTO = 0,
+    FILE_OPTION_PE,
+    FILE_OPTION_ELF,
+    FILE_OPTION_MACHO,
+    FILE_OPTION_RAW,
+    FILE_OPTION_EXE,
+    FILE_OPTION_DLL,
+    FILE_OPTION_MAX
+} FileOption;
 
-    typedef enum FileOption {
-        FILE_OPTION_AUTO = 0,
-        FILE_OPTION_PE,
-        FILE_OPTION_ELF,
-        FILE_OPTION_MACHO,
-        FILE_OPTION_RAW,
-        FILE_OPTION_EXE,
-        FILE_OPTION_DLL,
-        FILE_OPTION_MAX
-    } FileOption;
+typedef enum Workspace {
+    WORKSPACE_PERSONAL = 0,
+    WORKSPACE_TEAM,
+    WORKSPACE_PUBLIC,
+    WORKSPACE_MAX
+} Workspace;
 
-    typedef enum Workspace {
-        WORKSPACE_PERSONAL = 0,
-        WORKSPACE_TEAM,
-        WORKSPACE_PUBLIC,
-        WORKSPACE_MAX
-    } Workspace;
+typedef enum OrderBy {
+    ORDER_BY_CREATED = 0,
+    ORDER_BY_NAME,
+    ORDER_BY_MODEL,
+    ORDER_BY_OWNER,
+    ORDER_BY_SIZE,
+    ORDER_BY_LAST_UPDATED,
+    ORDER_BY_MAX
+} OrderBy;
 
-    typedef enum OrderBy {
-        ORDER_BY_CREATED = 0,
-        ORDER_BY_NAME,
-        ORDER_BY_MODEL,
-        ORDER_BY_OWNER,
-        ORDER_BY_SIZE,
-        ORDER_BY_LAST_UPDATED,
-        ORDER_BY_MAX
-    } OrderBy;
-
-    typedef struct Connection {
-        Str host;
-        Str api_key;
-    } Connection;
+typedef struct Connection {
+    Str host;
+    Str api_key;
+} Connection;
 
 #define ConnectionInit() {.host = StrInit(), .api_key = StrInit()}
 
-    typedef struct NewAnalysisRequest {
-        Str           ai_model;          /**< @b BinNet model to be used */
-        Str           platform_opt;      /**< @b Idk the possible values of this enum. */
-        Str           isa_opt;           /**< @b Idk possible values of this one as well. */
-        FileOption    file_opt;          /**< @b Info about file type. */
-        Tags          tags;              /**< @b Some tags info to help searching later on. */
-        bool          is_private;        /**< @b Scope of binary : public/private. */
-        u64           base_addr;         /**< @b Base address where binary is loaded. */
-        FunctionInfos functions;         /**< @b Vector of function information structures. */
-        Str           file_name;         /**< @b Name of file. */
-        Str           cmdline_args;      /**< @b Command like arguments if file takes any. */
-        i32           priority;          /**< @b Priority level of this analysis. */
-        Str           sha256;            /**< @b SHA256 hash returned when binary was uploaded. */
-        Str           debug_hash;        /**< @b Idk what this really is */
-        size          file_size;         /**< @b size of file in bytes. */
-        bool          dynamic_execution; /**< @b Whether to perform dynamic execution or not */
-        bool          skip_scraping;
-        bool          skip_cves;
-        bool          skip_sbom;
-        bool          skip_capabilities;
-        bool          ignore_cache;
-        bool          advanced_analysis;
-    } NewAnalysisRequest;
+typedef struct NewAnalysisRequest {
+    Str           ai_model;          /**< @b BinNet model to be used */
+    Str           platform_opt;      /**< @b Idk the possible values of this enum. */
+    Str           isa_opt;           /**< @b Idk possible values of this one as well. */
+    FileOption    file_opt;          /**< @b Info about file type. */
+    Tags          tags;              /**< @b Some tags info to help searching later on. */
+    bool          is_private;        /**< @b Scope of binary : public/private. */
+    u64           base_addr;         /**< @b Base address where binary is loaded. */
+    FunctionInfos functions;         /**< @b Vector of function information structures. */
+    Str           file_name;         /**< @b Name of file. */
+    Str           cmdline_args;      /**< @b Command like arguments if file takes any. */
+    i32           priority;          /**< @b Priority level of this analysis. */
+    Str           sha256;            /**< @b SHA256 hash returned when binary was uploaded. */
+    Str           debug_hash;        /**< @b Idk what this really is */
+    size          file_size;         /**< @b size of file in bytes. */
+    bool          dynamic_execution; /**< @b Whether to perform dynamic execution or not */
+    bool          skip_scraping;
+    bool          skip_cves;
+    bool          skip_sbom;
+    bool          skip_capabilities;
+    bool          ignore_cache;
+    bool          advanced_analysis;
+} NewAnalysisRequest;
 
-    typedef struct RecentAnalysisRequest {
-        Str       search_term;
-        Workspace workspace;
-        Status    analysis_status;
-        Str       model_name;
-        Status    dyn_exec_status;
-        Strs      usernames;
-        u32       limit;
-        u32       offset;
-        OrderBy   order_by;
-        bool      order_in_asc;
-    } RecentAnalysisRequest;
+typedef struct RecentAnalysisRequest {
+    Str       search_term;
+    Workspace workspace;
+    Status    analysis_status;
+    Str       model_name;
+    Status    dyn_exec_status;
+    Strs      usernames;
+    u32       limit;
+    u32       offset;
+    OrderBy   order_by;
+    bool      order_in_asc;
+} RecentAnalysisRequest;
 
-    typedef struct BatchAnnSymbolRequest {
-        AnalysisId analysis_id;
-        size       limit;
-        f64        distance;
-        bool       debug_symbols_only;
-        struct {
-            AnalysisIds   analysis_ids;
-            CollectionIds collection_ids;
-            BinaryIds     binary_ids;
-            FunctionIds   function_ids;
-        } search;
-    } BatchAnnSymbolRequest;
-
-    typedef struct SearchBinaryRequest {
-        size page;
-        size page_size;
-        Str  partial_name;
-        Str  partial_sha256;
-        Tags tags;
-        Str  model_name;
-    } SearchBinaryRequest;
-
-    typedef struct SearchCollectionRequest {
-        size    page;
-        size    page_size;
-        Str     partial_collection_name;
-        Str     partial_binary_name;
-        Str     partial_binary_sha256;
-        Tags    tags;
-        Str     model_name;
-        bool    filter_official : 1;
-        bool    filter_user     : 1;
-        bool    filter_team     : 1;
-        bool    filter_public   : 1;
-        bool    hide_empty      : 1;
-        OrderBy order_by;
-        bool    order_in_asc;
-    } SearchCollectionRequest;
-
-    typedef struct SimilarFunctionsRequest {
-        FunctionId    function_id;
-        u32           limit;
-        f32           distance;
+typedef struct BatchAnnSymbolRequest {
+    AnalysisId analysis_id;
+    size       limit;
+    f64        distance;
+    bool       debug_symbols_only;
+    struct {
+        AnalysisIds   analysis_ids;
         CollectionIds collection_ids;
-        struct {
-            bool user_symbols;
-            bool system_symbols;
-            bool external_symbols;
-        } debug_include;
-        BinaryIds binary_ids;
-    } SimilarFunctionsRequest;
+        BinaryIds     binary_ids;
+        FunctionIds   function_ids;
+    } search;
+} BatchAnnSymbolRequest;
 
+typedef struct SearchBinaryRequest {
+    size page;
+    size page_size;
+    Str  partial_name;
+    Str  partial_sha256;
+    Tags tags;
+    Str  model_name;
+} SearchBinaryRequest;
 
+typedef struct SearchCollectionRequest {
+    size    page;
+    size    page_size;
+    Str     partial_collection_name;
+    Str     partial_binary_name;
+    Str     partial_binary_sha256;
+    Tags    tags;
+    Str     model_name;
+    bool    filter_official : 1;
+    bool    filter_user     : 1;
+    bool    filter_team     : 1;
+    bool    filter_public   : 1;
+    bool    hide_empty      : 1;
+    OrderBy order_by;
+    bool    order_in_asc;
+} SearchCollectionRequest;
+
+typedef struct SimilarFunctionsRequest {
+    FunctionId    function_id;
+    u32           limit;
+    f32           distance;
+    CollectionIds collection_ids;
+    struct {
+        bool user_symbols;
+        bool system_symbols;
+        bool external_symbols;
+    } debug_include;
+    BinaryIds binary_ids;
+} SimilarFunctionsRequest;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     ///
     /// Authenticates a connection using the provided API key and host.
@@ -157,7 +155,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false, error messages are logged.
     ///
-    bool Authenticate (Connection conn);
+    bool Authenticate (Connection* conn);
 
     ///
     /// Sends a new analysis request to the server and parses the response.
@@ -172,7 +170,7 @@ extern "C" {
     /// SUCCESS : A non-zero binary ID corresponding to newly created analysis.
     /// FAILURE : 0, error messages logged.
     ///
-    BinaryId CreateNewAnalysis (Connection conn, NewAnalysisRequest* request);
+    BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request);
 
     ///
     /// Retrieves basic function information using the provided binary ID.
@@ -187,7 +185,7 @@ extern "C" {
     /// SUCCESS : FunctionInfos vector filled with function symbol information retrieved from analysis.
     /// FAILURE : Empty FunctionInfos vector.
     ///
-    FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection conn, BinaryId binary_id);
+    FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id);
 
     ///
     /// Sends a request to retrieve recent analysis data based on the provided parameters.
@@ -201,7 +199,7 @@ extern "C" {
     /// SUCCESS :  A populated `AnalysisInfos` struct on success.
     /// FAILURE :  An empty struct (all fields set to 0) on failure.
     ///
-    AnalysisInfos GetRecentAnalysis (Connection conn, RecentAnalysisRequest* request);
+    AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request);
 
     ///
     /// Search for binaries with given filters
@@ -212,7 +210,7 @@ extern "C" {
     /// SUCCESS : BinaryInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    BinaryInfos SearchBinary (Connection conn, SearchBinaryRequest* request);
+    BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request);
 
     ///
     /// Search for collection with given filters
@@ -223,7 +221,7 @@ extern "C" {
     /// SUCCESS : CollectionInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    CollectionInfos SearchCollection (Connection conn, SearchCollectionRequest* request);
+    CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* request);
 
     ///
     /// Perform a batch function renaming operation for RevEngAI.
@@ -234,7 +232,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false
     ///
-    bool BatchRenameFunctions (Connection conn, FunctionInfos functions);
+    bool BatchRenameFunctions (Connection* conn, FunctionInfos functions);
 
     ///
     /// Rename a single function in RevEngAI.
@@ -246,7 +244,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false
     ///
-    bool RenameFunction (Connection conn, FunctionId fn_id, Str new_name);
+    bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name);
 
     ///
     /// Perform a batch ann symbol request using analysis id.
@@ -258,7 +256,7 @@ extern "C" {
     /// SUCCESS: A populated `AnnSymbols` vector struct on success.
     /// FAILURE: An empty struct (all fields set to 0) on failure.
     ///
-    AnnSymbols GetBatchAnnSymbols (Connection conn, BatchAnnSymbolRequest* request);
+    AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request);
 
     /// Retrieves the status of an analysis job for a given binary ID.
     ///
@@ -272,7 +270,7 @@ extern "C" {
     ///   - Status code indicating current analysis state (STATUS_SUCCESS, STATUS_PENDING, etc.)
     ///   - STATUS_INVALID if connection parameters are invalid or request fails
     ///
-    Status GetAnalysisStatus (Connection conn, BinaryId binary_id);
+    Status GetAnalysisStatus (Connection* conn, BinaryId binary_id);
 
     /// Retrieves information about available AI models.
     ///
@@ -285,7 +283,7 @@ extern "C" {
     ///   - Vector of ModelInfo structures containing model IDs and names
     ///   - Empty vector if connection fails or no models available
     ///
-    ModelInfos GetAiModelInfos (Connection conn);
+    ModelInfos GetAiModelInfos (Connection* conn);
 
     /// Initiates AI-powered decompilation for a specific function.
     ///
@@ -299,7 +297,7 @@ extern "C" {
     ///   - true if decompilation job started successfully
     ///   - false if invalid parameters or connection failure
     ///
-    bool BeginAiDecompilation (Connection conn, FunctionId function_id);
+    bool BeginAiDecompilation (Connection* conn, FunctionId function_id);
 
     /// Checks the status of an AI decompilation job.
     ///
@@ -313,7 +311,7 @@ extern "C" {
     ///   - Status code (STATUS_PENDING, STATUS_SUCCESS, etc.)
     ///   - STATUS_INVALID if invalid parameters or connection failure
     ///
-    Status GetAiDecompilationStatus (Connection conn, FunctionId function_id);
+    Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id);
 
     /// Retrieves results of a completed AI decompilation job.
     ///
@@ -329,7 +327,7 @@ extern "C" {
     ///   - Empty structure if job failed or results unavailable
     ///
     AiDecompilation
-        GetAiDecompilation (Connection conn, FunctionId function_id, bool get_ai_summary);
+        GetAiDecompilation (Connection* conn, FunctionId function_id, bool get_ai_summary);
 
     /// Finds similar functions based on vector space analysis.
     ///
@@ -343,7 +341,7 @@ extern "C" {
     ///   - Vector of SimilarFunction structures containing match details
     ///   - Empty vector if no matches found or connection failure
     ///
-    SimilarFunctions GetSimilarFunctions (Connection conn, SimilarFunctionsRequest* request);
+    SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
 
     /// Maps a binary ID to its corresponding analysis ID.
     ///
@@ -356,7 +354,7 @@ extern "C" {
     /// SUCCESS : Non-zero analysis ID if found
     /// FAILURE : 0 if invalid input or no matching analysis found.
     ///
-    AnalysisId AnalysisIdFromBinaryId (Connection conn, BinaryId binary_id);
+    AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id);
 
     /// Retrieves log data for a specific analysis job.
     ///
@@ -369,7 +367,7 @@ extern "C" {
     /// SUCCESS : String containing log text
     /// FAILURE : Empty string.
     ///
-    Str GetAnalysisLogs (Connection conn, AnalysisId analysis_id);
+    Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id);
 
     ///
     /// Upload a file for analysis.
@@ -384,7 +382,7 @@ extern "C" {
     /// SUCCESS : Str object containing SHA-256 Hash of uploaded file.
     /// FAILURE : Empty Str object.
     ///
-    Str UploadFile (Connection conn, Str file_path);
+    Str UploadFile (Connection* conn, Str file_path);
 
     ///
     /// Add a URL query parameter to given URL string.
@@ -492,6 +490,10 @@ extern "C" {
         const char* request_method,
         Str*        file_path
     );
+
+#ifdef __cplusplus
+}
+#endif
 
 #define NewAnalysisRequestInit()                                                                   \
     {                                                                                              \
@@ -633,9 +635,5 @@ extern "C" {
         VecDeinit (&(r)->collection_ids);                                                          \
         VecDeinit (&(r)->binary_ids);                                                              \
     } while (0)
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif // REAI_API_H

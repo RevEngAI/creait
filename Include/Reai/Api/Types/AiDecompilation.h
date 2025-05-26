@@ -1,6 +1,6 @@
 /**
  * @file AiDecompilation.h
- * @date 18th May 2025 
+ * @date 18th May 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
@@ -13,27 +13,27 @@
 #include <Reai/Api/Types/SymbolInfo.h>
 #include <Reai/Types.h>
 
+typedef struct AiDecompilation {
+    Str         decompilation;
+    Str         summary; // optional
+    SymbolInfos strings;
+    SymbolInfos functions;
+    struct {
+        SymbolInfos strings;
+        SymbolInfos functions;
+        SymbolInfos vars;
+        SymbolInfos external_vars;
+        SymbolInfos custom_types;
+        SymbolInfos go_to_labels;
+        SymbolInfos custom_function_pointers;
+        SymbolInfos variadic_lists;
+    } unmatched;
+    // TODO: fields??
+} AiDecompilation;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    typedef struct AiDecompilation {
-        Str         decompilation;
-        Str         summary; // optional
-        SymbolInfos strings;
-        SymbolInfos functions;
-        struct {
-            SymbolInfos strings;
-            SymbolInfos functions;
-            SymbolInfos vars;
-            SymbolInfos external_vars;
-            SymbolInfos custom_types;
-            SymbolInfos go_to_labels;
-            SymbolInfos custom_function_pointers;
-            SymbolInfos variadic_lists;
-        } unmatched;
-        // TODO: fields??
-    } AiDecompilation;
 
     void AiDecompilationDeinit (AiDecompilation* clone);
 

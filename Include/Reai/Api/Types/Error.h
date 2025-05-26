@@ -12,14 +12,14 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
+typedef struct {
+    Str code;
+    Str message;
+} Error;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    typedef struct {
-        Str code;
-        Str message;
-    } Error;
 
     bool ErrorInitClone (Error* dst, Error* src);
     void ErrorDeinit (Error* e);

@@ -12,27 +12,27 @@
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
+/**
+ * \b Function map provided in AI decompilation results.
+ * */
+typedef struct {
+    union {
+        Str name;
+        Str string;
+    };
+    bool is_addr;
+    bool is_external;
+    union {
+        Str str;
+        u64 addr;
+    } value;
+} SymbolInfo;
+
+typedef Vec (SymbolInfo) SymbolInfos;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-    /**
-     * \b Function map provided in AI decompilation results.
-     * */
-    typedef struct {
-        union {
-            Str name;
-            Str string;
-        };
-        bool is_addr;
-        bool is_external;
-        union {
-            Str str;
-            u64 addr;
-        } value;
-    } SymbolInfo;
-
-    typedef Vec (SymbolInfo) SymbolInfos;
 
     ///
     /// Deinitalize given symbol addr object.

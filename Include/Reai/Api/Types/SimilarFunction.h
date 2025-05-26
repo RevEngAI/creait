@@ -1,6 +1,6 @@
 /**
  * @file SimilarFunction.h
- * @date 31st March 2025 
+ * @date 31st March 2025
  * @author Siddharth Mishra (admin@brightprogrammer.in)
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
@@ -9,25 +9,25 @@
 #ifndef REAI_SIMILAR_FN_H
 #define REAI_SIMILAR_FN_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <Reai/Api/Types/Common.h>
 #include <Reai/Types.h>
 #include <Reai/Util/Str.h>
 
-    typedef struct SimilarFunction {
-        FunctionId id;
-        Str        name;
-        BinaryId   binary_id;
-        Str        binary_name;
-        f64        distance;
-        Str        sha256;
-        Vec (f64) projection;
-    } SimilarFunction;
+typedef struct SimilarFunction {
+    FunctionId id;
+    Str        name;
+    BinaryId   binary_id;
+    Str        binary_name;
+    f64        distance;
+    Str        sha256;
+    Vec (f64) projection;
+} SimilarFunction;
 
-    typedef Vec (SimilarFunction) SimilarFunctions;
+typedef Vec (SimilarFunction) SimilarFunctions;
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
     ///
     /// Deinit cloned SimilarFunction object. Provided pointer is not freed.
