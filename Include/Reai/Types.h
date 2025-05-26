@@ -8,7 +8,6 @@
 #ifndef REAI_TYPE_H
 #define REAI_TYPE_H
 
-// clang-format off
 typedef signed char      i8;
 typedef signed short     i16;
 typedef signed int       i32;
@@ -19,11 +18,18 @@ typedef unsigned short     u16;
 typedef unsigned int       u32;
 typedef unsigned long long u64;
 
+#ifdef _MSC_VER
+#    if defined(_WIN64)
+typedef unsigned long long size;
+#    else
 typedef unsigned long size;
+#    endif
+#else
+typedef unsigned long size;
+#endif
 
 typedef float  f32;
 typedef double f64;
-// clang-format on
 
 // bool is already defined in C++
 #ifndef __cplusplus

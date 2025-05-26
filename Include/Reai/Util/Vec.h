@@ -80,13 +80,25 @@ typedef struct {
 ///         // use vector
 ///     }
 ///
-#define VecInit_T(v)                                                                               \
-    ((TYPE_OF (*v)) {.length      = 0,                                                             \
-                     .capacity    = 0,                                                             \
-                     .copy_init   = (GenericCopyInit)NULL,                                         \
-                     .copy_deinit = (GenericCopyDeinit)NULL,                                       \
-                     .data        = NULL,                                                          \
-                     .alignment   = 1})
+#ifdef __cplusplus
+#    define VecInit_T(v)                                                                           \
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)NULL,                                                  \
+            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = 1                                                                       \
+        })
+#else
+#    define VecInit_T(v)                                                                           \
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)NULL,                                     \
+                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = 1})
+#endif
 
 ///
 /// Initialize vector. Default alignment is 1
@@ -124,13 +136,25 @@ typedef struct {
 ///         // use vector
 ///     }
 ///
-#define VecInitWithDeepCopy_T(v, ci, cd)                                                           \
-    ((TYPE_OF (*v)) {.length      = 0,                                                             \
-                     .capacity    = 0,                                                             \
-                     .copy_init   = (GenericCopyInit)(ci),                                         \
-                     .copy_deinit = (GenericCopyDeinit)(cd),                                       \
-                     .data        = NULL,                                                          \
-                     .alignment   = 1})
+#ifdef __cplusplus
+#    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)(ci),                                                  \
+            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = 1                                                                       \
+        })
+#else
+#    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)(ci),                                     \
+                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = 1})
+#endif
 
 ///
 /// Initialize vector with given alignment.
@@ -176,13 +200,25 @@ typedef struct {
 ///         // use vector
 ///     }
 ///
-#define VecInitAligned_T(v, aln)                                                                   \
-    ((TYPE_OF (*v)) {.length      = 0,                                                             \
-                     .capacity    = 0,                                                             \
-                     .copy_init   = (GenericCopyInit)NULL,                                         \
-                     .copy_deinit = (GenericCopyDeinit)NULL,                                       \
-                     .data        = NULL,                                                          \
-                     .alignment   = (aln)})
+#ifdef __cplusplus
+#    define VecInitAligned_T(v, aln)                                                               \
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)NULL,                                                  \
+            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = (aln)                                                                   \
+        })
+#else
+#    define VecInitAligned_T(v, aln)                                                               \
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)NULL,                                     \
+                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = (aln)})
+#endif
 
 ///
 /// Initialize vector with given alignment.
@@ -237,13 +273,25 @@ typedef struct {
 ///         Data i2 = VecLast(data_vec); // get last item (index = whatever)
 ///     }
 ///
-#define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                               \
-    ((TYPE_OF (*v)) {.length      = 0,                                                             \
-                     .capacity    = 0,                                                             \
-                     .copy_init   = (GenericCopyInit)(ci),                                         \
-                     .copy_deinit = (GenericCopyDeinit)(cd),                                       \
-                     .data        = NULL,                                                          \
-                     .alignment   = (aln)})
+#ifdef __cplusplus
+#    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)(ci),                                                  \
+            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = (aln)                                                                   \
+        })
+#else
+#    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)(ci),                                     \
+                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = (aln)})
+#endif
 
 ///
 /// Initialize given vector using memory from stack.
@@ -271,19 +319,35 @@ typedef struct {
 ///         // Do not call deinit after use!!
 ///   });
 ///
-#define VecInitStack(v, ne, scoped_body)                                                           \
-    do {                                                                                           \
-        VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                              \
+#ifdef __cplusplus
+#    define VecInitStack(v, ne, scoped_body)                                                       \
+        do {                                                                                       \
+            VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                          \
                                                                                                    \
-        *(v)          = (TYPE_OF (*v))VecInit();                                                   \
-        (v)->capacity = (ne);                                                                      \
-        (v)->data     = &___data___[0];                                                            \
+            *(v)          = (TYPE_OF (*v) VecInit());                                              \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = &___data___[0];                                                        \
                                                                                                    \
-        {scoped_body}                                                                              \
+            {scoped_body}                                                                          \
                                                                                                    \
-        memset (___data___, 0, sizeof (___data___));                                               \
-        memset (v, 0, sizeof (*v));                                                                \
-    } while (0)
+            memset (___data___, 0, sizeof (___data___));                                           \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#else
+#    define VecInitStack(v, ne, scoped_body)                                                       \
+        do {                                                                                       \
+            VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                          \
+                                                                                                   \
+            *(v)          = (TYPE_OF (*v))VecInit();                                               \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = &___data___[0];                                                        \
+                                                                                                   \
+            {scoped_body}                                                                          \
+                                                                                                   \
+            memset (___data___, 0, sizeof (___data___));                                           \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#endif
 
 ///
 /// Initialize given vector with given alignment.
@@ -319,19 +383,35 @@ typedef struct {
 ///         // so any data held by the vector in this scope is invalid outside
 ///   });
 ///
-#define VecInitAlignedStack(v, ne, aln, scoped_body)                                               \
-    do {                                                                                           \
-        char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};          \
+#ifdef __cplusplus
+#    define VecInitAlignedStack(v, ne, aln, scoped_body)                                           \
+        do {                                                                                       \
+            char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};      \
                                                                                                    \
-        *(v)          = (TYPE_OF (*v))VecInitAligned ((aln));                                      \
-        (v)->capacity = (ne);                                                                      \
-        (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                       \
+            *(v)          = (TYPE_OF (*v) VecInitAligned ((aln)));                                 \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                   \
                                                                                                    \
-        {scoped_body}                                                                              \
+            {scoped_body}                                                                          \
                                                                                                    \
-        memset (&___data___[0], 0, sizeof (___data___));                                           \
-        memset (v, 0, sizeof (*v));                                                                \
-    } while (0)
+            memset (&___data___[0], 0, sizeof (___data___));                                       \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#else
+#    define VecInitAlignedStack(v, ne, aln, scoped_body)                                           \
+        do {                                                                                       \
+            char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};      \
+                                                                                                   \
+            *(v)          = (TYPE_OF (*v))VecInitAligned ((aln));                                  \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                   \
+                                                                                                   \
+            {scoped_body}                                                                          \
+                                                                                                   \
+            memset (&___data___[0], 0, sizeof (___data___));                                       \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#endif
 
 ///
 /// Initialize given vector using memory from stack.
@@ -360,23 +440,43 @@ typedef struct {
 ///         // Do not call deinit after use!!
 ///   });
 ///
-#define VecInitWithDeepCopyStack(v, ne, ci, cd, scoped_body)                                       \
-    do {                                                                                           \
-        VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                              \
+#ifdef __cplusplus
+#    define VecInitWithDeepCopyStack(v, ne, ci, cd, scoped_body)                                   \
+        do {                                                                                       \
+            VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                          \
                                                                                                    \
-        *(v)          = (TYPE_OF (*v))VecInit();                                                   \
-        (v)->capacity = (ne);                                                                      \
-        (v)->data     = &___data___[0];                                                            \
+            *(v)          = (TYPE_OF (*v) VecInitWithDeepCopy ((ci), (cd)));                       \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = &___data___[0];                                                        \
                                                                                                    \
-        { scoped_body }                                                                            \
+            { scoped_body }                                                                        \
                                                                                                    \
-        if ((cd))                                                                                  \
-            VecForeachPtr ((v), ve, { (cd) (ve); });                                               \
-        else                                                                                       \
-            memset (&___data___[0], 0, sizeof (___data___));                                       \
+            if ((cd))                                                                              \
+                VecForeachPtr ((v), ve, { (cd) (ve); });                                           \
+            else                                                                                   \
+                memset (&___data___[0], 0, sizeof (___data___));                                   \
                                                                                                    \
-        memset (v, 0, sizeof (*v));                                                                \
-    } while (0)
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#else
+#    define VecInitWithDeepCopyStack(v, ne, ci, cd, scoped_body)                                   \
+        do {                                                                                       \
+            VEC_DATA_TYPE (v) ___data___[(ne) + 1] = {0};                                          \
+                                                                                                   \
+            *(v)          = (TYPE_OF (*v))VecInitWithDeepCopy ((ci), (cd));                        \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = &___data___[0];                                                        \
+                                                                                                   \
+            { scoped_body }                                                                        \
+                                                                                                   \
+            if ((cd))                                                                              \
+                VecForeachPtr ((v), ve, { (cd) (ve); });                                           \
+            else                                                                                   \
+                memset (&___data___[0], 0, sizeof (___data___));                                   \
+                                                                                                   \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#endif
 
 ///
 /// Initialize given vector with given alignment.
@@ -413,23 +513,43 @@ typedef struct {
 ///         // so any data held by the vector in this scope is invalid outside
 ///   });
 ///
-#define VecInitAlignedWithDeepCopyStack(v, ne, ci, cd, aln, scoped_body)                           \
-    do {                                                                                           \
-        char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};          \
+#ifdef __cplusplus
+#    define VecInitAlignedWithDeepCopyStack(v, ne, ci, cd, aln, scoped_body)                       \
+        do {                                                                                       \
+            char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};      \
                                                                                                    \
-        *(v)          = (TYPE_OF (*v))VecInitAligned ((aln));                                      \
-        (v)->capacity = (ne);                                                                      \
-        (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                       \
+            *(v)          = (TYPE_OF (*v) VecInitAlignedWithDeepCopy ((aln), (ci), (cd)));         \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                   \
                                                                                                    \
-        { scoped_body }                                                                            \
+            { scoped_body }                                                                        \
                                                                                                    \
-        if ((cd))                                                                                  \
-            VecForeachPtr ((v), ve, { (cd) (ve); });                                               \
-        else                                                                                       \
-            memset (&___data___[0], 0, sizeof (___data___));                                       \
+            if ((cd))                                                                              \
+                VecForeachPtr ((v), ve, { (cd) (ve); });                                           \
+            else                                                                                   \
+                memset (&___data___[0], 0, sizeof (___data___));                                   \
                                                                                                    \
-        memset (v, 0, sizeof (*v));                                                                \
-    } while (0)
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#else
+#    define VecInitAlignedWithDeepCopyStack(v, ne, ci, cd, aln, scoped_body)                       \
+        do {                                                                                       \
+            char ___data___[ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (aln)) * ((ne) + 1)] = {0};      \
+                                                                                                   \
+            *(v)          = (TYPE_OF (*v))VecInitAlignedWithDeepCopy ((aln), (ci), (cd));          \
+            (v)->capacity = (ne);                                                                  \
+            (v)->data     = (VEC_DATA_TYPE (v) *)&___data___[0];                                   \
+                                                                                                   \
+            { scoped_body }                                                                        \
+                                                                                                   \
+            if ((cd))                                                                              \
+                VecForeachPtr ((v), ve, { (cd) (ve); });                                           \
+            else                                                                                   \
+                memset (&___data___[0], 0, sizeof (___data___));                                   \
+                                                                                                   \
+            memset (v, 0, sizeof (*v));                                                            \
+        } while (0)
+#endif
 
 ///
 /// Deinit vec by freeing all allocations.
