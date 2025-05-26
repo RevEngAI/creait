@@ -16,6 +16,10 @@
 typedef Vec (char) Str;
 typedef Vec (Str) Strs;
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef _MSC_VER
 static inline char* strndup (const char* s, size n) {
     size  len     = strnlen (s, n); // Only up to n
@@ -692,5 +696,9 @@ void StrReplaceCstr (
 void StrReplace (Str* s, const Str* match, const Str* replacement, size count);
 
 Str strip_str (Str* s, const char* key, int split_direction);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif // MISRA_STD_CONTAINER_STRING_H
