@@ -38,24 +38,22 @@ extern "C" {
 ///
 #ifdef __cplusplus
 #    define StrInitFromCstr(cstr, len)                                                             \
-        (Str {                                                                                      \
-            .data        = strndup ((char*)(cstr), (len)),                                         \
+        (Str {                                                                                     \
             .length      = (len),                                                                  \
             .capacity    = (len),                                                                  \
             .copy_init   = NULL,                                                                   \
             .copy_deinit = NULL,                                                                   \
+            .data        = strndup ((char*)(cstr), (len)),                                         \
             .alignment   = 1                                                                       \
         })
 #else
 #    define StrInitFromCstr(cstr, len)                                                             \
-        ((Str) {                                                                                    \
-            .data        = strndup ((char*)(cstr), (len)),                                         \
-            .length      = (len),                                                                  \
-            .capacity    = (len),                                                                  \
-            .copy_init   = NULL,                                                                   \
-            .copy_deinit = NULL,                                                                   \
-            .alignment   = 1                                                                       \
-        })
+        ((Str) {.length      = (len),                                                              \
+                .capacity    = (len),                                                              \
+                .copy_init   = NULL,                                                               \
+                .copy_deinit = NULL,                                                               \
+                .data        = strndup ((char*)(cstr), (len)),                                     \
+                .alignment   = 1})
 #endif
 
 ///
@@ -92,7 +90,7 @@ extern "C" {
 #ifdef __cplusplus
 #    define StrInit() (Str VecInit())
 #else
-#    define StrInit() ((Str) VecInit())
+#    define StrInit() ((Str)VecInit())
 #endif
 
 ///
