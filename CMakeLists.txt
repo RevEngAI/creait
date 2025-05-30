@@ -1,9 +1,6 @@
 cmake_minimum_required(VERSION 3.5)
 
 project(CREAIT LANGUAGES C VERSION 0.1.1)
-include(FetchContent)
-include(ExternalProject)
-include(CTest)
 
 option(BUILD_SHARED_LIBS "Build using shared libraries" OFF)
 option(ENABLE_ASAN "Enable Address Sanitizer" OFF)
@@ -29,7 +26,6 @@ set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # Add dependencies to project
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/CMake")
-include(Dependencies)
 find_package(CURL REQUIRED)
 
 link_directories(
@@ -37,12 +33,10 @@ link_directories(
   "${CMAKE_PREFIX_PATH}/bin"
 )
 
-include_directories(
-  "${CMAKE_PREFIX_PATH}/include"
-)
+include_directories("${CMAKE_PREFIX_PATH}/include")
 
 # Add library source
-add_subdirectory(Source)
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Source/Reai")
 
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)
