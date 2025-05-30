@@ -22,11 +22,32 @@ typedef enum LogLevel {
 extern "C" {
 #endif
 
-    void LogPrintf (LogLevel level, const char *tag, int line, const char *format, ...);
+    void LogWrite (LogLevel level, const char *tag, int line, const char *msg);
 
-#define LOG_INFO(...)  LogPrintf (LOG_LEVEL_INFO, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define LOG_ERROR(...) LogPrintf (LOG_LEVEL_ERROR, __FUNCTION__, __LINE__, __VA_ARGS__)
-#define LOG_FATAL(...) (LogPrintf (LOG_LEVEL_FATAL, __FUNCTION__, __LINE__, __VA_ARGS__), abort())
+#define LOG_INFO(...)                                                                              \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_INFO, __func__, __LINE__, msg.data);                          \
+        StrDeinit (&msg);                                                                          \
+    } while (0)
+
+#define LOG_ERROR(...)                                                                             \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, msg.data);                         \
+        StrDeinit (&msg);                                                                          \
+    } while (0)
+
+#define LOG_FATAL(...)                                                                             \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_FATAL, __func__, __LINE__, msg.data);                         \
+        StrDeinit (&msg);                                                                          \
+        abort();                                                                                   \
+    } while (0)
 
     void LogInit (bool redirect);
 

@@ -45,26 +45,48 @@ void LogInit (bool redirect) {
         // Get path to temp directory
         Str log_dir = StrInit();
         if (!SysGetEnv ("TMP", &log_dir) && !SysGetEnv ("TEMP", &log_dir) &&
-            !SysGetEnv ("TMPDIR", &log_dir) && !SysGetEnv ("TEMPDIR", &log_dir) &&
-            !SysGetEnv ("PWD", &log_dir)) {
-            Str syserr;
-            StrInitStack (&syserr, SYS_ERROR_STR_MAX_LENGTH, {
-                fprintf (
-                    stderr,
-                    "error opening logfile : %s\n"
-                    "All logs will now be redirected to stderr.\n",
-                    SysStrError (errno, &syserr)->data
-                );
-            });
-            stderror = stderr;
-            goto LOG_STREAM_FALLBACK;
+            !SysGetEnv ("TMPDIR", &log_dir) && !SysGetEnv ("TEMPDIR", &log_dir)) {
+            int error    = 1;
+            Str home_dir = StrInit();
+
+#ifdef _WIN32
+            if (SysGetEnv ("USERPROFILE", &home_dir)) {
+                error = system ("mkdir \"%USERPROFILE%\\.revengai-logs\"");
+                if (!error) {
+                    StrPrintf (&log_dir, "\"%s\"\\.revengai-logs", home_dir.data);
+                }
+            }
+#else
+            if (SysGetEnv ("HOME", &home_dir)) {
+                error = system ("mkdir -pv ~/.revengai-logs");
+                if (!error) {
+                    StrPrintf (&log_dir, "%s/.revengai-logs", home_dir.data);
+                }
+            }
+#endif
+            StrDeinit (&home_dir);
+
+            if (error) {
+                Str syserr;
+                StrInitStack (&syserr, SYS_ERROR_STR_MAX_LENGTH, {
+                    fprintf (
+                        stderr,
+                        "error opening logfile : %s\n"
+                        "All logs will now be redirected to stderr.\n",
+                        SysStrError (errno, &syserr)->data
+                    );
+                });
+
+                stderror = stderr;
+                goto LOG_STREAM_FALLBACK;
+            }
         }
 
         // generate log file name
         Str file_name = StrInit();
         StrPrintf (
             &file_name,
-            "%s/misra-%lu-%s",
+            "%s/revengai-%lu-%s",
             log_dir.data,
             SysGetCurrentProcessId(),
             time_buffer
@@ -110,12 +132,7 @@ LOG_STREAM_FALLBACK: {
     }
 }
 
-void LogPrintf (LogLevel level, const char *tag, int line, const char *format, ...) {
-    if (!format) {
-        LOG_ERROR ("Invalid format string provided. Cannot write to logs.");
-        return;
-    }
-
+void LogWrite (LogLevel level, const char *tag, int line, const char* msg) {
     // By default we have a "decompiler" tag in all logs
     tag = tag ? tag : "log_write";
 
@@ -128,26 +145,6 @@ void LogPrintf (LogLevel level, const char *tag, int line, const char *format, .
     if (!log_mutex) {
         log_mutex = SysMutexCreate();
     }
-
-    // Get the current time
-    time_t    raw_time;
-    struct tm time_info;
-    char      time_buffer[20];
-
-    time (&raw_time);
-#ifdef _WIN32
-    // Order is inverted in Windows
-    if (localtime_s (&time_info, &raw_time)) {
-#else
-    if (!localtime_r (&raw_time, &time_info)) {
-#endif
-        Str syserr;
-        StrInitStack (&syserr, SYS_ERROR_STR_MAX_LENGTH, {
-            LOG_ERROR ("Failed to get localtime : %s", SysStrError (errno, &syserr)->data);
-        });
-        return;
-    }
-    strftime (time_buffer, sizeof (time_buffer), "%Y-%m-%d-%H-%M-%S", &time_info);
 
     const char *msg_type = NULL;
     switch (level) {
@@ -168,16 +165,7 @@ void LogPrintf (LogLevel level, const char *tag, int line, const char *format, .
     SysMutexLock (log_mutex);
 
     // Print the log prefix to stderr
-    fprintf (stderror, "[%s] [%s] [%s:%d] ", msg_type, time_buffer, tag, line);
-
-    // Process the variadic arguments and print the log message
-    va_list args;
-    va_start (args, format);
-    vfprintf (stderror, format, args);
-    va_end (args);
-
-    // Print a newline for better readability
-    fprintf (stderror, "\n");
+    fprintf (stderror, "[%s] [%s:%d] %s\n", msg_type, tag, line, msg);
 
     SysMutexUnlock (log_mutex);
 }

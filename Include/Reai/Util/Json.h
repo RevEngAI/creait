@@ -22,15 +22,17 @@ typedef Vec (i64) F64Vec;
 
 typedef struct {
     char* data;
-    i64   length;
-    i64   pos;
+    size   length;
+    size   pos;
     size  alignment;
 } StrIter;
 
-#define StrIterInit()           {.data = NULL, .length = 0, .pos = 0, .alignment = 1}
-#define StrIterInitAligned(aln) {.data = NULL, .length = 0, .pos = 0, .alignment = (aln)}
+#define StrIterInit()                                                                              \
+    { .data = NULL, .length = 0, .pos = 0, .alignment = 1 }
+#define StrIterInitAligned(aln)                                                                    \
+    { .data = NULL, .length = 0, .pos = 0, .alignment = (aln) }
 #define StrIterInitFromStr(v)                                                                      \
-    {.data = (v)->data, .length = (v)->length, .pos = 0, .alignment = (v)->alignment}
+    { .data = (v)->data, .length = (v)->length, .pos = 0, .alignment = (v)->alignment }
 
 ///
 /// Get total length of this StrIter object
@@ -39,7 +41,10 @@ typedef struct {
 ///           this StrIter is iterating over.
 /// FAILURE : If provided StrIter is NULL_ITER(mi) then returns 0
 #define StrIterLength(mi)                                                                          \
-    ((mi) ? ((mi)->length) : (LOG_ERROR ("StrIter: Invalid memory iter pointer"), 0))
+    ((mi) ?                                                                                        \
+         ((mi)->length) :                                                                          \
+         (LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, "StrIter: Invalid memory iter pointer"),  \
+          0))
 
 ///
 /// Get remaining length left to read this memory iterator.
@@ -52,7 +57,7 @@ typedef struct {
     ((mi) ?                                                                                        \
          (((mi)->pos >= 0 && (mi)->pos < StrIterLength (mi)) ? (StrIterLength (mi) - (mi)->pos) :  \
                                                                0) :                                \
-         (LOG_ERROR ("StrIter: Invalid memory pointer"), 0))
+         (LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, "StrIter: Invalid memory pointer"), 0))
 
 ///
 /// If there's space left to read in memory region we're iterating over,
@@ -89,7 +94,7 @@ typedef struct {
             (mi)->pos += (n);                                                                      \
         else                                                                                       \
             LOG_ERROR (                                                                            \
-                "StrIter: iter move by %zu didn't take place {pos = %zu, length = %zu}",           \
+                "StrIter: iter move by %d didn't take place {pos = %zu, length = %zu}",           \
                 (n),                                                                               \
                 (mi)->pos,                                                                         \
                 (mi)->length                                                                       \

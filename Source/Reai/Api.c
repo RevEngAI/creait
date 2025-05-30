@@ -74,7 +74,7 @@ BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request) {
                 if (!function.symbol.is_addr) {
                     LOG_ERROR (
                         "Function \"%s\" symbol expected to be an address value.",
-                        function.symbol.name
+                        function.symbol.name.data
                     );
                     continue;
                 }
@@ -608,7 +608,7 @@ AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request)
                         });
 
                         LOG_INFO (
-                            "Source (%zu) -> Target (%zu) [%s]",
+                            "Source (%llu) -> Target (%llu) [%s]",
                             sym.source_function_id,
                             sym.target_function_id,
                             sym.function_name.data
@@ -1079,7 +1079,7 @@ AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id) {
 
         AnalysisId id = 0;
         JR_OBJ (j, { JR_INT_KV (j, "analysis_id", id); });
-        LOG_INFO ("Analysis ID = %zu", id);
+        LOG_INFO ("Analysis ID = %llu", id);
 
         StrDeinit (&gj);
 

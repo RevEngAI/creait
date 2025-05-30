@@ -1,4 +1,5 @@
 #include <Reai/Util/Json.h>
+#include <string.h>
 
 static StrIter JSkipObject (StrIter si) {
     if (!StrIterRemainingLength (&si)) {
@@ -243,7 +244,7 @@ StrIter JReadString (StrIter si, Str* str) {
                         case 'u' :
                             LOG_ERROR (
                                 "No unicode support '%.*s'. Unicode sequence will be skipped.",
-                                MIN2 (StrIterRemainingLength (&si), 6),
+                                (i32)MIN2 (StrIterRemainingLength (&si), 6),
                                 si.data + si.pos - 1
                             );
                             StrIterMove (&si, 5);
@@ -366,7 +367,7 @@ StrIter JReadNumber (StrIter si, Number* num) {
     if (!ns.length) {
         LOG_ERROR (
             "Failed to parse number. '%.*s'",
-            MIN2 (StrIterRemainingLength (&saved_si), 8),
+            (i32)MIN2 (StrIterRemainingLength (&saved_si), 8),
             saved_si.data + saved_si.pos
         );
         StrDeinit (&ns);

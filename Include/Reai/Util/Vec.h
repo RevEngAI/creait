@@ -60,12 +60,10 @@ typedef struct {
 ///   Vec(HttpRequest) requests = VecInit();
 ///
 #define VecInit()                                                                                  \
-    {.length      = 0,                                                                             \
-     .capacity    = 0,                                                                             \
-     .copy_init   = (GenericCopyInit)NULL,                                                         \
-     .copy_deinit = (GenericCopyDeinit)NULL,                                                       \
-     .data        = NULL,                                                                          \
-     .alignment   = 1}
+    {                                                                                              \
+        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)NULL,                            \
+        .copy_deinit = (GenericCopyDeinit)NULL, .data = NULL, .alignment = 1                       \
+    }
 
 ///
 /// Initialize given vector. Default alignment is 1
@@ -82,22 +80,22 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInit_T(v)                                                                           \
-        (TYPE_OF (*v) {                                                                            \
-            .length      = 0,                                                                      \
-            .capacity    = 0,                                                                      \
-            .copy_init   = (GenericCopyInit)NULL,                                                  \
-            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
-            .data        = NULL,                                                                   \
-            .alignment   = 1                                                                       \
-        })
+        (TYPE_OF (*v                                                                               \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)NULL,                                                   \
+           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = 1})
 #else
 #    define VecInit_T(v)                                                                           \
-        ((TYPE_OF (*v)) {.length      = 0,                                                         \
-                         .capacity    = 0,                                                         \
-                         .copy_init   = (GenericCopyInit)NULL,                                     \
-                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
-                         .data        = NULL,                                                      \
-                         .alignment   = 1})
+        ((TYPE_OF (*v)                                                                             \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)NULL,                                                   \
+           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = 1})
 #endif
 
 ///
@@ -111,12 +109,10 @@ typedef struct {
 ///   Vec(HttpRequest) requests = VecInitWithDeepCopy(RequestClone, RequestDeinit);
 ///
 #define VecInitWithDeepCopy(ci, cd)                                                                \
-    {.length      = 0,                                                                             \
-     .capacity    = 0,                                                                             \
-     .copy_init   = (GenericCopyInit)(ci),                                                         \
-     .copy_deinit = (GenericCopyDeinit)(cd),                                                       \
-     .data        = NULL,                                                                          \
-     .alignment   = 1}
+    {                                                                                              \
+        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)(ci),                            \
+        .copy_deinit = (GenericCopyDeinit)(cd), .data = NULL, .alignment = 1                       \
+    }
 
 ///
 /// Initialize given vector. Default alignment is 1
@@ -138,22 +134,22 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
-        (TYPE_OF (*v) {                                                                            \
-            .length      = 0,                                                                      \
-            .capacity    = 0,                                                                      \
-            .copy_init   = (GenericCopyInit)(ci),                                                  \
-            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
-            .data        = NULL,                                                                   \
-            .alignment   = 1                                                                       \
-        })
+        (TYPE_OF (*v                                                                               \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)(ci),                                                   \
+           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = 1})
 #else
 #    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
-        ((TYPE_OF (*v)) {.length      = 0,                                                         \
-                         .capacity    = 0,                                                         \
-                         .copy_init   = (GenericCopyInit)(ci),                                     \
-                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
-                         .data        = NULL,                                                      \
-                         .alignment   = 1})
+        ((TYPE_OF (*v)                                                                             \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)(ci),                                                   \
+           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = 1})
 #endif
 
 ///
@@ -171,12 +167,10 @@ typedef struct {
 ///   Vec(Node) nodes = VecInitAligned(16);
 ///
 #define VecInitAligned(aln)                                                                        \
-    {.length      = 0,                                                                             \
-     .capacity    = 0,                                                                             \
-     .copy_init   = (GenericCopyInit)NULL,                                                         \
-     .copy_deinit = (GenericCopyDeinit)NULL,                                                       \
-     .data        = NULL,                                                                          \
-     .alignment   = (aln)}
+    {                                                                                              \
+        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)NULL,                            \
+        .copy_deinit = (GenericCopyDeinit)NULL, .data = NULL, .alignment = (aln)                   \
+    }
 
 ///
 /// Initialize given vector with given alignment.
@@ -202,22 +196,22 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitAligned_T(v, aln)                                                               \
-        (TYPE_OF (*v) {                                                                            \
-            .length      = 0,                                                                      \
-            .capacity    = 0,                                                                      \
-            .copy_init   = (GenericCopyInit)NULL,                                                  \
-            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
-            .data        = NULL,                                                                   \
-            .alignment   = (aln)                                                                   \
-        })
+        (TYPE_OF (*v                                                                               \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)NULL,                                                   \
+           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = (aln)})
 #else
 #    define VecInitAligned_T(v, aln)                                                               \
-        ((TYPE_OF (*v)) {.length      = 0,                                                         \
-                         .capacity    = 0,                                                         \
-                         .copy_init   = (GenericCopyInit)NULL,                                     \
-                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
-                         .data        = NULL,                                                      \
-                         .alignment   = (aln)})
+        ((TYPE_OF (*v)                                                                             \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)NULL,                                                   \
+           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = (aln)})
 #endif
 
 ///
@@ -238,12 +232,10 @@ typedef struct {
 ///   NodeVec nodes = VecInitAligned(NodeInitCopy, NodeDeinit, 48);
 ///
 #define VecInitAlignedWithDeepCopy(ci, cd, aln)                                                    \
-    {.length      = 0,                                                                             \
-     .capacity    = 0,                                                                             \
-     .copy_init   = (GenericCopyInit)(ci),                                                         \
-     .copy_deinit = (GenericCopyDeinit)(cd),                                                       \
-     .data        = NULL,                                                                          \
-     .alignment   = (aln)}
+    {                                                                                              \
+        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)(ci),                            \
+        .copy_deinit = (GenericCopyDeinit)(cd), .data = NULL, .alignment = (aln)                   \
+    }
 
 ///
 /// Initialize given vector with given alignment.
@@ -275,22 +267,22 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
-        (TYPE_OF (*v) {                                                                            \
-            .length      = 0,                                                                      \
-            .capacity    = 0,                                                                      \
-            .copy_init   = (GenericCopyInit)(ci),                                                  \
-            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
-            .data        = NULL,                                                                   \
-            .alignment   = (aln)                                                                   \
-        })
+        (TYPE_OF (*v                                                                               \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)(ci),                                                   \
+           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = (aln)})
 #else
 #    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
-        ((TYPE_OF (*v)) {.length      = 0,                                                         \
-                         .capacity    = 0,                                                         \
-                         .copy_init   = (GenericCopyInit)(ci),                                     \
-                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
-                         .data        = NULL,                                                      \
-                         .alignment   = (aln)})
+        ((TYPE_OF (*v)                                                                             \
+        ) {.length      = 0,                                                                       \
+           .capacity    = 0,                                                                       \
+           .copy_init   = (GenericCopyInit)(ci),                                                   \
+           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
+           .data        = NULL,                                                                    \
+           .alignment   = (aln)})
 #endif
 
 ///
@@ -977,8 +969,15 @@ typedef struct {
 /// FAILURE : Does not return on failure
 ///
 #define VecAlignedOffsetAt(v, idx)                                                                 \
-    ((v) ? ((idx) * ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (v)->alignment)) :                       \
-           (LOG_FATAL ("Invalid vector provided to VecAlignedOffsetAt! Aborting..."), 0))
+    ((v != NULL) ? ((idx) * ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (v)->alignment)) :                       \
+           (LogWrite (                                                                             \
+                LOG_LEVEL_FATAL,                                                                   \
+                __func__,                                                                          \
+                __LINE__,                                                                          \
+                "Invalid vector provided to VecAlignedOffsetAt! Aborting..."                       \
+            ),                                                                                     \
+            abort(),                                                                               \
+            0))
 
 ///
 /// Value at given index in a vector.
@@ -1169,16 +1168,10 @@ typedef struct {
 ///
 #define VecForeachIdx(v, var, idx, body)                                                           \
     do {                                                                                           \
-        i64 idx               = 0;                                                                 \
-        VEC_DATA_TYPE (v) var = {0};                                                               \
-        if ((v) && (v)->length) {                                                                  \
-            for ((idx) = 0; (idx) < (i64)(v)->length; ++(idx)) {                                   \
-                if ((idx) < 0) {                                                                   \
-                    LOG_FATAL (                                                                    \
-                        "Vector range underflow : Invalid index reached "                          \
-                        "during Foreach iteration."                                                \
-                    );                                                                             \
-                }                                                                                  \
+        size idx             = 0;                                                                  \
+        VEC_DATA_TYPE (v) var = {0};                                                                \
+        if ((v) != NULL && (v)->length > 0) {                                                      \
+            for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
                 var = VecAt (v, idx);                                                              \
                 { body }                                                                           \
             }                                                                                      \
@@ -1198,26 +1191,20 @@ typedef struct {
 ///
 #define VecForeachReverseIdx(v, var, idx, body)                                                    \
     do {                                                                                           \
-        i64 idx               = 0;                                                                 \
-        VEC_DATA_TYPE (v) var = {0};                                                               \
-        if ((v) && (v)->length) {                                                                  \
-            for ((idx) = (i64)(v)->length - 1; (idx) >= 0; --(idx)) {                              \
-                if ((idx) < 0) {                                                                   \
-                    LOG_FATAL (                                                                    \
-                        "Vector range underflow : Invalid index reached "                          \
-                        "during Foreach reverse "                                                  \
-                        "iteration."                                                               \
-                    );                                                                             \
-                }                                                                                  \
+        size idx             = 0;                                                                  \
+        VEC_DATA_TYPE (v) var = {0};                                                                \
+        if ((v) != NULL && (v)->length > 0) {                                                      \
+            for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
                 if ((idx) >= (v)->length) {                                                        \
                     LOG_FATAL (                                                                    \
-                        "Vector range overflow : Invalid index reached "                           \
-                        "during Foreach reverse "                                                  \
+                        "Vector range overflow : Invalid index reached during Foreach reverse "    \
                         "iteration."                                                               \
                     );                                                                             \
                 }                                                                                  \
                 var = VecAt (v, idx);                                                              \
                 { body }                                                                           \
+                if (idx == 0)                                                                      \
+                    break; /* Stop after processing index 0 */                                     \
             }                                                                                      \
         }                                                                                          \
     } while (0)
@@ -1235,18 +1222,17 @@ typedef struct {
 ///
 #define VecForeachPtrIdx(v, var, idx, body)                                                        \
     do {                                                                                           \
-        i64 idx                = 0;                                                                \
-        VEC_DATA_TYPE (v) *var = {0};                                                              \
-        if ((v) && (v)->length) {                                                                  \
-            for ((idx) = 0; (idx) < (i64)(v)->length; ++(idx)) {                                   \
-                if ((idx) < 0) {                                                                   \
+        size idx              = 0;                                                                 \
+        VEC_DATA_TYPE (v) *var = NULL;                                                              \
+        if ((v) != NULL && (v)->length > 0) {                                                      \
+            for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
+                if ((idx) >= (v)->length) {                                                        \
                     LOG_FATAL (                                                                    \
-                        "Vector range underflow : Invalid index reached "                          \
-                        "during Foreach iteration."                                                \
+                        "Vector range overflow : Invalid index reached during Foreach iteration."  \
                     );                                                                             \
                 }                                                                                  \
                 var = VecPtrAt (v, idx);                                                           \
-                { body }                                                                           \
+                body                                                                               \
             }                                                                                      \
         }                                                                                          \
     } while (0)
@@ -1264,33 +1250,117 @@ typedef struct {
 ///
 #define VecForeachPtrReverseIdx(v, var, idx, body)                                                 \
     do {                                                                                           \
-        i64 idx                = 0;                                                                \
-        VEC_DATA_TYPE (v) *var = {0};                                                              \
-        if ((v) && (v)->length) {                                                                  \
-            for ((idx) = (i64)(v)->length - 1; (idx) >= 0; --(idx)) {                              \
-                if ((idx) < 0) {                                                                   \
+        size idx              = 0;                                                                 \
+        VEC_DATA_TYPE (v) *var = {0};                                                               \
+        if ((v) != NULL && (v)->length > 0) {                                                      \
+            for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
+                if ((idx) >= (v)->length) {                                                        \
                     LOG_FATAL (                                                                    \
-                        "Vector range underflow : Invalid index reached "                          \
-                        "during Foreach reverse "                                                  \
-                        "iteration."                                                               \
-                    );                                                                             \
-                }                                                                                  \
-                if ((idx) >= (i64)(v)->length) {                                                   \
-                    LOG_FATAL (                                                                    \
-                        "Vector range overflow : Invalid index reached "                           \
-                        "during Foreach reverse "                                                  \
+                        "Vector range overflow : Invalid index reached during Foreach reverse "    \
                         "iteration."                                                               \
                     );                                                                             \
                 }                                                                                  \
                 var = VecPtrAt (v, idx);                                                           \
                 { body }                                                                           \
+                if (idx == 0)                                                                      \
+                    break; /* Stop after processing index 0 */                                     \
             }                                                                                      \
         }                                                                                          \
     } while (0)
 
-#define VecForeach(v, var, body)        VecForeachIdx ((v), (var), (____iter___), {body})
+///
+/// Iterate over each element `var` of the given vector `v`.
+/// This is a convenience macro that iterates forward using an internally managed index.
+/// The variable `var` is declared and defined by this macro.
+///
+/// v[in,out] : Vector to iterate over.
+/// var[in]   : Name of the variable to be used which will contain the value of the
+///             current element during iteration. The type of `var` will be the
+///             data type of the vector elements (obtained via `VEC_DATA_TYPE(v)`).
+/// body      : The block of code to be executed for each element of the vector.
+///
+/// SUCCESS : The `body` is executed for each element of the vector `v` from the
+///           beginning to the end.
+/// FAILURE : If the vector `v` is NULL or its length is zero, the loop body will not
+///           be executed. Any failures within the `VecForeachIdx` macro (like invalid
+///           index access) will result in a fatal log message and program termination.
+///
+#define VecForeach(v, var, body) VecForeachIdx ((v), (var), (____iter___), {body})
+
+///
+/// Iterate over each element `var` of the given vector `v` in reverse order.
+/// This is a convenience macro that iterates backward using an internally managed index.
+/// The variable `var` is declared and defined by this macro.
+///
+/// v[in,out] : Vector to iterate over.
+/// var[in]   : Name of the variable to be used which will contain the value of the
+///             current element during iteration. The type of `var` will be the
+///             data type of the vector elements (obtained via `VEC_DATA_TYPE(v)`).
+/// body      : The block of code to be executed for each element of the vector.
+///
+/// SUCCESS : The `body` is executed for each element of the vector `v` from the
+///           end to the beginning.
+/// FAILURE : If the vector `v` is NULL or its length is zero, the loop body will not
+///           be executed. Any failures within the `VecForeachReverseIdx` macro (like
+///           invalid index access) will result in a fatal log message and program termination.
+///
 #define VecForeachReverse(v, var, body) VecForeachReverseIdx ((v), (var), (____iter___), {body})
-#define VecForeachPtr(v, var, body)     VecForeachPtrIdx ((v), (var), (____iter___), {body})
+
+///
+/// Iterate over each element `var` of the given vector `v` (as a pointer).
+/// This is a convenience macro that iterates forward using an internally managed index
+/// and provides a pointer to each element. The variable `var` is declared and defined
+/// by this macro as a pointer to the vector's data type.
+///
+/// v[in,out] : Vector to iterate over.
+/// var[in]   : Name of the pointer variable to be used which will point to the
+///             current element during iteration. The type of `var` will be a pointer
+///             to the data type of the vector elements (obtained via
+///             `VEC_DATA_TYPE(v) *`).
+/// body      : The block of code to be executed for each element of the vector.
+///
+/// SUCCESS : The `body` is executed for each element of the vector `v` (with `var`
+///           pointing to the current element) from the beginning to the end.
+/// FAILURE : If the vector `v` is NULL or its length is zero, the loop body will not
+///           be executed. Any failures within the `VecForeachPtrIdx` macro (like invalid
+///           index access) will result in a fatal log message and program termination.
+///
+#define VecForeachPtr(v, var, body)                                                                \
+    do {                                                                                           \
+        size ____iter___      = 0;                                                                 \
+        VEC_DATA_TYPE (v) *var = NULL;                                                              \
+        if ((v) != NULL && (v)->length > 0) {                                                      \
+            for (____iter___ = 0; ____iter___ < (v)->length; ++____iter___) {                      \
+                if (____iter___ >= (v)->length) {                                                  \
+                    LOG_FATAL (                                                                    \
+                        "Vector range overflow : Invalid index reached during Foreach iteration."  \
+                    );                                                                             \
+                }                                                                                  \
+                var = VecPtrAt (v, ____iter___);                                                   \
+                body                                                                               \
+            }                                                                                      \
+        }                                                                                          \
+    } while (0)
+
+///
+/// Iterate over each element `var` (as a pointer) of the given vector `v` in reverse order.
+/// This is a convenience macro that iterates backward using an internally managed index
+/// and provides a pointer to each element. The variable `var` is declared and defined
+/// by this macro as a pointer to the vector's data type.
+///
+/// v[in,out] : Vector to iterate over.
+/// var[in]   : Name of the pointer variable to be used which will point to the
+///             current element during iteration. The type of `var` will be a pointer
+///             to the data type of the vector elements (obtained via
+///             `VEC_DATA_TYPE(v) *`).
+/// body      : The block of code to be executed for each element of the vector.
+///
+/// SUCCESS : The `body` is executed for each element of the vector `v` (with `var`
+///           pointing to the current element) from the end to the beginning.
+/// FAILURE : If the vector `v` is NULL or its length is zero, the loop body will not
+///           be executed. Any failures within the `VecForeachPtrReverseIdx` macro (like
+///           invalid index access) will result in a fatal log message and program termination.
+///
 #define VecForeachPtrReverse(v, var, body)                                                         \
     VecForeachPtrReverseIdx ((v), (var), (____iter___), {body})
 
