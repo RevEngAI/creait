@@ -23,14 +23,14 @@ Before building, ensure you have the following dependencies installed:
 - make or ninja
 - pkg-config
 
-#### On Ubuntu/Debian:
-```sh
-sudo apt install libcurl4-openssl-dev git cmake ninja-build pkg-config
-```
-
 #### On macOS:
 ```sh
 brew install cmake ninja curl pkg-config
+```
+
+#### On Ubuntu/Debian:
+```sh
+sudo apt install libcurl4-openssl-dev git cmake ninja-build pkg-config
 ```
 
 #### On Windows:
@@ -50,11 +50,6 @@ cmake -B Build -G Ninja
 
 # Build and install creait
 ninja -C Build && sudo ninja -C Build install
-```
-
-For macOS users building cJSON from source:
-```sh
-cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_NAME_DIR=/usr/local/lib
 ```
 
 ## Configuration System
@@ -133,8 +128,8 @@ int main() {
     Str* host = ConfigGet(&config, "host");
     
     if (api_key && host) {
-        StrCopy(&conn.api_key, api_key->data);
-        StrCopy(&conn.host, host->data);
+        StrInitCopy(&conn.api_key, api_key);
+        StrInitCopy(&conn.host, host);
         
         // Authenticate
         if (Authenticate(&conn)) {
@@ -219,7 +214,7 @@ StrDeinit(&status_str);
 
 // Convert string to status
 Str status_str = StrInit();
-StrCopy(&status_str, "Complete");
+StrPrintf(&status_str, "Complete");
 Status status = StatusFromStr(&status_str);
 // Use STATUS_MASK to get the base status without flags
 if ((status & STATUS_MASK) == STATUS_COMPLETE) {
@@ -242,8 +237,8 @@ int main() {
     Connection conn = ConnectionInit();
     
     // Set API key and host
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -268,8 +263,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -279,7 +274,7 @@ int main() {
     
     // Upload a binary file
     Str file_path = StrInit();
-    StrCopy(&file_path, "/path/to/your/binary");
+    StrPrintf(&file_path, "/path/to/your/binary");
     
     Str sha256 = UploadFile(&conn, file_path);
     if (sha256.length == 0) {
@@ -307,8 +302,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -318,7 +313,7 @@ int main() {
     
     // Upload a binary file
     Str file_path = StrInit();
-    StrCopy(&file_path, "/path/to/your/binary");
+    StrPrintf(&file_path, "/path/to/your/binary");
     
     Str sha256 = UploadFile(&conn, file_path);
     if (sha256.length == 0) {
@@ -330,14 +325,14 @@ int main() {
     NewAnalysisRequest request = NewAnalysisRequestInit();
     
     // Set model name
-    StrCopy(&request.ai_model, "binnet-v1");
+    StrPrintf(&request.ai_model, "binnet-v1");
     
     // Set file options
     request.file_opt = FILE_OPTION_AUTO;
     
     // Set file details
-    StrCopy(&request.file_name, "example_binary");
-    StrCopy(&request.sha256, sha256.data);
+    StrPrintf(&request.file_name, "example_binary");
+    StrPrintf(&request.sha256, "%s", sha256.data);
     
     request.file_size = 1024; // Replace with actual file size
     
@@ -373,8 +368,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -419,8 +414,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -455,8 +450,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -467,7 +462,7 @@ int main() {
     // Rename a function
     FunctionId function_id = 123456; // Replace with your function ID
     Str new_name = StrInit();
-    StrCopy(&new_name, "process_user_input");
+    StrPrintf(&new_name, "process_user_input");
     
     if (RenameFunction(&conn, function_id, new_name)) {
         printf("Function renamed successfully\n");
@@ -491,8 +486,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -565,8 +560,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -611,8 +606,8 @@ int main() {
 
 int main() {
     Connection conn = ConnectionInit();
-    StrCopy(&conn.api_key, "your_api_key_here");
-    StrCopy(&conn.host, "https://api.reveng.ai");
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
     
     // Authenticate
     if (!Authenticate(&conn)) {
@@ -625,7 +620,7 @@ int main() {
     request.page = 1;
     request.page_size = 10;
     
-    StrCopy(&request.partial_name, "example");
+    StrPrintf(&request.partial_name, "example");
     
     // Search for binaries
     BinaryInfos binaries = SearchBinary(&conn, &request);
