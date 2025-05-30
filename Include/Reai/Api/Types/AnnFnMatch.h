@@ -9,35 +9,28 @@
 #ifndef REAI_ANN_FN_MATCH_H
 #define REAI_ANN_FN_MATCH_H
 
-#include "Reai/Common.h"
+#include <Reai/Api/Types/Common.h>
+#include <Reai/Types.h>
+#include <Reai/Util/Str.h>
+#include <Reai/Util/Vec.h>
+
+typedef struct AnnFnMatch {
+    f64        confidence;
+    BinaryId   binary_id;
+    Str        binary_name;
+    bool       debug;
+    FunctionId function_id;
+    Str        function_name;
+    Str        sha256;
+    FunctionId origin_function_id;
+} AnnFnMatch;
+
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <Reai/Types.h>
-#include <Reai/Util/Vec.h>
-
-    typedef struct ReaiAnnFnMatch {
-        Float64        confidence;
-        ReaiBinaryId   nn_binary_id;
-        CString        nn_binary_name;
-        Bool           nn_debug;
-        ReaiFunctionId nn_function_id;
-        CString        nn_function_name;
-        CString        nn_sha_256_hash;
-        ReaiFunctionId origin_function_id;
-    } ReaiAnnFnMatch;
-
-    ReaiAnnFnMatch* reai_ann_fn_match_clone_deinit (ReaiAnnFnMatch* clone);
-    ReaiAnnFnMatch* reai_ann_fn_match_clone_init (ReaiAnnFnMatch* dst, ReaiAnnFnMatch* src);
-
-    REAI_MAKE_VEC (
-        ReaiAnnFnMatchVec,
-        ann_fn_match,
-        ReaiAnnFnMatch,
-        reai_ann_fn_match_clone_init,
-        reai_ann_fn_match_clone_deinit
-    );
+    void AnnFnMatchDeinit (AnnFnMatch* clone);
+    bool AnnFnMatchInitClone (AnnFnMatch* dst, AnnFnMatch* src);
 
 #ifdef __cplusplus
 }

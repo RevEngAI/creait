@@ -11,38 +11,80 @@
 #ifndef REAI_CONFIG_H
 #define REAI_CONFIG_H
 
-#include <Reai/Common.h>
 #include <Reai/Types.h>
-
-/**
- * Get directory path where config file must be stored, depending
- * on operating system.
- * */
-
-#if defined(_WIN32) || defined(_WIN64)
-#    define REAI_CONFIG_DIR_PATH getenv ("USERPROFILE")
-#elif defined(__linux__) || defined(__APPLE__)
-#    define REAI_CONFIG_DIR_PATH getenv ("HOME")
-#else
-#    error "Unsupported OS"
-#endif
-
-#define REAI_CONFIG_FILE_NAME ".creait.toml"
+#include <Reai/Util/Str.h>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-    typedef struct ReaiConfig {
-        CString host;
-        CString apikey;
-    } ReaiConfig;
+    /* Config file is just a set of key-value pairs in
+     * "\s*key\s*=\s*value\n" format
+     * in new line each. */
 
-    ReaiConfig *reai_config_load (CString path);
-    void        reai_config_destroy (ReaiConfig *cfg);
-    CString     reai_config_get_default_path();
-    CString     reai_config_get_default_dir_path();
-    Bool        reai_config_check_api_key (CString apikey);
+    typedef struct {
+        Str key;
+        Str value;
+    } KvPair;
+    typedef Vec (KvPair) KvPairs;
+    typedef KvPairs Config;
+
+    void KvPairDeinit (KvPair* c);
+    bool KvPairInitClone (KvPair* d, KvPair* s);
+
+#ifdef __cplusplus
+#    define KvPairInit() (KvPair {.key = StrInit(), .value = StrInit()})
+#    define ConfigInit() (Config VecInitWithDeepCopy (NULL, KvPairDeinit))
+#else
+#    define KvPairInit() ((KvPair) {.key = StrInit(), .value = StrInit()})
+#    define ConfigInit() ((Config)VecInitWithDeepCopy (NULL, KvPairDeinit))
+#endif
+
+#define ConfigDeinit(c) VecDeinit (c)
+
+    ///
+    /// Load config from given path
+    ///
+    /// path[in] : Path to config file. If `NULL` then default path will be used.
+    ///
+    /// SUCCESS : Contents of config file loaded into Config object.
+    /// FAILURE : Empty object.
+    ///
+    Config ConfigRead (const char* path);
+
+    ///
+    /// Write config to a file.
+    ///
+    /// c[in]    : Config to be serialized
+    /// path[in] : Path to config save file.
+    ///
+    /// SUCCESS : Config file written to file at given path.
+    /// FAILURE : Error message logged.
+    ///
+    void ConfigWrite (Config* c, const char* path);
+
+    ///
+    /// Add a new key-value pair to config.
+    ///
+    /// c[out]    : Config to add new key-value pair to.
+    /// key[in]   : Key
+    /// value[in] : Corresponding value.
+    ///
+    /// SUCCESS : Add new kv-pair to given config. If key already exists then it's overwritten.
+    /// FAILURE : Error message logged.
+    ///
+    void ConfigAdd (Config* c, const char* key, const char* value);
+
+    ///
+    /// Look for a certain key in config
+    ///
+    /// c[in]   : Config
+    /// key[in] : Key to search for.
+    ///
+    /// SUCCESS : Str object with value corresponding to key. Don't ever deinit!
+    /// FAILURE : NULL.
+    ///
+    Str* ConfigGet (Config* c, const char* key);
 
 #ifdef __cplusplus
 }

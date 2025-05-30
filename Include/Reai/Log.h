@@ -5,37 +5,54 @@
  * @copyright Copyright (c) RevEngAI. All Rights Reserved.
  * */
 
-#ifndef REAI_LOG_H
-#define REAI_LOG_H
+#ifndef LOG_H
+#define LOG_H
+
+#include <Reai/Types.h>
+
+typedef enum LogLevel {
+    LOG_LEVEL_INVALID = 0,
+    LOG_LEVEL_INFO,  ///< For general information
+    LOG_LEVEL_ERROR, ///< Might be recoverable so just return
+    LOG_LEVEL_FATAL, ///< Qucik Abort!
+    LOG_LEVEL_MAX,   ///< Number of log levels
+} LogLevel;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include <Reai/Types.h>
+    void LogWrite (LogLevel level, const char *tag, int line, const char *msg);
 
-    typedef enum ReaiLogLevel {
-        REAI_LOG_LEVEL_TRACE, ///< For traced logging
-        REAI_LOG_LEVEL_INFO,  ///< For debugging only
-        REAI_LOG_LEVEL_DEBUG, ///< For debugging only
-        REAI_LOG_LEVEL_WARN,  ///< Recoverable within the function that generates this
-                              ///< warning
-        REAI_LOG_LEVEL_ERROR, ///< Might be recoverable so just return
-        REAI_LOG_LEVEL_FATAL, ///< Qucik Abort!
-        REAI_LOG_LEVEL_MAX,   ///< Number of log levels
-    } ReaiLogLevel;
+#define LOG_INFO(...)                                                                              \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_INFO, __func__, __LINE__, msg.data);                          \
+        StrDeinit (&msg);                                                                          \
+    } while (0)
 
-    void reai_log_printf (ReaiLogLevel level, CString tag, CString fmtstr, ...);
+#define LOG_ERROR(...)                                                                             \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, msg.data);                         \
+        StrDeinit (&msg);                                                                          \
+    } while (0)
 
-#define REAI_LOG_TRACE(...) reai_log_printf (REAI_LOG_LEVEL_TRACE, __FUNCTION__, __VA_ARGS__)
-#define REAI_LOG_INFO(...)  reai_log_printf (REAI_LOG_LEVEL_INFO, __FUNCTION__, __VA_ARGS__)
-#define REAI_LOG_DEBUG(...) reai_log_printf (REAI_LOG_LEVEL_DEBUG, __FUNCTION__, __VA_ARGS__)
-#define REAI_LOG_WARN(...)  reai_log_printf (REAI_LOG_LEVEL_WARN, __FUNCTION__, __VA_ARGS__)
-#define REAI_LOG_ERROR(...) reai_log_printf (REAI_LOG_LEVEL_ERROR, __FUNCTION__, __VA_ARGS__)
-#define REAI_LOG_FATAL(...) reai_log_printf (REAI_LOG_LEVEL_FATAL, __FUNCTION__, __VA_ARGS__)
+#define LOG_FATAL(...)                                                                             \
+    do {                                                                                           \
+        Str msg = StrInit();                                                                       \
+        StrPrintf (&msg, __VA_ARGS__);                                                             \
+        LogWrite (LOG_LEVEL_FATAL, __func__, __LINE__, msg.data);                         \
+        StrDeinit (&msg);                                                                          \
+        abort();                                                                                   \
+    } while (0)
+
+    void LogInit (bool redirect);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif // REAI_LOG_H
+#endif // LOG_H

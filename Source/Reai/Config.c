@@ -1,156 +1,128 @@
 #include <Reai/Config.h>
-
-#include "Reai/Common.h"
-
-/* tomlc99 */
-#include <toml.h>
+#include <Reai/File.h>
+#include <Reai/Log.h>
+#include <Reai/Sys.h>
 
 /* libc  */
 #include <ctype.h>
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
-// TODO: remove toml dependency, by converting the toml file to a simple kv config file
-// simply store k=v in a single line where anything before = is a key and after = is the corresponding value
+#if defined(_WIN32) || defined(_WIN64)
+#    define CONFIG_DIR_PATH getenv ("USERPROFILE")
+#elif defined(__linux__) || defined(__APPLE__)
+#    define CONFIG_DIR_PATH getenv ("HOME")
+#else
+#    error "Unsupported OS"
+#endif
 
-/**
- * @b Get default file path where .reait.toml is supposed to be present.
- *
- * @param buf Buffer to get full path into
- * @param buf_cap Buffer capacity
- *
- * @return @c buf on success
- * @return @c NULL otherwise.
- * */
-CString reai_config_get_default_path() {
-    static Char buf[1024]        = {0};
-    static Bool default_path_set = false;
+#define CONFIG_FILE_NAME ".creait"
+
+const char *defaultConfigPath() {
+    static char buf[1024]        = {0};
+    static bool default_path_set = false;
 
     if (default_path_set) {
         return buf;
     }
 
-    snprintf (buf, sizeof (buf), "%s/%s", REAI_CONFIG_DIR_PATH, REAI_CONFIG_FILE_NAME);
+    snprintf (buf, sizeof (buf), "%s/%s", CONFIG_DIR_PATH, CONFIG_FILE_NAME);
     default_path_set = true;
 
     return buf;
 }
 
-/**
- * @b Get default directory path where .reait.toml is supposed to be present.
- *
- * @param buf Buffer to get full path into
- * @param buf_cap Buffer capacity
- *
- * @return @c buf on success
- * @return @c NULL otherwise.
- * */
-CString reai_config_get_default_dir_path() {
-    return REAI_CONFIG_DIR_PATH;
-}
-
-/**
- * @b Load TOML config from given path.
- *
- * @param path If @c NULL then default path is used.
- *
- * @return ReaiConfig
- * */
-PUBLIC ReaiConfig *reai_config_load (CString path) {
+Config ConfigRead (const char *path) {
     if (!path) {
-        path = reai_config_get_default_path();
+        LOG_INFO ("Config file path not provided. Using default path.");
+        path = defaultConfigPath();
     }
 
-    ReaiConfig *cfg = NEW (ReaiConfig);
+    Str cfg = StrInit();
+    if (ReadCompleteFile (path, &cfg.data, &cfg.length, &cfg.capacity)) {
+        Strs   lines  = StrSplit (&cfg, "\n");
+        Config config = ConfigInit();
 
-    FILE *fp;
-    char  errbuf[200];
+        VecForeachPtr (&lines, line, {
+            Strs kvsplit = StrSplit (line, "=");
+            if (kvsplit.length != 2) {
+                LOG_ERROR ("Config file is invalid. Each line must be in form 'key = value'");
+                StrDeinit (&cfg);
+                VecDeinit (&lines);
+                VecDeinit (&kvsplit);
+                return (Config) {0};
+            }
 
-    fp = fopen (path, "r");
-    RETURN_VALUE_IF (!fp, NULL, ERR_FILE_OPEN_FAILED " : %s", strerror (errno));
+            KvPair kv = KvPairInit();
+            kv.key    = StrStrip (VecPtrAt (&kvsplit, 0), " \r\t");
+            kv.value  = StrStrip (VecPtrAt (&kvsplit, 1), " \r\t");
+            VecDeinit (&kvsplit);
 
-    toml_table_t *reai_conf = toml_parse_file (fp, errbuf, sizeof (errbuf));
-    fclose (fp);
-    RETURN_VALUE_IF (!reai_conf, NULL, "Failed to parse toml config file.");
+            LOG_INFO ("Config : Key ('%s') -> Value ('%s')", kv.key.data, kv.value.data);
 
-    toml_datum_t apikey = toml_string_in (reai_conf, "apikey");
-    GOTO_HANDLER_IF (
-        !apikey.ok,
-        LOAD_FAILED,
-        "Cannot find 'apikey' (required) in RevEngAI config."
-    );
-    cfg->apikey = apikey.u.s;
+            VecPushBack (&config, kv);
+        });
 
-    toml_datum_t host = toml_string_in (reai_conf, "host");
-    GOTO_HANDLER_IF (!host.ok, LOAD_FAILED, "Cannot find 'host' (required) in RevEngAI config.");
-    cfg->host = host.u.s;
-
-    if (reai_conf) {
-        toml_free (reai_conf);
+        return config;
+    } else {
+        LOG_ERROR ("Failed to open config file at : %s", path);
+        return (Config) {0};
     }
-    return cfg;
-
-LOAD_FAILED:
-    if (reai_conf) {
-        toml_free (reai_conf);
-    }
-
-    reai_config_destroy (cfg);
-    return NULL;
 }
 
-/**
- * @b Destroy given TOML config object.
- *
- * @param cfg
- * @return ReaiConfig
- * */
-PUBLIC void reai_config_destroy (ReaiConfig *cfg) {
-    RETURN_IF (!cfg, ERR_INVALID_ARGUMENTS);
-
-    if (cfg->apikey) {
-        memset ((Char *)cfg->apikey, 0, strlen (cfg->apikey));
-        FREE (cfg->apikey);
-    }
-    if (cfg->host) {
-        memset ((Char *)cfg->host, 0, strlen (cfg->host));
-        FREE (cfg->host);
+void ConfigWrite (Config *c, const char *path) {
+    if (!c) {
+        LOG_FATAL ("Invalid arguments");
     }
 
-    memset (cfg, 0, sizeof (ReaiConfig));
-    FREE (cfg);
+    if (!path) {
+        path = defaultConfigPath();
+    }
+
+    FILE *outfile = fopen (path, "w");
+    if (!outfile) {
+        Str syserr = StrInit();
+        LOG_ERROR ("Error opening file for writing %s", SysStrError (errno, &syserr)->data);
+        StrDeinit (&syserr);
+    }
+
+    VecForeach (c, kv, { fprintf (outfile, "%s = %s\n", kv.key.data, kv.value.data); });
+
+    fclose (outfile);
 }
 
-/**
- * @b Check whether or not the API key is in correct format.
- *
- * @param apikey
- *
- * @return @c true if given API key is correct.
- * @return @c false otherwise.
- * */
-Bool reai_config_check_api_key (CString apikey) {
-    RETURN_VALUE_IF (!apikey, false, ERR_INVALID_ARGUMENTS);
-
-    // Check the length of the string
-    if (strlen (apikey) != 36) {
-        return 0; // Invalid length
-    }
-
-    // Check the format: xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx
-    for (int i = 0; i < 36; i++) {
-        if (i == 8 || i == 13 || i == 18 || i == 23) {
-            // Check for dashes at the correct positions
-            if (apikey[i] != '-') {
-                return 0; // Incorrect character at dash position
-            }
-        } else {
-            // Check for hexadecimal characters
-            if (!isxdigit ((Uint8)apikey[i])) {
-                return 0; // Non-hexadecimal character
-            }
+Str *ConfigGet (Config *cfg, const char *key) {
+    VecForeachPtr (cfg, kv, {
+        if (!StrCmpZstr (&kv->key, key)) {
+            return &kv->value;
         }
+    });
+    return NULL; // Key not found
+}
+
+void KvPairDeinit (KvPair *c) {
+    if (!c) {
+        LOG_FATAL ("Invalid argument");
+    }
+    StrDeinit (&c->key);
+    StrDeinit (&c->value);
+}
+
+bool KvPairInitClone (KvPair *d, KvPair *s) {
+    if (!d || !s) {
+        LOG_FATAL ("Invalid arguments");
+    }
+    StrInitCopy (&d->key, &s->key);
+    StrInitCopy (&d->value, &s->value);
+    return true;
+}
+
+void ConfigAdd (Config *c, const char *key, const char *value) {
+    if (!c || !key || !value) {
+        LOG_FATAL ("Invalid arguments");
     }
 
-    return 1; // Valid UUID
+    KvPair kv = {.key = StrInitFromZstr (key), .value = StrInitFromZstr (value)};
+    VecPushBack (c, kv);
 }
