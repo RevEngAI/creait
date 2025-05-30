@@ -969,15 +969,15 @@ typedef struct {
 /// FAILURE : Does not return on failure
 ///
 #define VecAlignedOffsetAt(v, idx)                                                                 \
-    ((v != NULL) ? ((idx) * ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (v)->alignment)) :                       \
-           (LogWrite (                                                                             \
-                LOG_LEVEL_FATAL,                                                                   \
-                __func__,                                                                          \
-                __LINE__,                                                                          \
-                "Invalid vector provided to VecAlignedOffsetAt! Aborting..."                       \
-            ),                                                                                     \
-            abort(),                                                                               \
-            0))
+    ((v != NULL) ? ((idx) * ALIGN_UP (sizeof (VEC_DATA_TYPE (v)), (v)->alignment)) :               \
+                   (LogWrite (                                                                     \
+                        LOG_LEVEL_FATAL,                                                           \
+                        __func__,                                                                  \
+                        __LINE__,                                                                  \
+                        "Invalid vector provided to VecAlignedOffsetAt! Aborting..."               \
+                    ),                                                                             \
+                    abort(),                                                                       \
+                    0))
 
 ///
 /// Value at given index in a vector.
@@ -1168,10 +1168,16 @@ typedef struct {
 ///
 #define VecForeachIdx(v, var, idx, body)                                                           \
     do {                                                                                           \
-        size idx             = 0;                                                                  \
-        VEC_DATA_TYPE (v) var = {0};                                                                \
+        u64 idx               = 0;                                                                 \
+        VEC_DATA_TYPE (v) var;                                                               \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
+                if ((idx) >= (v)->length) {                                                        \
+                    LOG_FATAL (                                                                    \
+                        "Vector range overflow : Invalid index reached during Foreach reverse "    \
+                        "iteration."                                                               \
+                    );                                                                             \
+                }                                                                                  \
                 var = VecAt (v, idx);                                                              \
                 { body }                                                                           \
             }                                                                                      \
@@ -1191,8 +1197,8 @@ typedef struct {
 ///
 #define VecForeachReverseIdx(v, var, idx, body)                                                    \
     do {                                                                                           \
-        size idx             = 0;                                                                  \
-        VEC_DATA_TYPE (v) var = {0};                                                                \
+        u64 idx               = 0;                                                                 \
+        VEC_DATA_TYPE (v) var;                                                               \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1222,8 +1228,8 @@ typedef struct {
 ///
 #define VecForeachPtrIdx(v, var, idx, body)                                                        \
     do {                                                                                           \
-        size idx              = 0;                                                                 \
-        VEC_DATA_TYPE (v) *var = NULL;                                                              \
+        u64 idx                = 0;                                                                \
+        VEC_DATA_TYPE (v) *var;                                                             \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1250,8 +1256,8 @@ typedef struct {
 ///
 #define VecForeachPtrReverseIdx(v, var, idx, body)                                                 \
     do {                                                                                           \
-        size idx              = 0;                                                                 \
-        VEC_DATA_TYPE (v) *var = {0};                                                               \
+        u64 idx                = 0;                                                                \
+        VEC_DATA_TYPE (v) *var;                                                              \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1285,7 +1291,7 @@ typedef struct {
 ///           be executed. Any failures within the `VecForeachIdx` macro (like invalid
 ///           index access) will result in a fatal log message and program termination.
 ///
-#define VecForeach(v, var, body) VecForeachIdx ((v), (var), (____iter___), {body})
+#define VecForeach(v, var, body) VecForeachIdx ((v), var, (____iter___), {body})
 
 ///
 /// Iterate over each element `var` of the given vector `v` in reverse order.
@@ -1304,7 +1310,7 @@ typedef struct {
 ///           be executed. Any failures within the `VecForeachReverseIdx` macro (like
 ///           invalid index access) will result in a fatal log message and program termination.
 ///
-#define VecForeachReverse(v, var, body) VecForeachReverseIdx ((v), (var), (____iter___), {body})
+#define VecForeachReverse(v, var, body) VecForeachReverseIdx ((v), var, (____iter___), {body})
 
 ///
 /// Iterate over each element `var` of the given vector `v` (as a pointer).
@@ -1325,22 +1331,7 @@ typedef struct {
 ///           be executed. Any failures within the `VecForeachPtrIdx` macro (like invalid
 ///           index access) will result in a fatal log message and program termination.
 ///
-#define VecForeachPtr(v, var, body)                                                                \
-    do {                                                                                           \
-        size ____iter___      = 0;                                                                 \
-        VEC_DATA_TYPE (v) *var = NULL;                                                              \
-        if ((v) != NULL && (v)->length > 0) {                                                      \
-            for (____iter___ = 0; ____iter___ < (v)->length; ++____iter___) {                      \
-                if (____iter___ >= (v)->length) {                                                  \
-                    LOG_FATAL (                                                                    \
-                        "Vector range overflow : Invalid index reached during Foreach iteration."  \
-                    );                                                                             \
-                }                                                                                  \
-                var = VecPtrAt (v, ____iter___);                                                   \
-                body                                                                               \
-            }                                                                                      \
-        }                                                                                          \
-    } while (0)
+#define VecForeachPtr(v, var, body) VecForeachPtrIdx ((v), var, ____iter___, {body})
 
 ///
 /// Iterate over each element `var` (as a pointer) of the given vector `v` in reverse order.
@@ -1362,7 +1353,7 @@ typedef struct {
 ///           invalid index access) will result in a fatal log message and program termination.
 ///
 #define VecForeachPtrReverse(v, var, body)                                                         \
-    VecForeachPtrReverseIdx ((v), (var), (____iter___), {body})
+    VecForeachPtrReverseIdx ((v), var, (____iter___), {body})
 
 #ifdef __cplusplus
 extern "C" {
