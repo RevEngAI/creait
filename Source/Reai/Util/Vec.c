@@ -17,10 +17,6 @@
 // actual capacity may differ from stored capacity value
 
 static inline size vec_aligned_size (GenericVec *v, size item_size) {
-    if (!v || !item_size) {
-        LOG_FATAL ("Invalid arguments. Aborting...");
-    }
-
     if (!v->alignment) {
         LOG_FATAL ("Invalid alignment. Did you initialize before use? Aborting...");
     }
@@ -29,48 +25,14 @@ static inline size vec_aligned_size (GenericVec *v, size item_size) {
 }
 
 static inline size vec_aligned_offset_at (GenericVec *v, size idx, size item_size) {
-    if (!v || !item_size) {
-        LOG_FATAL ("Invalid arguments. Aborting...");
-    }
-
     return idx * vec_aligned_size (v, item_size);
 }
 
 static inline char *vec_ptr_at (GenericVec *v, size idx, size item_size) {
-    if (!v || !item_size) {
-        LOG_FATAL ("Invalid arguments");
-    }
-
     return v->data + vec_aligned_offset_at (v, idx, item_size);
 }
 
-void init_vec_on_stack (
-    GenericVec       *vec,
-    char             *stack_mem,
-    size              capacity,
-    size              item_size,
-    GenericCopyInit   copy_init,
-    GenericCopyDeinit copy_deinit,
-    size              alignment
-) {
-    if (!vec || !item_size || !alignment) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
-    vec->copy_init   = copy_init;
-    vec->copy_deinit = copy_deinit;
-    vec->alignment   = alignment;
-    vec->data        = stack_mem;
-    vec->capacity    = capacity;
-    vec->length      = 0;
-}
-
-
 void deinit_vec (GenericVec *vec, size item_size) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments");
-    }
-
     if (vec->data) {
         if (vec->copy_deinit) {
             for (size i = 0; i < vec->length; i++) {
@@ -83,15 +45,12 @@ void deinit_vec (GenericVec *vec, size item_size) {
         free (vec->data);
     }
 
-    memset (vec, 0, sizeof (GenericVec));
+    vec->data   = NULL;
+    vec->length = vec->capacity = 0;
 }
 
 
 void clear_vec (GenericVec *vec, size item_size) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (vec->data) {
         if (vec->copy_deinit) {
             for (size i = 0; i < vec->length; i++) {
@@ -110,10 +69,6 @@ void clear_vec (GenericVec *vec, size item_size) {
 
 // Reserve new space if n > capacity
 void reserve_vec (GenericVec *vec, size item_size, size n) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (n > vec->capacity) {
         // make sure actual capacity is always at-least one greater than given capacity
         // this way, actual capacity is always at least one greater than length of vector (as required for strings)
@@ -124,22 +79,20 @@ void reserve_vec (GenericVec *vec, size item_size, size n) {
                 LOG_FATAL ("realloc() failed : %s.", SysStrError (errno, &syserr)->data);
             });
         }
+        // it's mandatory to set the pointer here, because next call to any vec_ will do a validation check
+        // this could've resulted in a heap-use-after-free bug, which was caught with help of ValidateVec
+        vec->data = ptr;
         memset (
             ptr + vec_aligned_offset_at (vec, vec->capacity, item_size),
             0,
             vec_aligned_size (vec, item_size) * (n + 1 - vec->capacity)
         );
-        vec->data     = ptr;
         vec->capacity = n;
     }
 }
 
 
 void reserve_pow2_vec (GenericVec *vec, size item_size, size n) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     size n2 = 1;
     if (n == 0) {
         return;
@@ -154,10 +107,6 @@ void reserve_pow2_vec (GenericVec *vec, size item_size, size n) {
 
 
 void reduce_space_vec (GenericVec *vec, size item_size) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (vec->length == 0) {
         free (vec->data);
         vec->data     = NULL;
@@ -187,10 +136,6 @@ void insert_range_into_vec (
     size        idx,
     size        count
 ) {
-    if (!vec || !item_size || !item_data) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (idx > vec->length) {
         LOG_FATAL ("vector index out of bounds, insertion at index greater than length");
     }
@@ -207,7 +152,7 @@ void insert_range_into_vec (
         );
     }
 
-    for (i64 i = 0; i < count; i++) {
+    for (size i = 0; i < count; i++) {
         if (vec->copy_init) {
             memset (vec_ptr_at (vec, idx + i, item_size), 0, item_size);
             vec->copy_init (vec_ptr_at (vec, idx + i, item_size), item_data + i * item_size);
@@ -229,10 +174,6 @@ void insert_range_fast_into_vec (
     size        idx,
     size        count
 ) {
-    if (!vec || !item_size || !item_data) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (idx > vec->length) {
         LOG_FATAL ("vector index out of bounds, insertion at index greater than length");
     }
@@ -250,7 +191,7 @@ void insert_range_fast_into_vec (
         );
     }
 
-    for (i64 i = 0; i < count; i++) {
+    for (size i = 0; i < count; i++) {
         if (vec->copy_init) {
             memset (vec_ptr_at (vec, idx + i, item_size), 0, item_size);
             vec->copy_init (vec_ptr_at (vec, idx + i, item_size), item_data + i * item_size);
@@ -273,10 +214,6 @@ void remove_range_vec (
     size        start,
     size        count
 ) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (start + count > vec->length) {
         LOG_FATAL ("vector range out of bounds.");
     }
@@ -334,14 +271,11 @@ void fast_remove_range_vec (
     size        start,
     size        count
 ) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (start + count > vec->length) {
         LOG_FATAL ("vector range out of bounds.");
     }
 
+    // Save the data to be removed if requested
     if (removed_data) {
         memcpy (
             removed_data,
@@ -349,6 +283,7 @@ void fast_remove_range_vec (
             count * vec_aligned_size (vec, item_size)
         );
     } else {
+        // Otherwise, properly clean up the memory
         if (vec->copy_deinit) {
             char *vec_data = vec_ptr_at (vec, start, item_size);
             for (size s = 0; s < count; s++) {
@@ -364,34 +299,42 @@ void fast_remove_range_vec (
         }
     }
 
-    // move just last "count" elements to new created space
-    memmove (
-        // move to freed up space
-        vec_ptr_at (vec, start, item_size),
-        // last "count" elements
-        vec_ptr_at (vec, (vec->length - count), item_size),
-        // "count" items
-        count * vec_aligned_size (vec, item_size)
-    );
-    // memset last count items to 0
+    // Calculate how many elements we can move from the end
+    size available_elements = vec->length - (start + count);
+    size elements_to_move   = count;
+
+    // If we don't have enough elements at the end, adjust the count
+    if (elements_to_move > available_elements) {
+        elements_to_move = available_elements;
+    }
+
+    if (elements_to_move > 0) {
+        // Move the last 'elements_to_move' elements to the gap
+        memmove (
+            // Move to freed up space
+            vec_ptr_at (vec, start, item_size),
+            // Start from the position that leaves exactly 'elements_to_move' elements
+            vec_ptr_at (vec, vec->length - elements_to_move, item_size),
+            // Move 'elements_to_move' elements
+            elements_to_move * vec_aligned_size (vec, item_size)
+        );
+    }
+
+    // Clear the remaining elements at the end
     memset (
-        vec_ptr_at (vec, (vec->length - count), item_size),
+        vec_ptr_at (vec, vec->length - count, item_size),
         0,
         count * vec_aligned_size (vec, item_size)
     );
 
     vec->length -= count;
 
-    // make sure space just after vector length is memeset to 0
+    // Make sure space just after vector length is memset to 0
     memset (vec_ptr_at (vec, vec->length, item_size), 0, item_size);
 }
 
 
 void qsort_vec (GenericVec *vec, size item_size, GenericCompare comp) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (vec_aligned_size (vec, item_size) != item_size) {
         LOG_FATAL (
             "QSort not implemented for vectors wherein the size of items don't "
@@ -405,10 +348,6 @@ void qsort_vec (GenericVec *vec, size item_size, GenericCompare comp) {
 
 
 void swap_vec (GenericVec *vec, size item_size, size idx1, size idx2) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (idx1 >= vec->length || idx2 >= vec->length) {
         LOG_FATAL ("vector index out of bounds.");
     }
@@ -432,64 +371,13 @@ void swap_vec (GenericVec *vec, size item_size, size idx1, size idx2) {
 
 
 void reverse_vec (GenericVec *vec, size item_size) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     size i = vec->length / 2;
     while (i--) {
         swap_vec (vec, item_size, i, vec->length - (i + 1));
     }
 }
 
-
-void push_arr_vec (GenericVec *vec, size item_size, char *arr, size count, size pos) {
-    if (!arr && !count)
-        return;
-
-    if (!vec || !arr || !count || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
-    if (pos > vec->length) {
-        LOG_FATAL ("vector index out of range.");
-    }
-
-    reserve_pow2_vec (vec, item_size, vec->length + count);
-
-    size aligned_size = vec_aligned_size (vec, item_size);
-
-    if (pos < vec->length) {
-        memmove (
-            vec_ptr_at (vec, pos + count, item_size),
-            vec_ptr_at (vec, pos, item_size),
-            (vec->length - pos) * aligned_size
-        );
-        memset (vec_ptr_at (vec, pos, item_size), 0, count * aligned_size);
-    }
-
-    char *data = vec_ptr_at (vec, pos, item_size);
-    for (size i = 0; i < count; ++i) {
-        if (vec->copy_init) {
-            vec->copy_init (data, arr);
-        } else {
-            memcpy (data, arr, item_size);
-        }
-        arr  += aligned_size;
-        data += aligned_size;
-    }
-
-    vec->length += count;
-
-    memset (vec_ptr_at (vec, vec->length, item_size), 0, aligned_size);
-}
-
-
 void resize_vec (GenericVec *vec, size item_size, size new_size) {
-    if (!vec || !item_size) {
-        LOG_FATAL ("invalid arguments.");
-    }
-
     if (new_size <= vec->capacity) {
         // if we're shrinking then we need to remove some part of the data
         if (new_size < vec->length) {

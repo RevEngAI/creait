@@ -1028,32 +1028,14 @@ typedef struct {
 ///
 /// Push a complete array into this vector.
 ///
-/// If array and count are both NULL and zero together correspondingly,
-/// then the function simply returns without any error. Any other combination
-/// is invalid and will result in an `abort()` call.
-///
 /// v[in,out] : Vector to insert array items into.
 /// arr[in]   : Array to be inserted.
-/// count[in] : Number of items in array.
+/// count[in] : Number (non-zero) of items in array.
 ///
 /// SUCCESS : `v`
 /// FAILURE : Does not return on failure
 ///
-#define VecPushArr(v, arr, count, pos)                                                             \
-    do {                                                                                           \
-        if (!arr) {                                                                                \
-            LOG_FATAL ("Provided array pointer is NULL. Expected a non-NULL value.");              \
-        }                                                                                          \
-        VEC_DATA_TYPE (v) __t_m_p = *(arr);                                                        \
-        (void)__t_m_p;                                                                             \
-        push_arr_vec (                                                                             \
-            GENERIC_VEC (v),                                                                       \
-            sizeof (VEC_DATA_TYPE (v)),                                                            \
-            (char *)(void *)(arr),                                                                 \
-            (count),                                                                               \
-            (pos)                                                                                  \
-        );                                                                                         \
-    } while (0)
+#define VecPushBackArr(v, arr, count) VecInsertRange((v), (arr), (v)->length, (count))
 
 ///
 /// Push a complete array into this vector.
@@ -1065,19 +1047,7 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : Does not return on failure
 ///
-#define VecPushBackArr(v, arr, count) VecPushArr ((v), (arr), (count), (v)->length)
-
-///
-/// Push a complete array into this vector.
-///
-/// v[in,out] : Vector to insert array items into.
-/// arr[in]   : Array to be inserted.
-/// count[in] : Number (non-zero) of items in array.
-///
-/// SUCCESS : `v`
-/// FAILURE : Does not return on failure
-///
-#define VecPushFrontArr(v, arr, count) VecPushArr ((v), (arr), (count), 0)
+#define VecPushFrontArr(v, arr, count) VecInsertRange ((v), (arr), 0, (count))
 
 ///
 /// Merge two vectors and store the result in the first vector.
