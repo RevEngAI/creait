@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-    static inline char* strndup (const char* s, size n) {
+    REAI_API static inline char* strndup (const char* s, size n) {
         size  len     = strnlen (s, n); // Only up to n
         char* new_str = (char*)malloc (len + 1);
         if (!new_str)
@@ -77,7 +77,7 @@ extern "C" {
     /// SUCCESS : `str`
     /// FAILURE : NULL
     ///
-    Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
+    REAI_API Str* StrPrintf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 
 ///
 /// Initialize given string.
@@ -110,7 +110,7 @@ extern "C" {
     ///
     /// str : Pointer to string to be deinited
     ///
-    void StrDeinit (Str* str);
+    REAI_API void StrDeinit (Str* str);
 
 ///
 /// Compare two Str objects
@@ -143,7 +143,7 @@ extern "C" {
     /// SUCCESS : `str`
     /// FAILURE : NULL
     ///
-    Str* StrAppendf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
+    REAI_API Str* StrAppendf (Str* str, const char* fmt, ...) FORMAT_STRING (2, 3);
 
 ///
 /// Insert char into string of it's type.
@@ -505,7 +505,7 @@ extern "C" {
     /// SUCCESS : Strs vector of non-zero length
     /// FAILURE : Strs vector of zero-length
     ///
-    Strs StrSplit (Str* s, const char* key);
+    REAI_API Strs StrSplit (Str* s, const char* key);
 
 ///
 /// Strip leading and trailing whitespace (or optional custom characters) from
@@ -567,7 +567,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false
     ///
-    bool StrInitCopy (Str* dst, const Str* src);
+    REAI_API bool StrInitCopy (Str* dst, const Str* src);
 
     ///
     /// Check if string starts with a null-terminated string (Zstr).
@@ -578,7 +578,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` starts with `prefix`.
     /// FAILURE : Returns false.
     ///
-    bool StrStartsWithZstr (const Str* s, const char* prefix);
+    REAI_API bool StrStartsWithZstr (const Str* s, const char* prefix);
 
     ///
     /// Check if string ends with a null-terminated string (Zstr).
@@ -589,7 +589,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` ends with `suffix`.
     /// FAILURE : Returns false.
     ///
-    bool StrEndsWithZstr (const Str* s, const char* suffix);
+    REAI_API bool StrEndsWithZstr (const Str* s, const char* suffix);
 
     ///
     /// Check if string starts with a fixed-length C-style string (Cstr).
@@ -601,7 +601,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` starts with `prefix`.
     /// FAILURE : Returns false.
     ///
-    bool StrStartsWithCstr (const Str* s, const char* prefix, size prefix_len);
+    REAI_API bool StrStartsWithCstr (const Str* s, const char* prefix, size prefix_len);
 
     ///
     /// Check if string ends with a fixed-length C-style string (Cstr).
@@ -613,7 +613,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` ends with `suffix`.
     /// FAILURE : Returns false.
     ///
-    bool StrEndsWithCstr (const Str* s, const char* suffix, size suffix_len);
+    REAI_API bool StrEndsWithCstr (const Str* s, const char* suffix, size suffix_len);
 
     ///
     /// Check if string starts with another Str object.
@@ -624,7 +624,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` starts with `prefix`.
     /// FAILURE : Returns false.
     ///
-    bool StrStartsWith (const Str* s, const Str* prefix);
+    REAI_API bool StrStartsWith (const Str* s, const Str* prefix);
 
     ///
     /// Check if string ends with another Str object.
@@ -635,7 +635,7 @@ extern "C" {
     /// SUCCESS : Returns true if `s` ends with `suffix`.
     /// FAILURE : Returns false.
     ///
-    bool StrEndsWith (const Str* s, const Str* suffix);
+    REAI_API bool StrEndsWith (const Str* s, const Str* suffix);
 
     ///
     /// Replace occurrences of a null-terminated string (Zstr) in string.
@@ -648,7 +648,7 @@ extern "C" {
     /// SUCCESS : Modifies `s` in place.
     /// FAILURE : No replacement if `match` not found.
     ///
-    void StrReplaceZstr (Str* s, const char* match, const char* replacement, size count);
+    REAI_API void StrReplaceZstr (Str* s, const char* match, const char* replacement, size count);
 
     ///
     /// Replace occurrences of a fixed-length string (Cstr) in string.
@@ -663,7 +663,7 @@ extern "C" {
     /// SUCCESS : Modifies `s` in place.
     /// FAILURE : No replacement if `match` not found.
     ///
-    void StrReplaceCstr (
+    REAI_API void StrReplaceCstr (
         Str*        s,
         const char* match,
         size        match_len,
@@ -683,9 +683,9 @@ extern "C" {
     /// SUCCESS : Modifies `s` in place.
     /// FAILURE : No replacement if `match` not found.
     ///
-    void StrReplace (Str* s, const Str* match, const Str* replacement, size count);
+    REAI_API void StrReplace (Str* s, const Str* match, const Str* replacement, size count);
 
-    Str strip_str (Str* s, const char* key, int split_direction);
+    REAI_API Str strip_str (Str* s, const char* key, int split_direction);
 
 #ifdef __cplusplus
 }

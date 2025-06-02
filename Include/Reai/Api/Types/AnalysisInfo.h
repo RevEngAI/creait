@@ -40,8 +40,8 @@ typedef Vec (AnalysisInfo) AnalysisInfos;
 extern "C" {
 #endif
 
-    void AnalysisInfoDeinit (AnalysisInfo* clone);
-    bool AnalysisInfoInitClone (AnalysisInfo* dst, AnalysisInfo* src);
+    REAI_API void AnalysisInfoDeinit (AnalysisInfo* clone);
+    REAI_API bool AnalysisInfoInitClone (AnalysisInfo* dst, AnalysisInfo* src);
 
 #ifdef __cplusplus
 }

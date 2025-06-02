@@ -21,8 +21,8 @@ typedef struct {
 extern "C" {
 #endif
 
-    bool ErrorInitClone (Error* dst, Error* src);
-    void ErrorDeinit (Error* e);
+    REAI_API bool ErrorInitClone (Error* dst, Error* src);
+    REAI_API void ErrorDeinit (Error* e);
 
 #ifdef __cplusplus
 }

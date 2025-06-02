@@ -20,6 +20,7 @@ set_target_properties(
   reai
   PROPERTIES POSITION_INDEPENDENT_CODE ${BUILD_SHARED_LIBS}
 )
+target_compile_definitions(reai PRIVATE REAI_EXPORTS) # for generating an exports .lib file
 
 # Add installation target for library
 install(TARGETS reai

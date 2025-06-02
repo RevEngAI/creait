@@ -39,7 +39,7 @@ extern "C" {
     ///
     /// fi[in,out] : Object to be destroyed.
     ///
-    void AnnSymbolDeinit (AnnSymbol* clone);
+    REAI_API void AnnSymbolDeinit (AnnSymbol* clone);
 
     ///
     /// Clone a AnnSymbol object from `src` to `dst`
@@ -50,7 +50,7 @@ extern "C" {
     /// SUCCESS : True
     /// FAILURE : Does not return
     ///
-    bool AnnSymbolInitClone (AnnSymbol* dst, AnnSymbol* src);
+    REAI_API bool AnnSymbolInitClone (AnnSymbol* dst, AnnSymbol* src);
 
 #ifdef __cplusplus
 }

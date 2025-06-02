@@ -95,4 +95,14 @@ typedef i8 bool;
 #    define TYPE_OF(x) __typeof__ ((x))
 #endif
 
+#ifdef _WIN32
+  #ifdef REAI_EXPORTS
+    #define REAI_API __declspec(dllexport)
+  #else
+    #define REAI_API __declspec(dllimport)
+  #endif
+#else
+  #define REAI_API
+#endif
+
 #endif // REAI_TYPE_H

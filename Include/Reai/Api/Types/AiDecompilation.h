@@ -35,7 +35,7 @@ typedef struct AiDecompilation {
 extern "C" {
 #endif
 
-    void AiDecompilationDeinit (AiDecompilation* clone);
+    REAI_API void AiDecompilationDeinit (AiDecompilation* clone);
 
     ///
     /// Init clone of AiDecompilation object
@@ -47,7 +47,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : Does not return
     ///
-    bool AiDecompilationInitClone (AiDecompilation* dst, AiDecompilation* src);
+    REAI_API bool AiDecompilationInitClone (AiDecompilation* dst, AiDecompilation* src);
 
 #ifdef __cplusplus
 }

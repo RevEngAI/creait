@@ -37,7 +37,7 @@ extern "C" {
     /// SUCCESS : True
     /// FAILURE : Does not return
     ///
-    bool FunctionInfoInitClone (FunctionInfo* dst, FunctionInfo* src);
+    REAI_API bool FunctionInfoInitClone (FunctionInfo* dst, FunctionInfo* src);
 
     ///
     /// Deinit cloned FunctionInfo object. Provided pointer is not freed.
@@ -45,7 +45,7 @@ extern "C" {
     ///
     /// fi[in,out] : Object to be destroyed.
     ///
-    void FunctionInfoDeinit (FunctionInfo* fi);
+    REAI_API void FunctionInfoDeinit (FunctionInfo* fi);
 
 #ifdef __cplusplus
 }

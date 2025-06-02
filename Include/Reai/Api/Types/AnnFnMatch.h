@@ -29,8 +29,8 @@ typedef struct AnnFnMatch {
 extern "C" {
 #endif
 
-    void AnnFnMatchDeinit (AnnFnMatch* clone);
-    bool AnnFnMatchInitClone (AnnFnMatch* dst, AnnFnMatch* src);
+    REAI_API void AnnFnMatchDeinit (AnnFnMatch* clone);
+    REAI_API bool AnnFnMatchInitClone (AnnFnMatch* dst, AnnFnMatch* src);
 
 #ifdef __cplusplus
 }

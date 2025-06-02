@@ -155,7 +155,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false, error messages are logged.
     ///
-    bool Authenticate (Connection* conn);
+    REAI_API bool Authenticate (Connection* conn);
 
     ///
     /// Sends a new analysis request to the server and parses the response.
@@ -170,7 +170,7 @@ extern "C" {
     /// SUCCESS : A non-zero binary ID corresponding to newly created analysis.
     /// FAILURE : 0, error messages logged.
     ///
-    BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request);
+    REAI_API BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request);
 
     ///
     /// Retrieves basic function information using the provided binary ID.
@@ -185,7 +185,7 @@ extern "C" {
     /// SUCCESS : FunctionInfos vector filled with function symbol information retrieved from analysis.
     /// FAILURE : Empty FunctionInfos vector.
     ///
-    FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id);
+    REAI_API FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id);
 
     ///
     /// Sends a request to retrieve recent analysis data based on the provided parameters.
@@ -199,7 +199,7 @@ extern "C" {
     /// SUCCESS :  A populated `AnalysisInfos` struct on success.
     /// FAILURE :  An empty struct (all fields set to 0) on failure.
     ///
-    AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request);
+    REAI_API AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request);
 
     ///
     /// Search for binaries with given filters
@@ -210,7 +210,7 @@ extern "C" {
     /// SUCCESS : BinaryInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request);
+    REAI_API BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request);
 
     ///
     /// Search for collection with given filters
@@ -221,7 +221,7 @@ extern "C" {
     /// SUCCESS : CollectionInfos struct filled with valid data on success.
     /// FAILURE : Empty struct otherwise.
     ///
-    CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* request);
+    REAI_API CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* request);
 
     ///
     /// Perform a batch function renaming operation for RevEngAI.
@@ -232,7 +232,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false
     ///
-    bool BatchRenameFunctions (Connection* conn, FunctionInfos functions);
+    REAI_API bool BatchRenameFunctions (Connection* conn, FunctionInfos functions);
 
     ///
     /// Rename a single function in RevEngAI.
@@ -244,7 +244,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : false
     ///
-    bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name);
+    REAI_API bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name);
 
     ///
     /// Perform a batch ann symbol request using analysis id.
@@ -256,7 +256,7 @@ extern "C" {
     /// SUCCESS: A populated `AnnSymbols` vector struct on success.
     /// FAILURE: An empty struct (all fields set to 0) on failure.
     ///
-    AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request);
+    REAI_API AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request);
 
     /// Retrieves the status of an analysis job for a given binary ID.
     ///
@@ -270,7 +270,7 @@ extern "C" {
     ///   - Status code indicating current analysis state (STATUS_SUCCESS, STATUS_PENDING, etc.)
     ///   - STATUS_INVALID if connection parameters are invalid or request fails
     ///
-    Status GetAnalysisStatus (Connection* conn, BinaryId binary_id);
+    REAI_API Status GetAnalysisStatus (Connection* conn, BinaryId binary_id);
 
     /// Retrieves information about available AI models.
     ///
@@ -283,7 +283,7 @@ extern "C" {
     ///   - Vector of ModelInfo structures containing model IDs and names
     ///   - Empty vector if connection fails or no models available
     ///
-    ModelInfos GetAiModelInfos (Connection* conn);
+    REAI_API ModelInfos GetAiModelInfos (Connection* conn);
 
     /// Initiates AI-powered decompilation for a specific function.
     ///
@@ -297,7 +297,7 @@ extern "C" {
     ///   - true if decompilation job started successfully
     ///   - false if invalid parameters or connection failure
     ///
-    bool BeginAiDecompilation (Connection* conn, FunctionId function_id);
+    REAI_API bool BeginAiDecompilation (Connection* conn, FunctionId function_id);
 
     /// Checks the status of an AI decompilation job.
     ///
@@ -311,7 +311,7 @@ extern "C" {
     ///   - Status code (STATUS_PENDING, STATUS_SUCCESS, etc.)
     ///   - STATUS_INVALID if invalid parameters or connection failure
     ///
-    Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id);
+    REAI_API Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id);
 
     /// Retrieves results of a completed AI decompilation job.
     ///
@@ -326,7 +326,7 @@ extern "C" {
     ///   - AiDecompilation structure containing decompilation results
     ///   - Empty structure if job failed or results unavailable
     ///
-    AiDecompilation
+    REAI_API AiDecompilation
         GetAiDecompilation (Connection* conn, FunctionId function_id, bool get_ai_summary);
 
     /// Finds similar functions based on vector space analysis.
@@ -341,7 +341,7 @@ extern "C" {
     ///   - Vector of SimilarFunction structures containing match details
     ///   - Empty vector if no matches found or connection failure
     ///
-    SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
+    REAI_API SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
 
     /// Maps a binary ID to its corresponding analysis ID.
     ///
@@ -354,7 +354,7 @@ extern "C" {
     /// SUCCESS : Non-zero analysis ID if found
     /// FAILURE : 0 if invalid input or no matching analysis found.
     ///
-    AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id);
+    REAI_API AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id);
 
     /// Retrieves log data for a specific analysis job.
     ///
@@ -367,7 +367,7 @@ extern "C" {
     /// SUCCESS : String containing log text
     /// FAILURE : Empty string.
     ///
-    Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id);
+    REAI_API Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id);
 
     ///
     /// Upload a file for analysis.
@@ -382,7 +382,7 @@ extern "C" {
     /// SUCCESS : Str object containing SHA-256 Hash of uploaded file.
     /// FAILURE : Empty Str object.
     ///
-    Str UploadFile (Connection* conn, Str file_path);
+    REAI_API Str UploadFile (Connection* conn, Str file_path);
 
     ///
     /// Add a URL query parameter to given URL string.
@@ -398,7 +398,7 @@ extern "C" {
     /// SUCCESS : Updated `url` string on success.
     /// FAILURE : `NULL` otherwise.
     ///
-    Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_first);
+    REAI_API Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_first);
 
     ///
     /// Add a URL query parameter to given URL string.
@@ -413,7 +413,7 @@ extern "C" {
     /// SUCCESS : Updated `url` string on success.
     /// FAILURE : `NULL` otherwise.
     ///
-    Str* UrlAddQueryInt (Str* url, const char* key, i64 value, bool* is_first);
+    REAI_API Str* UrlAddQueryInt (Str* url, const char* key, i64 value, bool* is_first);
 
     ///
     /// Add a URL query parameter to given URL string.
@@ -428,7 +428,7 @@ extern "C" {
     /// SUCCESS : Updated `url` string on success.
     /// FAILURE : `NULL` otherwise.
     ///
-    Str* UrlAddQueryFloat (Str* url, const char* key, f64 value, bool* is_first);
+    REAI_API Str* UrlAddQueryFloat (Str* url, const char* key, f64 value, bool* is_first);
 
     ///
     /// Add a URL query parameter to given URL string.
@@ -440,7 +440,7 @@ extern "C" {
     ///     - Updated `url` string on success.
     ///     - `NULL` otherwise.
     ///
-    Str* UrlAddQueryBool (Str* url, const char* key, bool value, bool* is_first);
+    REAI_API Str* UrlAddQueryBool (Str* url, const char* key, bool value, bool* is_first);
 
     ///
     /// Make an HTTP request to the specified URL with the given method and JSON body.
@@ -457,7 +457,7 @@ extern "C" {
     /// On success - true
     /// On failure - false, with log messages printed to log file or stderr.
     ///
-    bool MakeRequest (
+    REAI_API bool MakeRequest (
         Str*        api_key,
         Str*        request_url,
         Str*        request_json,
@@ -482,7 +482,7 @@ extern "C" {
     /// On success - true
     /// On failure - false, with log messages printed to log file or stderr.
     ///
-    bool MakeUploadRequest (
+    REAI_API bool MakeUploadRequest (
         Str*        api_key,
         Str*        request_url,
         Str*        request_json,

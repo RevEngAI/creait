@@ -35,7 +35,7 @@ extern "C" {
     ///
     /// fi[in,out] : Object to be destroyed.
     ///
-    void SimilarFunctionDeinit (SimilarFunction* clone);
+    REAI_API void SimilarFunctionDeinit (SimilarFunction* clone);
 
     ///
     /// Clone a SimilarFunction object from `src` to `dst`
@@ -46,7 +46,7 @@ extern "C" {
     /// SUCCESS : True
     /// FAILURE : Does not return
     ///
-    bool SimilarFunctionInitClone (SimilarFunction* dst, SimilarFunction* src);
+    REAI_API bool SimilarFunctionInitClone (SimilarFunction* dst, SimilarFunction* src);
 
 #ifdef __cplusplus
 }

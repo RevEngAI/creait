@@ -153,7 +153,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Whitespace, Parsing, Utility
     ///
-    StrIter JSkipWhitespace (StrIter si);
+    REAI_API StrIter JSkipWhitespace (StrIter si);
 
     ///
     /// Read a quoted string, handling escape sequences.
@@ -168,7 +168,7 @@ extern "C" {
     ///
     /// TAGS: JSON, String, Parsing, EscapeSequences
     ///
-    StrIter JReadString (StrIter si, Str* str);
+    REAI_API StrIter JReadString (StrIter si, Str* str);
 
     ///
     /// Read a JSON number (int or float) from input string.
@@ -181,7 +181,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Number, Parsing, Numeric
     ///
-    StrIter JReadNumber (StrIter si, Number* num);
+    REAI_API StrIter JReadNumber (StrIter si, Number* num);
 
     ///
     /// Strictly read an integer from input string.
@@ -194,7 +194,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Integer, Parsing, Strict
     ///
-    StrIter JReadInteger (StrIter si, i64* val);
+    REAI_API StrIter JReadInteger (StrIter si, i64* val);
 
     ///
     /// Read a floating-point number from input string.
@@ -207,7 +207,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Float, Parsing
     ///
-    StrIter JReadFloat (StrIter si, f64* val);
+    REAI_API StrIter JReadFloat (StrIter si, f64* val);
 
     ///
     /// Read a boolean value ("true" or "false") from input string.
@@ -220,7 +220,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Boolean, Parsing
     ///
-    StrIter JReadBool (StrIter si, bool* b);
+    REAI_API StrIter JReadBool (StrIter si, bool* b);
 
     ///
     /// Read a "null" value from input string.
@@ -231,7 +231,7 @@ extern "C" {
     /// SUCCESS : Returns `StrIter` advanced past "null"
     /// FAILURE : Returns original `StrIter` if "null" not found
     ///
-    StrIter JReadNull (StrIter si, bool* is_null);
+    REAI_API StrIter JReadNull (StrIter si, bool* is_null);
 
     ///
     /// Skip the current JSON value at reading position.
@@ -243,7 +243,7 @@ extern "C" {
     ///
     /// TAGS: JSON, Parsing, Utility
     ///
-    StrIter JSkipValue (StrIter si);
+    REAI_API StrIter JSkipValue (StrIter si);
 
 #ifdef __cplusplus
 }

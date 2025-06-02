@@ -41,7 +41,7 @@ extern "C" {
     ///
     /// RETURN : Does not return on failure.
     ///
-    void SymbolInfoDeinit (SymbolInfo* sa);
+    REAI_API void SymbolInfoDeinit (SymbolInfo* sa);
 
     ///
     /// Init clone of given `src` object into `dst` object
@@ -52,7 +52,7 @@ extern "C" {
     /// SUCCESS : Return true on success
     /// FAILURE : Does not return on failure
     ///
-    bool SymbolInfoInitClone (SymbolInfo* dst, SymbolInfo* src);
+    REAI_API bool SymbolInfoInitClone (SymbolInfo* dst, SymbolInfo* src);
 
 #ifdef __cplusplus
 }

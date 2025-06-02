@@ -22,7 +22,7 @@ typedef enum LogLevel {
 extern "C" {
 #endif
 
-    void LogWrite (LogLevel level, const char *tag, int line, const char *msg);
+    REAI_API void LogWrite (LogLevel level, const char *tag, int line, const char *msg);
 
 #define LOG_INFO(...)                                                                              \
     do {                                                                                           \
@@ -49,7 +49,7 @@ extern "C" {
         abort();                                                                                   \
     } while (0)
 
-    void LogInit (bool redirect);
+    REAI_API void LogInit (bool redirect);
 
 #ifdef __cplusplus
 }

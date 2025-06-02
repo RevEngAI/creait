@@ -33,7 +33,7 @@ extern "C" {
     ///
     /// RETURN : Does not return on failure.
     ///
-    void ModelInfoDeinit (ModelInfo* sa);
+    REAI_API void ModelInfoDeinit (ModelInfo* sa);
 
     ///
     /// Init clone of given `src` object into `dst` object
@@ -44,7 +44,7 @@ extern "C" {
     /// SUCCESS : Return true on success
     /// FAILURE : Does not return on failure
     ///
-    bool ModelInfoInitClone (ModelInfo* dst, ModelInfo* src);
+    REAI_API bool ModelInfoInitClone (ModelInfo* dst, ModelInfo* src);
 
     //TODO : vec
 

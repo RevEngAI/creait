@@ -32,6 +32,6 @@
 ///
 /// TAGS: Read, File, I/O, Utility, Helper
 ///
-bool ReadCompleteFile (const char *filename, char **data, size *file_size, size *capacity);
+REAI_API bool ReadCompleteFile (const char *filename, char **data, size *file_size, size *capacity);
 
 #endif // REAI_FILE_H

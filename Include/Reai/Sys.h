@@ -10,7 +10,7 @@
 typedef unsigned long   SysProcessId;
 typedef struct SysMutex SysMutex;
 
-Str *SysGetLocalTime (Str *timebuf);
+REAI_API Str *SysGetLocalTime (Str *timebuf);
 
 ///
 /// Get size of file without opening it.
@@ -20,7 +20,7 @@ Str *SysGetLocalTime (Str *timebuf);
 /// SUCCESS : Non-negative value representing size of file in bytes.
 /// FAILURE : -1
 ///
-i64 SysGetFileSize (const char *filename);
+REAI_API i64 SysGetFileSize (const char *filename);
 
 ///
 /// Get environment value value in a `Str` object.
@@ -32,12 +32,12 @@ i64 SysGetFileSize (const char *filename);
 /// SUCCESS : `Str` object containing value of environment variable.
 /// FAILURE : `NULL`
 ///
-Str *SysGetEnv (const char *name, Str *value);
+REAI_API Str *SysGetEnv (const char *name, Str *value);
 
 ///
 /// Platform independent method to get current process Id
 ///
-SysProcessId SysGetCurrentProcessId();
+REAI_API SysProcessId SysGetCurrentProcessId();
 
 ///
 /// Create a platform-independent mutex object.
@@ -45,7 +45,7 @@ SysProcessId SysGetCurrentProcessId();
 /// SUCCESS : A valid SysMutex object
 /// FAILURE : `NULL`
 ///
-SysMutex *SysMutexCreate();
+REAI_API SysMutex *SysMutexCreate();
 
 ///
 /// Destroy the provided mutex object.
@@ -54,7 +54,7 @@ SysMutex *SysMutexCreate();
 ///
 /// m[in] : Mutex object to be destroyed.
 ///
-void SysMutexDestroy (SysMutex *m);
+REAI_API void SysMutexDestroy (SysMutex *m);
 
 ///
 /// Acquire lock on provided mutex object.
@@ -64,7 +64,7 @@ void SysMutexDestroy (SysMutex *m);
 /// SUCCESS : `m`
 /// FAILURE : `NULL`
 ///
-SysMutex *SysMutexLock (SysMutex *m);
+REAI_API SysMutex *SysMutexLock (SysMutex *m);
 
 ///
 /// Release lock on provided mutex object.
@@ -74,7 +74,7 @@ SysMutex *SysMutexLock (SysMutex *m);
 /// SUCCESS : `m`
 /// FAILURE : `NULL`
 ///
-SysMutex *SysMutexUnlock (SysMutex *m);
+REAI_API SysMutex *SysMutexUnlock (SysMutex *m);
 
 ///
 /// Get last error using an error number.
@@ -85,6 +85,6 @@ SysMutex *SysMutexUnlock (SysMutex *m);
 /// SUCCESS : Error string describing last error.
 /// FAILURE : NULL only if `err_str` is NULL
 ///
-Str *SysStrError (i32 eno, Str *err_str);
+REAI_API Str *SysStrError (i32 eno, Str *err_str);
 
 #endif

@@ -48,7 +48,7 @@ extern "C" {
     ///
     /// RETURN : Does not return on failure
     ///
-    void BinaryInfoDeinit (BinaryInfo* bsr);
+    REAI_API void BinaryInfoDeinit (BinaryInfo* bsr);
 
     ///
     /// Create clone of given `src` object into `dst` object
@@ -59,7 +59,7 @@ extern "C" {
     /// SUCCESS : true
     /// FAILURE : Does not return on failure
     ///
-    bool BinaryInfoInitClone (BinaryInfo* dst, BinaryInfo* src);
+    REAI_API bool BinaryInfoInitClone (BinaryInfo* dst, BinaryInfo* src);
 
 #ifdef __cplusplus
 }

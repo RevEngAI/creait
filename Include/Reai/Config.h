@@ -29,8 +29,8 @@ extern "C" {
     typedef Vec (KvPair) KvPairs;
     typedef KvPairs Config;
 
-    void KvPairDeinit (KvPair* c);
-    bool KvPairInitClone (KvPair* d, KvPair* s);
+    REAI_API void KvPairDeinit (KvPair* c);
+    REAI_API bool KvPairInitClone (KvPair* d, KvPair* s);
 
 #ifdef __cplusplus
 #    define KvPairInit() (KvPair {.key = StrInit(), .value = StrInit()})
@@ -50,7 +50,7 @@ extern "C" {
     /// SUCCESS : Contents of config file loaded into Config object.
     /// FAILURE : Empty object.
     ///
-    Config ConfigRead (const char* path);
+    REAI_API Config ConfigRead (const char* path);
 
     ///
     /// Write config to a file.
@@ -61,7 +61,7 @@ extern "C" {
     /// SUCCESS : Config file written to file at given path.
     /// FAILURE : Error message logged.
     ///
-    void ConfigWrite (Config* c, const char* path);
+    REAI_API void ConfigWrite (Config* c, const char* path);
 
     ///
     /// Add a new key-value pair to config.
@@ -73,7 +73,7 @@ extern "C" {
     /// SUCCESS : Add new kv-pair to given config. If key already exists then it's overwritten.
     /// FAILURE : Error message logged.
     ///
-    void ConfigAdd (Config* c, const char* key, const char* value);
+    REAI_API void ConfigAdd (Config* c, const char* key, const char* value);
 
     ///
     /// Look for a certain key in config
@@ -84,7 +84,7 @@ extern "C" {
     /// SUCCESS : Str object with value corresponding to key. Don't ever deinit!
     /// FAILURE : NULL.
     ///
-    Str* ConfigGet (Config* c, const char* key);
+    REAI_API Str* ConfigGet (Config* c, const char* key);
 
 #ifdef __cplusplus
 }

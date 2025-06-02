@@ -59,7 +59,7 @@ extern "C" {
     ///
     /// RETURN : Does not return on failure
     ///
-    void StatusToStr (Status status, Str* str);
+    REAI_API void StatusToStr (Status status, Str* str);
 
     ///
     /// Convert the value given in Str object to corresponding Status enum.
@@ -68,7 +68,7 @@ extern "C" {
     ///
     /// RETURN : Does not return on failure
     ///
-    Status StatusFromStr (Str* str);
+    REAI_API Status StatusFromStr (Str* str);
 
 #ifdef __cplusplus
 }

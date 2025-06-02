@@ -40,7 +40,7 @@ extern "C" {
     ///
     /// fi[in,out] : Object to be destroyed.
     ///
-    void CollectionInfoDeinit (CollectionInfo* clone);
+    REAI_API void CollectionInfoDeinit (CollectionInfo* clone);
 
     ///
     /// Clone a CollectionInfo object from `src` to `dst`
@@ -51,7 +51,7 @@ extern "C" {
     /// SUCCESS : True
     /// FAILURE : Does not return
     ///
-    bool CollectionInfoInitClone (CollectionInfo* dst, CollectionInfo* src);
+    REAI_API bool CollectionInfoInitClone (CollectionInfo* dst, CollectionInfo* src);
 
 #ifdef __cplusplus
 }
