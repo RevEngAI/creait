@@ -9,8 +9,8 @@
 # Allow user to specify a custom installation prefix
 set(_CREAIT_HINT_DIRS
     $ENV{HOME}/.local
-    $ENV{HOME}/.local/RevEngAI/Radare2
-    $ENV{HOME}/.local/RevEngAI/Rizin
+    $ENV{HOME}/.local/RevEngAI/Radare2/Install
+    $ENV{HOME}/.local/RevEngAI/Rizin/Install
     /usr/local
     /usr
 )
