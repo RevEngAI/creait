@@ -402,32 +402,6 @@ extern "C" {
 #define StrCharAt(str)    VecAt (str, idx)
 #define StrCharPtrAt(str) VecPtrAt (str, idx)
 
-///
-/// Push a array of characters with given length into this string at the given
-/// position.
-///
-/// str[in,out] : Str to insert array chars into.
-/// cstr[in]    : array of characters with given length to be inserted.
-/// len [in]    : Number of characters to be appended.
-///
-/// SUCCESS : `str`
-/// FAILURE : NULL
-///
-#define StrPushCstr(str, cstr, len, pos) VecPushArr ((str), (cstr), (count), (pos))
-
-///
-/// Push a null-terminated string to this string
-/// at given position.
-///
-/// str[in,out] : Str to insert array chars into.
-/// zstr[in]    : Null-terminated string to be appended.
-///
-/// SUCCESS : `str`
-/// FAILURE : NULL
-///
-#define StrPushZstr(str, zstr, pos) StrPushCstr ((str), (zstr), strlen (zstr), (pos))
-
-///
 /// Push an array of chars with given length to the back of this string.
 ///
 /// str[in,out] : Str to insert array chars into.

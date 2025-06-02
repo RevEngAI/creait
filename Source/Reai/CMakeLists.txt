@@ -2,7 +2,6 @@ find_package(CURL)
 
 file(GLOB_RECURSE CREAIT_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.c)
 
-set(CURL_STATICLIB ON)
 find_package(CURL REQUIRED)
 
 # Dependencies

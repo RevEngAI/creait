@@ -1,171 +1,666 @@
-# C RevEngAI Toolkit
+# C RevEngAI Toolkit (creait)
 
-`creait` is a library for writing C applications that interact with the RevEngAI API.
-creait is currently under development.
+`creait` is a C library for interacting with the RevEngAI API. It provides a set of functions to perform binary analysis, decompilation, and function identification using RevEngAI's machine learning models.
+
+## Features
+
+- Binary analysis with AI-powered models
+- Function identification and annotation
+- AI-assisted decompilation
+- Binary similarity search
+- Collection management
+- Function renaming and annotation
 
 ## Installation
+
+### Prerequisites
+
+Before building, ensure you have the following dependencies installed:
+
+- libcurl (development package)
+- git
+- cmake
+- make or ninja
+- pkg-config
+
+#### On macOS:
+```sh
+brew install cmake ninja curl pkg-config
+```
+
+#### On Ubuntu/Debian:
+```sh
+sudo apt install libcurl4-openssl-dev git cmake ninja-build pkg-config
+```
+
+#### On Windows:
+- Install Visual Studio with C/C++ development tools
+- Install Git from the official website
+- Install Python and then run `pip install meson`
+- Install pkg-config: `choco install pkgconfiglite` (requires Chocolatey)
+
+### Building and Installing
 
 ```sh
 # Clone this repo and cd into it
 git clone git@github.com:RevEngAI/creait.git && cd creait
 
-# Configre the build using ninja. Remove -G Ninja if you prefer usign GNU Makefiles (make required)
+# Configure the build using ninja
 cmake -B Build -G Ninja
 
-# Build and install creait.
+# Build and install creait
 ninja -C Build && sudo ninja -C Build install
 ```
 
-You can just copy paste this directly in your terminal and it will do everyting for you,
-given the following dependencies are installed already.
+## Configuration System
 
-## Dependencies
+The library includes a simple configuration system that allows users to store and retrieve key-value pairs. Configuration files use a simple format with one key-value pair per line, separated by an equals sign (`=`).
 
-Before building, user/developer must have libcurl (development package), git, cmake, make, ninja and pkg-config installed on host system. The package names differ from OS to OS.
+### Configuration File Format
 
-When building and installing cJSON from source on Mac OS based systems, add `CMAKE_INSTALL_NAME_DIR=<install_prefix>/lib`
-Where `<install_prefix>` is the prefix path you chose to install the library. This can be something like `/usr` or `/usr/local`
-or if you're installing it some other place then that directory path. For example, my command looks like this :
-`cmake -B build -G Ninja -D CMAKE_BUILD_TYPE=Debug -D CMAKE_INSTALL_NAME_DIR=/usr/local/lib`
-
-On Windows
-
-- You need Visual Studio.
-- Git can be manually installed by downloading the installation setup.
-- Python must be installed and then use `pip install meson` to install meson.
-- pkg-config can be installed by running `choco install pkgconfiglite` after installing chocolatey package manager for windows.
-
-## Usage
-
-All struct type names start with `Reai` and all function name starts with `reai_`.
-The naming convention for function is in `snake_case` and is in the following format :
-`reai_<object-name>_<command>(...)`. Examples are `reai_analysis_info_vec_create()` or
-`reai_request()`, where `Reai` is the object name.
-
-There are three main objects you need to interact with.
-
-- First one is opaque `Reai` object. This is the main object that connects you to RevEng.AI servers.
-- Second is `ReaiRequest` which you must use to build your request.
-- Last is `ReaiResponse` where you get the response from RevEng.AI servers.
-
-### Configurations
-
-To connect with RevEng.AI servers, you first need to load a config file. The config file must
-usually be present in your home directory and must have name `~/.creait.toml`. When using a
-plugin, this file can be auto-generated using one of the commands. A very basic config is
-
-```toml
-apikey = "libr3"                   # Replace this with your own API key
-host = "https://api.reveng.ai/v1"  # API version and base endpoint
+```
+api_key = your_api_key_here
+host = https://api.reveng.ai
+timeout = 30
+debug = true
 ```
 
-To load the config, you must create a `ReaiConfig` object that parses this toml file and stores
-the data in it for you to use easily.
+Each line contains a key-value pair in the format `key = value`. Whitespace around keys and values is automatically trimmed.
+
+### Default Configuration Location
+
+The default configuration file is located at:
+- Windows: `%USERPROFILE%\.creait`
+- macOS/Linux: `$HOME/.creait`
+
+### Using the Configuration System
 
 ```c
 #include <Reai/Config.h>
 
 int main() {
-    ReaiConfig *cfg = reai_config_load (NULL);
-    RETURN_VALUE_IF(!cfg, EXIT_FAILURE, "Failed to load configuration.");
-
-    return EXIT_SUCCESS;
-}
-```
-
-Note that `NULL` is passed to `reai_config_load`. This means the config will be loaded from it's
-default expected path. Alternatively, you can load the config from your given path as well.
-
-### Making Contact
-
-Next step is to connect with RevEng.AI servers. This is done using a single function call
-
-```c
-#include <Reai/Api/Api.h>
-
-int main() {
-    // load config
-
-    // These values can be passed without loading config as well if
-    // it is desired to be hardcoded ihe the program itself.
-    Reai *reai = reai_create (cfg->host, cfg->apikey, cfg->model);
-    RETURN_VALUE_IF(!reai, EXIT_FAILURE, "Failed to connect to RevEng.AI servers.");
-
-    return EXIT_SUCCESS;
-}
-```
-
-If you already have host and apikey present in your codebase then you don't need to load
-the configuration as well.
-
-### Getting Responses
-
-Before you make any request, you must create a response structure where you'll get
-responses from the server. This is done by initializing one.
-
-```c
-#include <Reai/Api/Api.h>
-
-int main() {
-    // other code
-
-    ReaiResponse response;
-    reai_response_init (&response);
-
-}
-```
-
-### Making Requests
-
-There are different types of requests and you can go through them in RevEng.AI API docs,
-or you can go through them in `Include/Reai/Api/Request.h` header. Name of each request type
-is very closely related to the endpoint it'll communicate with, and to create a request,
-you need to fill valid data in correspondigly name structure inside `ReaiRequest` object.
-
-For example, if you want to search a binary you'll use the request type `REAI_REQUEST_TYPE_SEARCH`
-and fill data in `ReaiRequest::search`.
-
-```c
-#include <Reai/Api/Api.h>
-
-int main() {
-    // other code
-
-    ReaiRequest request = {0};
-
-    // Build request
-    request.type                   = REAI_REQUEST_TYPE_SEARCH;
-    request.search.collection_name = "trojan";
-    reai_request (reai, &request, &response);
-
-    // Verify that you got correct response
-    RETURN_VALUE_IF (
-        response.type != REAI_RESPONSE_TYPE_SEARCH,
-        EXIT_FAILURE,
-        "Failed to perform search : %s.\n",
-        response.raw.data
-    );
-
-    // Go over all query results and print values
-    if (response.search.success) {
-        REAI_VEC_FOREACH (response.search.query_results, result, {
-            PRINT_ERR ("%s\n", result->binary_name);
-        });
+    // Read configuration from the default location
+    Config config = ConfigRead(NULL);
+    
+    // Or read from a specific path
+    // Config config = ConfigRead("/path/to/config.ini");
+    
+    // Get a value from the configuration
+    Str* api_key = ConfigGet(&config, "api_key");
+    if (api_key) {
+        printf("API Key: %s\n", api_key->data);
     } else {
-        PRINT_ERR ("Search failed.\n");
+        printf("API Key not found in config\n");
     }
+    
+    // Add or update a configuration value
+    ConfigAdd(&config, "new_key", "new_value");
+    
+    // Write the configuration back to a file
+    ConfigWrite(&config, NULL);  // Write to default location
+    // Or write to a specific path
+    // ConfigWrite(&config, "/path/to/config.ini");
+    
+    // Clean up
+    ConfigDeinit(&config);
+    
+    return 0;
 }
 ```
 
-`PRINT_ERR` is just a macro to help debugging. It prepends the name of the function
-which issued the message and hence helps finding errors quickly.
+### Integration with API Functions
 
-### Extra Notes
+You can use the configuration system to store your API key and host information:
 
-Respones are reset everytime a new request is made. This means anything inside the
-response you want to keep, you must clone. For vectors there are `clone_create` methods already
-implemented, and whatever you clone is your responsibility and you must destroy those
-explicitly.
+```c
+#include <Reai/Api.h>
+#include <Reai/Config.h>
 
-Same goes for any other structure. If you called `init` then after use you must issue a `deinit`
-on the same object. If you called `create` then you must explicitly issue a `destroy`.
+int main() {
+    // Read configuration
+    Config config = ConfigRead(NULL);
+    
+    // Initialize connection
+    Connection conn = ConnectionInit();
+    
+    // Set API key and host from config
+    Str* api_key = ConfigGet(&config, "api_key");
+    Str* host = ConfigGet(&config, "host");
+    
+    if (api_key && host) {
+        StrInitCopy(&conn.api_key, api_key);
+        StrInitCopy(&conn.host, host);
+        
+        // Authenticate
+        if (Authenticate(&conn)) {
+            printf("Authentication successful\n");
+            // Proceed with API calls
+        } else {
+            printf("Authentication failed\n");
+        }
+    } else {
+        printf("API key or host not found in config\n");
+    }
+    
+    // Clean up
+    ConfigDeinit(&config);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+## Working with Request Objects
+
+The library provides convenient macros for initializing and cleaning up request objects. Always use these macros to ensure proper memory management.
+
+### Initializing Request Objects
+
+```c
+// Initialize a new analysis request with default values
+NewAnalysisRequest request = NewAnalysisRequestInit();
+
+// Initialize a search request with default values
+SearchBinaryRequest search_req = SearchBinaryRequestInit();
+
+// Initialize a similar functions request
+SimilarFunctionsRequest similar_req = SimilarFunctionsRequestInit();
+```
+
+### Cleaning Up Request Objects
+
+```c
+// Clean up a new analysis request
+NewAnalysisRequestDeinit(&request);
+
+// Clean up a search request
+SearchBinaryRequestDeinit(&search_req);
+
+// Clean up a similar functions request
+SimilarFunctionsRequestDeinit(&similar_req);
+```
+
+## Status Handling
+
+The library uses a unified status system for tracking the state of analyses, decompilations, and other operations. Status values include a type flag to indicate their source.
+
+### Status Types
+
+- `ANALYSIS_STATUS`: Status related to binary analysis
+- `DYN_EXEC_STATUS`: Status related to dynamic execution
+- `AI_DECOMP_STATUS`: Status related to AI decompilation
+
+### Common Status Values
+
+- `STATUS_QUEUED`: Operation is queued
+- `STATUS_PROCESSING` / `STATUS_RUNNING` / `STATUS_PENDING`: Operation is in progress
+- `STATUS_COMPLETE` / `STATUS_SUCCESS`: Operation completed successfully
+- `STATUS_ERROR`: Operation failed
+- `STATUS_UPLOADED`: Binary was uploaded but not yet processed
+
+### Converting Between Status and String
+
+```c
+#include <Reai/Api.h>
+#include <Reai/Api/Types/Status.h>
+
+// Convert status to string
+Status status = GetAnalysisStatus(&conn, binary_id);
+Str status_str = StrInit();
+StatusToStr(status, &status_str);
+printf("Status: %s\n", status_str.data);
+StrDeinit(&status_str);
+
+// Convert string to status
+Str status_str = StrInit();
+StrPrintf(&status_str, "Complete");
+Status status = StatusFromStr(&status_str);
+// Use STATUS_MASK to get the base status without flags
+if ((status & STATUS_MASK) == STATUS_COMPLETE) {
+    printf("Analysis is complete\n");
+}
+StrDeinit(&status_str);
+```
+
+## Usage Examples
+
+### Authentication
+
+Before using the API, you need to authenticate with your API key:
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    // Initialize connection
+    Connection conn = ConnectionInit();
+    
+    // Set API key and host
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    printf("Authentication successful\n");
+    
+    // Clean up
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Uploading a Binary File
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Upload a binary file
+    Str file_path = StrInit();
+    StrPrintf(&file_path, "/path/to/your/binary");
+    
+    Str sha256 = UploadFile(&conn, file_path);
+    if (sha256.length == 0) {
+        printf("File upload failed\n");
+        StrDeinit(&file_path);
+        return 1;
+    }
+    
+    printf("File uploaded successfully. SHA256: %s\n", sha256.data);
+    
+    // Clean up
+    StrDeinit(&file_path);
+    StrDeinit(&sha256);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Creating a New Analysis
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Upload a binary file
+    Str file_path = StrInit();
+    StrPrintf(&file_path, "/path/to/your/binary");
+    
+    Str sha256 = UploadFile(&conn, file_path);
+    if (sha256.length == 0) {
+        printf("File upload failed\n");
+        return 1;
+    }
+    
+    // Create a new analysis request using the initialization macro
+    NewAnalysisRequest request = NewAnalysisRequestInit();
+    
+    // Set model name
+    StrPrintf(&request.ai_model, "binnet-v1");
+    
+    // Set file options
+    request.file_opt = FILE_OPTION_AUTO;
+    
+    // Set file details
+    StrPrintf(&request.file_name, "example_binary");
+    StrPrintf(&request.sha256, "%s", sha256.data);
+    
+    request.file_size = 1024; // Replace with actual file size
+    
+    // Set analysis options
+    request.dynamic_execution = true;
+    request.is_private = true;
+    request.priority = 1;
+    
+    // Submit analysis request
+    BinaryId binary_id = CreateNewAnalysis(&conn, &request);
+    if (binary_id == 0) {
+        printf("Analysis creation failed\n");
+        return 1;
+    }
+    
+    printf("Analysis created successfully. Binary ID: %llu\n", binary_id);
+    
+    // Clean up using the deinitialization macro
+    NewAnalysisRequestDeinit(&request);
+    StrDeinit(&file_path);
+    StrDeinit(&sha256);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Getting Analysis Status
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Get analysis status for a binary
+    BinaryId binary_id = 123456; // Replace with your binary ID
+    Status status = GetAnalysisStatus(&conn, binary_id);
+    
+    printf("Analysis status: ");
+    switch (status & STATUS_MASK) {
+        case STATUS_QUEUED:
+            printf("Queued\n");
+            break;
+        case STATUS_PROCESSING:
+            printf("Processing\n");
+            break;
+        case STATUS_COMPLETE:
+            printf("Completed\n");
+            break;
+        case STATUS_ERROR:
+            printf("Failed\n");
+            break;
+        default:
+            printf("Unknown\n");
+    }
+    
+    // Clean up
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Getting Function Information
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Get function information for a binary
+    BinaryId binary_id = 123456; // Replace with your binary ID
+    FunctionInfos functions = GetBasicFunctionInfoUsingBinaryId(&conn, binary_id);
+    
+    printf("Found %zu functions:\n", functions.size);
+    for (size_t i = 0; i < functions.size; i++) {
+        FunctionInfo* func = &functions.data[i];
+        printf("Function ID: %llu, Name: %s, Address: 0x%llx, Size: %zu\n",
+               func->id, func->symbol.name.data, func->symbol.value.addr, func->size);
+    }
+    
+    // Clean up
+    VecDeinit(&functions);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Renaming Functions
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Rename a function
+    FunctionId function_id = 123456; // Replace with your function ID
+    Str new_name = StrInit();
+    StrPrintf(&new_name, "process_user_input");
+    
+    if (RenameFunction(&conn, function_id, new_name)) {
+        printf("Function renamed successfully\n");
+    } else {
+        printf("Function renaming failed\n");
+    }
+    
+    // Clean up
+    StrDeinit(&new_name);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### AI Decompilation
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Request AI decompilation for a function
+    FunctionId function_id = 123456; // Replace with your function ID
+    
+    if (!BeginAiDecompilation(&conn, function_id)) {
+        printf("Failed to start AI decompilation\n");
+        return 1;
+    }
+    
+    // Poll for decompilation status
+    Status status;
+    do {
+        sleep(5); // Wait 5 seconds between checks
+        status = GetAiDecompilationStatus(&conn, function_id);
+        
+        printf("Decompilation status: ");
+        switch (status & STATUS_MASK) {
+            case STATUS_QUEUED:
+            case STATUS_UNINITIALIZED:
+                printf("Queued\n");
+                break;
+            case STATUS_PROCESSING:
+            case STATUS_RUNNING:
+                printf("Processing\n");
+                break;
+            case STATUS_COMPLETE:
+                printf("Completed\n");
+                break;
+            case STATUS_ERROR:
+                printf("Failed\n");
+                break;
+            default:
+                printf("Unknown\n");
+        }
+    } while ((status & STATUS_MASK) == STATUS_QUEUED || 
+             (status & STATUS_MASK) == STATUS_PROCESSING ||
+             (status & STATUS_MASK) == STATUS_RUNNING ||
+             (status & STATUS_MASK) == STATUS_UNINITIALIZED);
+    
+    if ((status & STATUS_MASK) == STATUS_COMPLETE) {
+        // Get decompilation result with AI summary
+        AiDecompilation decompilation = GetAiDecompilation(&conn, function_id, true);
+        
+        printf("Decompiled code:\n%s\n\n", decompilation.decompiled_code.data);
+        printf("AI Summary:\n%s\n", decompilation.ai_summary.data);
+        
+        // Clean up decompilation
+        StrDeinit(&decompilation.decompiled_code);
+        StrDeinit(&decompilation.ai_summary);
+    }
+    
+    // Clean up
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Finding Similar Functions
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Create a request to find similar functions using the initialization macro
+    SimilarFunctionsRequest request = SimilarFunctionsRequestInit();
+    request.function_id = 123456; // Replace with your function ID
+    request.limit = 10;
+    request.distance = 0.8; // Similarity threshold (0.0 to 1.0)
+    
+    // Configure search options
+    request.debug_include.user_symbols = true;
+    request.debug_include.system_symbols = true;
+    request.debug_include.external_symbols = true;
+    
+    // Get similar functions
+    SimilarFunctions similar = GetSimilarFunctions(&conn, &request);
+    
+    printf("Found %zu similar functions:\n", similar.size);
+    for (size_t i = 0; i < similar.size; i++) {
+        SimilarFunction* func = &similar.data[i];
+        printf("Function: %s, Distance: %f\n", func->function_name.data, func->distance);
+    }
+    
+    // Clean up using the deinitialization macro
+    SimilarFunctionsRequestDeinit(&request);
+    VecDeinit(&similar);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+### Searching for Binaries
+
+```c
+#include <Reai/Api.h>
+
+int main() {
+    Connection conn = ConnectionInit();
+    StrPrintf(&conn.api_key, "your_api_key_here");
+    StrPrintf(&conn.host, "https://api.reveng.ai");
+    
+    // Authenticate
+    if (!Authenticate(&conn)) {
+        printf("Authentication failed\n");
+        return 1;
+    }
+    
+    // Create a search request using the initialization macro
+    SearchBinaryRequest request = SearchBinaryRequestInit();
+    request.page = 1;
+    request.page_size = 10;
+    
+    StrPrintf(&request.partial_name, "example");
+    
+    // Search for binaries
+    BinaryInfos binaries = SearchBinary(&conn, &request);
+    
+    printf("Found %zu binaries:\n", binaries.size);
+    for (size_t i = 0; i < binaries.size; i++) {
+        BinaryInfo* binary = &binaries.data[i];
+        printf("Binary ID: %llu, Name: %s\n", binary->id, binary->name.data);
+    }
+    
+    // Clean up using the deinitialization macro
+    SearchBinaryRequestDeinit(&request);
+    VecDeinit(&binaries);
+    StrDeinit(&conn.api_key);
+    StrDeinit(&conn.host);
+    
+    return 0;
+}
+```
+
+## API Reference
+
+For a complete list of API functions and their parameters, please refer to the header file:
+`Include/Reai/Api.h`
+
+Key API functions include:
+
+- `Authenticate`: Authenticate with the RevEngAI API
+- `UploadFile`: Upload a binary file for analysis
+- `CreateNewAnalysis`: Submit a new analysis request
+- `GetAnalysisStatus`: Check the status of an analysis
+- `GetBasicFunctionInfoUsingBinaryId`: Get function information for a binary
+- `RenameFunction`: Rename a function
+- `BeginAiDecompilation`: Start AI decompilation for a function
+- `GetAiDecompilationStatus`: Check the status of a decompilation
+- `GetAiDecompilation`: Get decompiled code and AI summary
+- `GetSimilarFunctions`: Find functions similar to a given function
+- `SearchBinary`: Search for binaries
+- `SearchCollection`: Search for collections
+
+## License
+
+Copyright (c) RevEngAI. All Rights Reserved.
