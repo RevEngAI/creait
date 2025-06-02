@@ -22,4 +22,8 @@ set_target_properties(
 )
 
 # Add installation target for library
-install(TARGETS reai DESTINATION lib)
+install(TARGETS reai
+  RUNTIME DESTINATION bin        # .dll files go here on Windows
+  LIBRARY DESTINATION lib        # .so files (Linux/macOS)
+  ARCHIVE DESTINATION lib        # .lib files (Windows import libs)
+)
