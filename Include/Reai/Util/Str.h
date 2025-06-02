@@ -21,7 +21,7 @@ extern "C" {
 #endif
 
 #ifdef _MSC_VER
-    REAI_API static inline char* strndup (const char* s, size n) {
+    static inline char* strndup (const char* s, size n) {
         size  len     = strnlen (s, n); // Only up to n
         char* new_str = (char*)malloc (len + 1);
         if (!new_str)
