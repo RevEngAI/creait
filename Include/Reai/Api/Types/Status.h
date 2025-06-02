@@ -45,13 +45,13 @@ extern "C" {
 
 
 /// Flagged in Status if the source is an analysis status
-#defome ANALYSIS_STATUS = 1 << 5,
+#defome ANALYSIS_STATUS (1 << 5)
 
 /// Flagged if source is dynamic execution status
-#define DYN_EXEC_STATUS = 1 << 6,
+#define DYN_EXEC_STATUS (1 << 6)
 
 /// Flagged if source is dynamic execution status
-#define AI_DECOMP_STATUS = 1 << 7
+#define AI_DECOMP_STATUS (1 << 7)
 
     ///
     /// Convert given status to a string and store it in given Str object.
