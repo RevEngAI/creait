@@ -45,7 +45,7 @@ extern "C" {
 
 
 /// Flagged in Status if the source is an analysis status
-#defome ANALYSIS_STATUS (1 << 5)
+#defime ANALYSIS_STATUS (1 << 5)
 
 /// Flagged if source is dynamic execution status
 #define DYN_EXEC_STATUS (1 << 6)
