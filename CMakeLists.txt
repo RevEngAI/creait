@@ -40,3 +40,9 @@ add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Source/Reai")
 
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)
+
+# Install FindCreait.cmake file for easy finding of library
+install(
+    FILES ${CMAKE_CURRENT_SOURCE_DIR}/FindCreait.cmake
+    DESTINATION ${CMAKE_INSTALL_PREFIX}/lib/cmake/Modules
+)

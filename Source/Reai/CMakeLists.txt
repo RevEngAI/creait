@@ -2,6 +2,7 @@ find_package(CURL)
 
 file(GLOB_RECURSE CREAIT_SRCS ${CMAKE_CURRENT_SOURCE_DIR} *.c)
 
+set(CURL_STATICLIB ON)
 find_package(CURL REQUIRED)
 
 # Dependencies
@@ -12,7 +13,7 @@ set(
 )
 
 # Reai Library
-add_library(reai ${CREAIT_SRCS})
+add_library(reai SHARED ${CREAIT_SRCS})
 target_link_libraries(reai PUBLIC ${CURL_LIBRARIES})
 target_link_directories(reai PUBLIC ${CMAKE_LIBRARY_OUTPUT_DIRECTORY})
 target_include_directories(reai PUBLIC ${PROJECT_SOURCE_DIR}/Include)
