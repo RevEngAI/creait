@@ -831,12 +831,14 @@ AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bo
 
         StrIter j = StrIterInitFromStr (&gj);
 
-        bool            status = false;
-        AiDecompilation decomp = {0};
-        decomp.decompilation   = StrInit();
-        decomp.summary         = StrInit();
-        decomp.functions       = VecInitWithDeepCopy_T (&decomp.functions, NULL, SymbolInfoDeinit);
-        decomp.strings         = VecInitWithDeepCopy_T (&decomp.strings, NULL, SymbolInfoDeinit);
+        bool            status   = false;
+        AiDecompilation decomp   = {0};
+        decomp.decompilation     = StrInit();
+        decomp.raw_decompilation = StrInit();
+        decomp.ai_summary        = StrInit();
+        decomp.raw_ai_summary    = StrInit();
+        decomp.functions = VecInitWithDeepCopy_T (&decomp.functions, NULL, SymbolInfoDeinit);
+        decomp.strings   = VecInitWithDeepCopy_T (&decomp.strings, NULL, SymbolInfoDeinit);
         decomp.unmatched.strings =
             VecInitWithDeepCopy_T (&decomp.unmatched.strings, NULL, SymbolInfoDeinit);
         decomp.unmatched.functions =
@@ -861,8 +863,10 @@ AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bo
             JR_BOOL_KV (j, "status", status);
             if (status) {
                 JR_OBJ_KV (j, "data", {
-                    JR_STR_KV (j, "raw_decompilation", decomp.decompilation);
-                    JR_STR_KV (j, "summary", decomp.summary);
+                    JR_STR_KV (j, "decompilation", decomp.decompilation);
+                    JR_STR_KV (j, "raw_decompilation", decomp.raw_decompilation);
+                    JR_STR_KV (j, "ai_summary", decomp.ai_summary);
+                    JR_STR_KV (j, "raw_ai_summary", decomp.raw_ai_summary);
                     JR_OBJ_KV (j, "function_mapping_full", {
                         JR_OBJ_KV (j, "inverse_string_map", {
                             SymbolInfo sym = {0};

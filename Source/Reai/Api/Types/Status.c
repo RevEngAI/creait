@@ -118,7 +118,7 @@ Status StatusFromStr (Str* ss) {
         return STATUS_ALL | ANALYSIS_STATUS;
     }
     if (!StrCmpZstr (ss, "PENDING")) {
-        return STATUS_PROCESSING | DYN_EXEC_STATUS ;
+        return STATUS_PROCESSING | DYN_EXEC_STATUS;
     }
     if (!StrCmpZstr (ss, "ERROR")) {
         return STATUS_ERROR | DYN_EXEC_STATUS | AI_DECOMP_STATUS;
@@ -130,7 +130,7 @@ Status StatusFromStr (Str* ss) {
         return STATUS_COMPLETE | AI_DECOMP_STATUS;
     }
     if (!StrCmpZstr (ss, "RUNNING")) {
-        return STATUS_RUNNING | DYN_EXEC_STATUS ;
+        return STATUS_RUNNING | DYN_EXEC_STATUS;
     }
     if (!StrCmpZstr (ss, "UNINITIALISED")) {
         return STATUS_UNINITIALIZED | AI_DECOMP_STATUS;

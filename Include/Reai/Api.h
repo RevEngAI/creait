@@ -341,7 +341,8 @@ extern "C" {
     ///   - Vector of SimilarFunction structures containing match details
     ///   - Empty vector if no matches found or connection failure
     ///
-    REAI_API SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
+    REAI_API SimilarFunctions
+        GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
 
     /// Maps a binary ID to its corresponding analysis ID.
     ///

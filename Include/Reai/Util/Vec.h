@@ -60,10 +60,12 @@ typedef struct {
 ///   Vec(HttpRequest) requests = VecInit();
 ///
 #define VecInit()                                                                                  \
-    {                                                                                              \
-        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)NULL,                            \
-        .copy_deinit = (GenericCopyDeinit)NULL, .data = NULL, .alignment = 1                       \
-    }
+    {.length      = 0,                                                                             \
+     .capacity    = 0,                                                                             \
+     .copy_init   = (GenericCopyInit)NULL,                                                         \
+     .copy_deinit = (GenericCopyDeinit)NULL,                                                       \
+     .data        = NULL,                                                                          \
+     .alignment   = 1}
 
 ///
 /// Initialize given vector. Default alignment is 1
@@ -89,13 +91,12 @@ typedef struct {
            .alignment   = 1})
 #else
 #    define VecInit_T(v)                                                                           \
-        ((TYPE_OF (*v)                                                                             \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)NULL,                                                   \
-           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = 1})
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)NULL,                                     \
+                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = 1})
 #endif
 
 ///
@@ -109,10 +110,12 @@ typedef struct {
 ///   Vec(HttpRequest) requests = VecInitWithDeepCopy(RequestClone, RequestDeinit);
 ///
 #define VecInitWithDeepCopy(ci, cd)                                                                \
-    {                                                                                              \
-        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)(ci),                            \
-        .copy_deinit = (GenericCopyDeinit)(cd), .data = NULL, .alignment = 1                       \
-    }
+    {.length      = 0,                                                                             \
+     .capacity    = 0,                                                                             \
+     .copy_init   = (GenericCopyInit)(ci),                                                         \
+     .copy_deinit = (GenericCopyDeinit)(cd),                                                       \
+     .data        = NULL,                                                                          \
+     .alignment   = 1}
 
 ///
 /// Initialize given vector. Default alignment is 1
@@ -143,13 +146,12 @@ typedef struct {
            .alignment   = 1})
 #else
 #    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
-        ((TYPE_OF (*v)                                                                             \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)(ci),                                                   \
-           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = 1})
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)(ci),                                     \
+                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = 1})
 #endif
 
 ///
@@ -167,10 +169,12 @@ typedef struct {
 ///   Vec(Node) nodes = VecInitAligned(16);
 ///
 #define VecInitAligned(aln)                                                                        \
-    {                                                                                              \
-        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)NULL,                            \
-        .copy_deinit = (GenericCopyDeinit)NULL, .data = NULL, .alignment = (aln)                   \
-    }
+    {.length      = 0,                                                                             \
+     .capacity    = 0,                                                                             \
+     .copy_init   = (GenericCopyInit)NULL,                                                         \
+     .copy_deinit = (GenericCopyDeinit)NULL,                                                       \
+     .data        = NULL,                                                                          \
+     .alignment   = (aln)}
 
 ///
 /// Initialize given vector with given alignment.
@@ -205,13 +209,12 @@ typedef struct {
            .alignment   = (aln)})
 #else
 #    define VecInitAligned_T(v, aln)                                                               \
-        ((TYPE_OF (*v)                                                                             \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)NULL,                                                   \
-           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = (aln)})
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)NULL,                                     \
+                         .copy_deinit = (GenericCopyDeinit)NULL,                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = (aln)})
 #endif
 
 ///
@@ -232,10 +235,12 @@ typedef struct {
 ///   NodeVec nodes = VecInitAligned(NodeInitCopy, NodeDeinit, 48);
 ///
 #define VecInitAlignedWithDeepCopy(ci, cd, aln)                                                    \
-    {                                                                                              \
-        .length = 0, .capacity = 0, .copy_init = (GenericCopyInit)(ci),                            \
-        .copy_deinit = (GenericCopyDeinit)(cd), .data = NULL, .alignment = (aln)                   \
-    }
+    {.length      = 0,                                                                             \
+     .capacity    = 0,                                                                             \
+     .copy_init   = (GenericCopyInit)(ci),                                                         \
+     .copy_deinit = (GenericCopyDeinit)(cd),                                                       \
+     .data        = NULL,                                                                          \
+     .alignment   = (aln)}
 
 ///
 /// Initialize given vector with given alignment.
@@ -276,13 +281,12 @@ typedef struct {
            .alignment   = (aln)})
 #else
 #    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
-        ((TYPE_OF (*v)                                                                             \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)(ci),                                                   \
-           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = (aln)})
+        ((TYPE_OF (*v)) {.length      = 0,                                                         \
+                         .capacity    = 0,                                                         \
+                         .copy_init   = (GenericCopyInit)(ci),                                     \
+                         .copy_deinit = (GenericCopyDeinit)(cd),                                   \
+                         .data        = NULL,                                                      \
+                         .alignment   = (aln)})
 #endif
 
 ///
@@ -1035,7 +1039,7 @@ typedef struct {
 /// SUCCESS : `v`
 /// FAILURE : Does not return on failure
 ///
-#define VecPushBackArr(v, arr, count) VecInsertRange((v), (arr), (v)->length, (count))
+#define VecPushBackArr(v, arr, count) VecInsertRange ((v), (arr), (v)->length, (count))
 
 ///
 /// Push a complete array into this vector.
@@ -1138,8 +1142,8 @@ typedef struct {
 ///
 #define VecForeachIdx(v, var, idx, body)                                                           \
     do {                                                                                           \
-        u64 idx               = 0;                                                                 \
-        VEC_DATA_TYPE (v) var;                                                               \
+        u64 idx = 0;                                                                               \
+        VEC_DATA_TYPE (v) var;                                                                     \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1167,8 +1171,8 @@ typedef struct {
 ///
 #define VecForeachReverseIdx(v, var, idx, body)                                                    \
     do {                                                                                           \
-        u64 idx               = 0;                                                                 \
-        VEC_DATA_TYPE (v) var;                                                               \
+        u64 idx = 0;                                                                               \
+        VEC_DATA_TYPE (v) var;                                                                     \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1198,8 +1202,8 @@ typedef struct {
 ///
 #define VecForeachPtrIdx(v, var, idx, body)                                                        \
     do {                                                                                           \
-        u64 idx                = 0;                                                                \
-        VEC_DATA_TYPE (v) *var;                                                             \
+        u64 idx = 0;                                                                               \
+        VEC_DATA_TYPE (v) * var;                                                                   \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = 0; (idx) < (v)->length; ++(idx)) {                                        \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1226,8 +1230,8 @@ typedef struct {
 ///
 #define VecForeachPtrReverseIdx(v, var, idx, body)                                                 \
     do {                                                                                           \
-        u64 idx                = 0;                                                                \
-        VEC_DATA_TYPE (v) *var;                                                              \
+        u64 idx = 0;                                                                               \
+        VEC_DATA_TYPE (v) * var;                                                                   \
         if ((v) != NULL && (v)->length > 0) {                                                      \
             for ((idx) = (v)->length - 1; (idx) < (v)->length; --(idx)) {                          \
                 if ((idx) >= (v)->length) {                                                        \
@@ -1322,8 +1326,7 @@ typedef struct {
 ///           be executed. Any failures within the `VecForeachPtrReverseIdx` macro (like
 ///           invalid index access) will result in a fatal log message and program termination.
 ///
-#define VecForeachPtrReverse(v, var, body)                                                         \
-    VecForeachPtrReverseIdx ((v), var, (____iter___), {body})
+#define VecForeachPtrReverse(v, var, body) VecForeachPtrReverseIdx ((v), var, (____iter___), {body})
 
 #ifdef __cplusplus
 extern "C" {

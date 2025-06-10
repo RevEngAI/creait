@@ -28,7 +28,7 @@ extern "C" {
     do {                                                                                           \
         Str msg = StrInit();                                                                       \
         StrPrintf (&msg, __VA_ARGS__);                                                             \
-        LogWrite (LOG_LEVEL_INFO, __func__, __LINE__, msg.data);                          \
+        LogWrite (LOG_LEVEL_INFO, __func__, __LINE__, msg.data);                                   \
         StrDeinit (&msg);                                                                          \
     } while (0)
 
@@ -36,7 +36,7 @@ extern "C" {
     do {                                                                                           \
         Str msg = StrInit();                                                                       \
         StrPrintf (&msg, __VA_ARGS__);                                                             \
-        LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, msg.data);                         \
+        LogWrite (LOG_LEVEL_ERROR, __func__, __LINE__, msg.data);                                  \
         StrDeinit (&msg);                                                                          \
     } while (0)
 
@@ -44,7 +44,7 @@ extern "C" {
     do {                                                                                           \
         Str msg = StrInit();                                                                       \
         StrPrintf (&msg, __VA_ARGS__);                                                             \
-        LogWrite (LOG_LEVEL_FATAL, __func__, __LINE__, msg.data);                         \
+        LogWrite (LOG_LEVEL_FATAL, __func__, __LINE__, msg.data);                                  \
         StrDeinit (&msg);                                                                          \
         abort();                                                                                   \
     } while (0)

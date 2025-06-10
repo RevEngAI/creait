@@ -96,13 +96,13 @@ typedef i8 bool;
 #endif
 
 #ifdef _WIN32
-  #ifdef REAI_EXPORTS
-    #define REAI_API __declspec(dllexport)
-  #else
-    #define REAI_API __declspec(dllimport)
-  #endif
+#    ifdef REAI_EXPORTS
+#        define REAI_API __declspec (dllexport)
+#    else
+#        define REAI_API __declspec (dllimport)
+#    endif
 #else
-  #define REAI_API
+#    define REAI_API
 #endif
 
 #endif // REAI_TYPE_H

@@ -15,7 +15,9 @@
 
 typedef struct AiDecompilation {
     Str         decompilation;
-    Str         summary; // optional
+    Str         raw_decompilation;
+    Str         ai_summary;     // optional (if requested)
+    Str         raw_ai_summary; // optional (if requested)
     SymbolInfos strings;
     SymbolInfos functions;
     struct {
