@@ -7,7 +7,9 @@ void AiDecompilationDeinit (AiDecompilation* clone) {
     }
 
     StrDeinit (&clone->decompilation);
-    StrDeinit (&clone->summary);
+    StrDeinit (&clone->raw_decompilation);
+    StrDeinit (&clone->ai_summary);
+    StrDeinit (&clone->raw_ai_summary);
     VecDeinit (&clone->functions);
     VecDeinit (&clone->strings);
     VecDeinit (&clone->unmatched.strings);
@@ -27,8 +29,10 @@ bool AiDecompilationInitClone (AiDecompilation* dst, AiDecompilation* src) {
         LOG_FATAL ("Invalid argument");
     }
 
-    dst->decompilation = StrInit();
-    dst->summary       = StrInit();
+    dst->decompilation     = StrInit();
+    dst->raw_decompilation = StrInit();
+    dst->ai_summary        = StrInit();
+    dst->raw_ai_summary    = StrInit();
     dst->functions = VecInitWithDeepCopy_T (&dst->functions, SymbolInfoInitClone, SymbolInfoDeinit);
     dst->strings   = VecInitWithDeepCopy_T (&dst->strings, SymbolInfoInitClone, SymbolInfoDeinit);
     dst->unmatched.strings =
@@ -53,7 +57,9 @@ bool AiDecompilationInitClone (AiDecompilation* dst, AiDecompilation* src) {
     );
 
     StrInitCopy (&dst->decompilation, &src->decompilation);
-    StrInitCopy (&dst->summary, &src->summary);
+    StrInitCopy (&dst->raw_decompilation, &src->raw_decompilation);
+    StrInitCopy (&dst->ai_summary, &src->ai_summary);
+    StrInitCopy (&dst->raw_ai_summary, &src->raw_ai_summary);
     VecInitClone (&dst->strings, &src->strings);
     VecInitClone (&dst->functions, &src->functions);
     VecInitClone (&dst->unmatched.strings, &src->unmatched.strings);
