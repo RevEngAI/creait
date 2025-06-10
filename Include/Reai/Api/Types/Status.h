@@ -39,21 +39,21 @@ extern "C" {
     } Status;
 
 #ifndef STATUS_ENUM_ALIASES_AND_MASK_DEFINED
-#define STATUS_ENUM_ALIASES_AND_MASK_DEFINED
+#    define STATUS_ENUM_ALIASES_AND_MASK_DEFINED
 
-#define STATUS_PENDING STATUS_PROCESSING
-#define STATUS_RUNNING STATUS_PROCESSING
-#define STATUS_SUCCESS STATUS_COMPLETE
-#define STATUS_UNINITIALIZED STATUS_QUEUED
+#    define STATUS_PENDING       STATUS_PROCESSING
+#    define STATUS_RUNNING       STATUS_PROCESSING
+#    define STATUS_SUCCESS       STATUS_COMPLETE
+#    define STATUS_UNINITIALIZED STATUS_QUEUED
 
 /// Flagged in Status if the source is an analysis status
-#define ANALYSIS_STATUS (1 << 5)
+#    define ANALYSIS_STATUS (1 << 5)
 
 /// Flagged if source is dynamic execution status
-#define DYN_EXEC_STATUS (1 << 6)
+#    define DYN_EXEC_STATUS (1 << 6)
 
 /// Flagged if source is dynamic execution status
-#define AI_DECOMP_STATUS (1 << 7)
+#    define AI_DECOMP_STATUS (1 << 7)
 
 #endif
 

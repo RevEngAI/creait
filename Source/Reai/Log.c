@@ -132,7 +132,7 @@ LOG_STREAM_FALLBACK: {
     }
 }
 
-void LogWrite (LogLevel level, const char *tag, int line, const char* msg) {
+void LogWrite (LogLevel level, const char *tag, int line, const char *msg) {
     // By default we have a "decompiler" tag in all logs
     tag = tag ? tag : "log_write";
 

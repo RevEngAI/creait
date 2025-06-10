@@ -22,17 +22,15 @@ typedef Vec (i64) F64Vec;
 
 typedef struct {
     char* data;
-    size   length;
-    size   pos;
+    size  length;
+    size  pos;
     size  alignment;
 } StrIter;
 
-#define StrIterInit()                                                                              \
-    { .data = NULL, .length = 0, .pos = 0, .alignment = 1 }
-#define StrIterInitAligned(aln)                                                                    \
-    { .data = NULL, .length = 0, .pos = 0, .alignment = (aln) }
+#define StrIterInit()           {.data = NULL, .length = 0, .pos = 0, .alignment = 1}
+#define StrIterInitAligned(aln) {.data = NULL, .length = 0, .pos = 0, .alignment = (aln)}
 #define StrIterInitFromStr(v)                                                                      \
-    { .data = (v)->data, .length = (v)->length, .pos = 0, .alignment = (v)->alignment }
+    {.data = (v)->data, .length = (v)->length, .pos = 0, .alignment = (v)->alignment}
 
 ///
 /// Get total length of this StrIter object
@@ -94,7 +92,7 @@ typedef struct {
             (mi)->pos += (n);                                                                      \
         else                                                                                       \
             LOG_ERROR (                                                                            \
-                "StrIter: iter move by %d didn't take place {pos = %zu, length = %zu}",           \
+                "StrIter: iter move by %d didn't take place {pos = %zu, length = %zu}",            \
                 (n),                                                                               \
                 (mi)->pos,                                                                         \
                 (mi)->length                                                                       \
