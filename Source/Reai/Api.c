@@ -1539,6 +1539,58 @@ bool DeleteAiDecompilationComment (Connection* conn, FunctionId function_id, Com
     return false;
 }
 
+REAI_API Comments GetComments (Connection* conn) {
+    if (!conn) {
+        LOG_ERROR ("Invalid argument");
+        return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+    }
+
+    Str url = StrInit();
+    StrPrintf (&url, "%s/v2/users/me/comments", conn->host.data);
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
+        StrDeinit (&url);
+
+        StrIter  j        = StrIterInitFromStr (&gj);
+        bool     status   = false;
+        Comments comments = VecInitWithDeepCopy (NULL, CommentDeinit);
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_ARR_KV (j, "data", {
+                    Comment c;
+                    c.content       = StrInit();
+                    c.created_at    = StrInit();
+                    c.updated_at    = StrInit();
+                    c.resource_type = StrInit();
+                    JR_OBJ (j, {
+                        JR_STR_KV (j, "content", c.content);
+                        JR_INT_KV (j, "id", c.id);
+                        JR_INT_KV (j, "user_id", c.user_id);
+                        JR_STR_KV (j, "resource_type", c.resource_type);
+                        JR_INT_KV (j, "resource_id", c.resource_id);
+                        JR_OBJ_KV (j, "context", {
+                            JR_INT_KV (j, "start_line", c.context.start_line);
+                            JR_INT_KV (j, "end_line", c.context.end_line);
+                        });
+                        JR_STR_KV (j, "created_at", c.created_at);
+                        JR_STR_KV (j, "updated_at", c.updated_at);
+                    });
+                    VecPushBack (&comments, c);
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return comments;
+    }
+
+
+    return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+}
 
 Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_first) {
     if (!url || !key) {

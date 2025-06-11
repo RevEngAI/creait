@@ -635,9 +635,18 @@ extern "C" {
         CommentId   comment_id
     );
 
-    //
-    // GET: /v2/users/me/comments
 
+    ///
+    /// GET: /v2/users/me/comments
+    ///
+    /// Get all comments created by this user.
+    ///
+    /// conn[in]         : Connection object with information to make secure connection with RevEngAI servers.
+    ///
+    /// SUCCESS: Comments vector filled with information about all created comments.
+    /// FAILURE: Empty vector object.
+    ///
+    REAI_API Comments GetComments (Connection* conn);
 
 #ifdef __cplusplus
 }
