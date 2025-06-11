@@ -82,13 +82,14 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInit_T(v)                                                                           \
-        (TYPE_OF (*v                                                                               \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)NULL,                                                   \
-           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = 1})
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)NULL,                                                  \
+            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = 1                                                                       \
+        })
 #else
 #    define VecInit_T(v)                                                                           \
         ((TYPE_OF (*v)) {.length      = 0,                                                         \
@@ -137,13 +138,14 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
-        (TYPE_OF (*v                                                                               \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)(ci),                                                   \
-           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = 1})
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)(ci),                                                  \
+            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = 1                                                                       \
+        })
 #else
 #    define VecInitWithDeepCopy_T(v, ci, cd)                                                       \
         ((TYPE_OF (*v)) {.length      = 0,                                                         \
@@ -200,13 +202,14 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitAligned_T(v, aln)                                                               \
-        (TYPE_OF (*v                                                                               \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)NULL,                                                   \
-           .copy_deinit = (GenericCopyDeinit)NULL,                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = (aln)})
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)NULL,                                                  \
+            .copy_deinit = (GenericCopyDeinit)NULL,                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = (aln)                                                                   \
+        })
 #else
 #    define VecInitAligned_T(v, aln)                                                               \
         ((TYPE_OF (*v)) {.length      = 0,                                                         \
@@ -272,13 +275,14 @@ typedef struct {
 ///
 #ifdef __cplusplus
 #    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
-        (TYPE_OF (*v                                                                               \
-        ) {.length      = 0,                                                                       \
-           .capacity    = 0,                                                                       \
-           .copy_init   = (GenericCopyInit)(ci),                                                   \
-           .copy_deinit = (GenericCopyDeinit)(cd),                                                 \
-           .data        = NULL,                                                                    \
-           .alignment   = (aln)})
+        (TYPE_OF (*v) {                                                                            \
+            .length      = 0,                                                                      \
+            .capacity    = 0,                                                                      \
+            .copy_init   = (GenericCopyInit)(ci),                                                  \
+            .copy_deinit = (GenericCopyDeinit)(cd),                                                \
+            .data        = NULL,                                                                   \
+            .alignment   = (aln)                                                                   \
+        })
 #else
 #    define VecInitAlignedWithDeepCopy_T(v, ci, cd, aln)                                           \
         ((TYPE_OF (*v)) {.length      = 0,                                                         \

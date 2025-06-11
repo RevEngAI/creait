@@ -492,6 +492,153 @@ extern "C" {
         Str*        file_path
     );
 
+    ///
+    /// GET: /v2/functions/{function_id}/decompilation/comments
+    ///
+    /// Get list of all comments created for function with given Id.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    ///
+    /// SUCCESS: A vector object containing all comments created by user.
+    /// FAILURE: Empty object.
+    ///
+    REAI_API Comments GetDecompilationComments (Connection* conn, FunctionId function_id);
+
+    ///
+    /// POST: /v2/functions/{function_id}/decompilation/comments
+    ///
+    /// Create a new comment for decompilation for function with given function id.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment[in]      : Str object containing the comment contents.
+    /// start_line[in]   : Start line within decompilation to add comment to.
+    /// end_line[in]     : End line within decompilation to add comment to.
+    ///
+    /// SUCCESS: A non-zero unique value associated with newly created comment, indicating comment creation was successful.
+    /// FAILURE: Zero.
+    ///
+    REAI_API CommentId AddDecompilationComment (
+        Connection* conn,
+        FunctionId  function_id,
+        Str*        comment,
+        u64         start_line,
+        u64         end_line
+    );
+
+    ///
+    /// PATCH: /v2/functions/{function_id}/decompilation/comments/{comment_id}
+    ///
+    /// Update an existing comment.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment_id[in]   : Comment ID for comment to be updated.
+    /// comment[in]      : Str object containing the comment contents.
+    ///
+    /// SUCCESS: true indicating successful comment update.
+    /// FAILURE: false.
+    ///
+    REAI_API bool UpdateDecompilationComment (
+        Connection* conn,
+        FunctionId  function_id,
+        CommentId   comment_id,
+        Str*        comment
+    );
+
+    ///
+    /// DELETE: /v2/functions/{function_id}/decompilation/comments/{comment_id}
+    ///
+    /// Delete an existing comment.
+    ///
+    /// conn[in]         : Connection object with information to make secure connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment_id[in]   : Comment ID for comment to be updated.
+    ///
+    /// SUCCESS: true indicating successful comment deletion.
+    /// FAILURE: false.
+    ///
+    REAI_API bool
+        DeleteDecompilationComment (Connection* conn, FunctionId function_id, CommentId comment_id);
+
+    ///
+    /// GET: /v2/functions/{function_id}/ai-decompilation/comments
+    ///
+    /// Get list of all comments created for function with given Id.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    ///
+    /// SUCCESS: A vector object containing all comments created by user.
+    /// FAILURE: Empty object.
+    ///
+    REAI_API Comments GetAiDecompilationComments (Connection* conn, FunctionId function_id);
+
+    ///
+    /// POST: /v2/functions/{function_id}/ai-decompilation/comments
+    ///
+    /// Create a new comment for decompilation for function with given function id.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment[in]      : Str object containing the comment contents.
+    /// start_line[in]   : Start line within decompilation to add comment to.
+    /// end_line[in]     : End line within decompilation to add comment to.
+    ///
+    /// SUCCESS: A non-zero unique value associated with newly created comment, indicating comment creation was successful.
+    /// FAILURE: Zero.
+    ///
+    REAI_API CommentId AddAiDecompilationComment (
+        Connection* conn,
+        FunctionId  function_id,
+        Str*        comment,
+        u64         start_line,
+        u64         end_line
+    );
+
+    ///
+    /// PATCH: /v2/functions/{function_id}/ai-decompilation/comments/{comment_id}
+    ///
+    /// Update an existing comment.
+    ///
+    /// conn[in]         : Connection object with information to make secure  connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment_id[in]   : Comment ID for comment to be updated.
+    /// comment[in]      : Str object containing the comment contents.
+    ///
+    /// SUCCESS: true indicating successful comment update.
+    /// FAILURE: false.
+    ///
+    REAI_API bool UpdateAiDecompilationComment (
+        Connection* conn,
+        FunctionId  function_id,
+        CommentId   comment_id,
+        Str*        comment
+    );
+
+    ///
+    /// DELETE: /v2/functions/{function_id}/ai-decompilation/comments/{comment_id}
+    ///
+    /// Delete an existing comment.
+    ///
+    /// conn[in]         : Connection object with information to make secure connection with RevEngAI servers.
+    /// function_id[in]  : Function ID to get comments for.
+    /// comment_id[in]   : Comment ID for comment to be updated.
+    ///
+    /// SUCCESS: true indicating successful comment deletion.
+    /// FAILURE: false.
+    ///
+    REAI_API bool DeleteAiDecompilationComment (
+        Connection* conn,
+        FunctionId  function_id,
+        CommentId   comment_id
+    );
+
+    //
+    // GET: /v2/users/me/comments
+
+
 #ifdef __cplusplus
 }
 #endif
