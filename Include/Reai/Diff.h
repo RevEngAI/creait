@@ -36,13 +36,13 @@ typedef Vec (DiffLine) DiffLines;
         (DiffLine {.type = DIFF_TYPE_ADD, .add.line = (l), .add.content = StrDup (s)})
 #    define DiffLineInitRem(l, s)                                                                  \
         (DiffLine {.type = DIFF_TYPE_REM, .rem.line = (l), .rem.content = StrDup (s)})
-#    define DiffLineInitMov(lo, so, ln, sn)                                                        \
+#    define DiffLineInitMov(lo, ln, s)                                                             \
         (DiffLine {                                                                                \
             .type            = DIFF_TYPE_MOV,                                                      \
             .mov.old_line    = (lo),                                                               \
             .mov.new_line    = (ln),                                                               \
-            .mov.old_content = StrDup (so),                                                        \
-            .mov.new_content = StrDup (sn)                                                         \
+            .mov.old_content = StrDup (s),                                                         \
+            .mov.new_content = StrDup (s)                                                          \
         })
 #    define DiffLineInitMod(lo, so, ln, sn)                                                        \
         (DiffLine {                                                                                \
@@ -59,12 +59,12 @@ typedef Vec (DiffLine) DiffLines;
         ((DiffLine) {.type = DIFF_TYPE_ADD, .add.line = (l), .add.content = StrDup (s)})
 #    define DiffLineInitRem(l, s)                                                                  \
         ((DiffLine) {.type = DIFF_TYPE_REM, .rem.line = (l), .rem.content = StrDup (s)})
-#    define DiffLineInitMov(lo, so, ln, sn)                                                        \
+#    define DiffLineInitMov(lo, ln, s)                                                             \
         ((DiffLine) {.type            = DIFF_TYPE_MOV,                                             \
                      .mov.old_line    = (lo),                                                      \
                      .mov.new_line    = (ln),                                                      \
-                     .mov.old_content = StrDup (so),                                               \
-                     .mov.new_content = StrDup (sn)})
+                     .mov.old_content = StrDup (s),                                                \
+                     .mov.new_content = StrDup (s)})
 #    define DiffLineInitMod(lo, so, ln, sn)                                                        \
         ((DiffLine) {.type            = DIFF_TYPE_MOD,                                             \
                      .mov.old_line    = (lo),                                                      \
@@ -79,6 +79,9 @@ extern "C" {
 
     REAI_API bool DiffLineInitClone (DiffLine* dst, DiffLine* src);
     REAI_API void DiffLineDeinit (DiffLine* dl);
+
+    REAI_API u32 StrLevenshteinDistance (Str* s1, Str* s2);
+    REAI_API bool StrAreSimilar (Str* s1, Str* s2, u32 max_distance);
 
     REAI_API DiffLines GetDiff (Str* og, Str* nw);
 

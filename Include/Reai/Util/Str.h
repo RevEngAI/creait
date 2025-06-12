@@ -399,8 +399,8 @@ extern "C" {
 #define StrLast(str)      VecLast (str)
 #define StrBegin(str)     VecBegin (str)
 #define StrEnd(str)       VecEnd (str)
-#define StrCharAt(str)    VecAt (str, idx)
-#define StrCharPtrAt(str) VecPtrAt (str, idx)
+#define StrCharAt(str, idx)    VecAt (str, idx)
+#define StrCharPtrAt(str, idx) VecPtrAt (str, idx)
 
 /// Push an array of chars with given length to the back of this string.
 ///
