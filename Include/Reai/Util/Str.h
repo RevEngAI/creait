@@ -121,7 +121,7 @@ extern "C" {
 /// RETURN : +ve or -ve depending on above or below in lexical ordering
 /// RETURN : 0 if both are equal
 ///
-#define StrCmp(str, ostr) memcmp ((str)->data, (ostr)->data, MIN2 ((str)->length, (ostr)->length))
+#define StrCmp(str, ostr) strncmp ((str)->data, (ostr)->data, (ostr)->length)
 
 ///
 /// Compare string with another const char*
