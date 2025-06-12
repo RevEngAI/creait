@@ -158,21 +158,12 @@ DiffLines GetDiff (Str* og, Str* nw) {
     // Resize vectors to match the number of lines and initialize to false
     VecResize(&og_matched, og_lines.length);
     VecResize(&nw_matched, nw_lines.length);
-    
-    // Initialize all elements to false (VecResize should zero-initialize)
-    for (size_t i = 0; i < og_lines.length; i++) {
-        VecAt(&og_matched, i) = false;
-    }
-    for (size_t i = 0; i < nw_lines.length; i++) {
-        VecAt(&nw_matched, i) = false;
-    }
 
     // Phase 1: Find exact matches in the same positions
-    for (size_t i = 0; i < og_lines.length && i < nw_lines.length; i++) {
-        if (VecAt(&og_matched, i) || VecAt(&nw_matched, i)) continue;
-        
-        if (StrCmp(&og_lines.data[i], &nw_lines.data[i]) == 0) {
-            DiffLine same = DiffLineInitSam(i, &og_lines.data[i]);
+    size_t min_length = og_lines.length < nw_lines.length ? og_lines.length : nw_lines.length;
+    for (size_t i = 0; i < min_length; i++) {        
+        if (StrCmp(VecPtrAt(&og_lines, i), VecPtrAt(&nw_lines, i)) == 0) {
+            DiffLine same = DiffLineInitSam(i, VecPtrAt(&og_lines, i));
             VecPushBack(&diff, same);
             VecAt(&og_matched, i) = true;
             VecAt(&nw_matched, i) = true;
@@ -180,56 +171,56 @@ DiffLines GetDiff (Str* og, Str* nw) {
     }
 
     // Phase 2: Find moves (exact content in different positions)
-    for (size_t og_idx = 0; og_idx < og_lines.length; og_idx++) {
+    VecForeachPtrIdx(&og_lines, og_line, og_idx, {
         if (VecAt(&og_matched, og_idx)) continue;
         
-        for (size_t nw_idx = 0; nw_idx < nw_lines.length; nw_idx++) {
+        VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
             if (VecAt(&nw_matched, nw_idx)) continue;
             
-            if (StrCmp(&og_lines.data[og_idx], &nw_lines.data[nw_idx]) == 0) {
-                DiffLine move = DiffLineInitMov(og_idx, &og_lines.data[og_idx], nw_idx, &nw_lines.data[nw_idx]);
+            if (StrCmp(og_line, nw_line) == 0) {
+                DiffLine move = DiffLineInitMov(og_idx, og_line, nw_idx, nw_line);
                 VecPushBack(&diff, move);
                 VecAt(&og_matched, og_idx) = true;
                 VecAt(&nw_matched, nw_idx) = true;
                 break;
             }
-        }
-    }
+        });
+    });
 
     // Phase 3: Find modifications using fuzzy matching
-    for (size_t og_idx = 0; og_idx < og_lines.length; og_idx++) {
+    VecForeachPtrIdx(&og_lines, og_line, og_idx, {
         if (VecAt(&og_matched, og_idx)) continue;
         
-        for (size_t nw_idx = 0; nw_idx < nw_lines.length; nw_idx++) {
+        VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
             if (VecAt(&nw_matched, nw_idx)) continue;
             
             // Calculate fuzzy match tolerance (75% of the longer string)
-            u32 tolerance = (MAX2(og_lines.data[og_idx].length, nw_lines.data[nw_idx].length) * 3) / 4;
+            u32 tolerance = (MAX2(og_line->length, nw_line->length) * 3) / 4;
             
-            if (StrFuzzyCmp(&og_lines.data[og_idx], &nw_lines.data[nw_idx], tolerance)) {
-                DiffLine mod = DiffLineInitMod(og_idx, &og_lines.data[og_idx], nw_idx, &nw_lines.data[nw_idx]);
+            if (StrFuzzyCmp(og_line, nw_line, tolerance)) {
+                DiffLine mod = DiffLineInitMod(og_idx, og_line, nw_idx, nw_line);
                 VecPushBack(&diff, mod);
                 VecAt(&og_matched, og_idx) = true;
                 VecAt(&nw_matched, nw_idx) = true;
                 break;
             }
-        }
-    }
+        });
+    });
 
     // Phase 4: Handle remaining unmatched lines (removals and additions)
-    for (size_t og_idx = 0; og_idx < og_lines.length; og_idx++) {
+    VecForeachPtrIdx(&og_lines, og_line, og_idx, {
         if (!VecAt(&og_matched, og_idx)) {
-            DiffLine removed = DiffLineInitRem(og_idx, &og_lines.data[og_idx]);
+            DiffLine removed = DiffLineInitRem(og_idx, og_line);
             VecPushBack(&diff, removed);
         }
-    }
+    });
     
-    for (size_t nw_idx = 0; nw_idx < nw_lines.length; nw_idx++) {
+    VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
         if (!VecAt(&nw_matched, nw_idx)) {
-            DiffLine added = DiffLineInitAdd(nw_idx, &nw_lines.data[nw_idx]);
+            DiffLine added = DiffLineInitAdd(nw_idx, nw_line);
             VecPushBack(&diff, added);
         }
-    }
+    });
 
     // Phase 5: Sort the diff results by line number for proper output order
     VecSort(&diff, DiffLineNumberCompare);
