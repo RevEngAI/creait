@@ -170,44 +170,45 @@ DiffLines GetDiff (Str* og, Str* nw) {
         }
     }
 
-    // Phase 2: Find moves (exact content in different positions)
+    // Phase 2: Find moves and modifications in a single pass
     VecForeachPtrIdx(&og_lines, og_line, og_idx, {
         if (VecAt(&og_matched, og_idx)) continue;
         
+        bool found_match = false;
         VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
             if (VecAt(&nw_matched, nw_idx)) continue;
             
+            // First check for exact match (move)
             if (StrCmp(og_line, nw_line) == 0) {
                 DiffLine move = DiffLineInitMov(og_idx, og_line, nw_idx, nw_line);
                 VecPushBack(&diff, move);
                 VecAt(&og_matched, og_idx) = true;
                 VecAt(&nw_matched, nw_idx) = true;
+                found_match = true;
                 break;
             }
         });
-    });
-
-    // Phase 3: Find modifications using fuzzy matching
-    VecForeachPtrIdx(&og_lines, og_line, og_idx, {
-        if (VecAt(&og_matched, og_idx)) continue;
         
-        VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
-            if (VecAt(&nw_matched, nw_idx)) continue;
-            
-            // Calculate fuzzy match tolerance (75% of the longer string)
-            u32 tolerance = (MAX2(og_line->length, nw_line->length) * 3) / 4;
-            
-            if (StrFuzzyCmp(og_line, nw_line, tolerance)) {
-                DiffLine mod = DiffLineInitMod(og_idx, og_line, nw_idx, nw_line);
-                VecPushBack(&diff, mod);
-                VecAt(&og_matched, og_idx) = true;
-                VecAt(&nw_matched, nw_idx) = true;
-                break;
-            }
-        });
+        // If no exact match found, look for fuzzy match (modification)
+        if (!found_match) {
+            VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
+                if (VecAt(&nw_matched, nw_idx)) continue;
+                
+                // Calculate fuzzy match tolerance (50% of the longer string)
+                u32 tolerance = MAX2(og_line->length, nw_line->length) / 2;
+                
+                if (StrFuzzyCmp(og_line, nw_line, tolerance)) {
+                    DiffLine mod = DiffLineInitMod(og_idx, og_line, nw_idx, nw_line);
+                    VecPushBack(&diff, mod);
+                    VecAt(&og_matched, og_idx) = true;
+                    VecAt(&nw_matched, nw_idx) = true;
+                    break;
+                }
+            });
+        }
     });
 
-    // Phase 4: Handle remaining unmatched lines (removals and additions)
+    // Phase 3: Handle remaining unmatched lines (removals and additions)
     VecForeachPtrIdx(&og_lines, og_line, og_idx, {
         if (!VecAt(&og_matched, og_idx)) {
             DiffLine removed = DiffLineInitRem(og_idx, og_line);
@@ -222,7 +223,7 @@ DiffLines GetDiff (Str* og, Str* nw) {
         }
     });
 
-    // Phase 5: Sort the diff results by line number for proper output order
+    // Phase 4: Sort the diff results by line number for proper output order
     VecSort(&diff, DiffLineNumberCompare);
 
     // Cleanup
