@@ -1226,7 +1226,7 @@ CommentId AddDecompilationComment (
     u64         start_line,
     u64         end_line
 ) {
-    if (!conn || !function_id || !comment || start_line >= end_line) {
+    if (!conn || !function_id || !comment || start_line > end_line) {
         LOG_ERROR ("Invalid arguments");
         return 0;
     }
@@ -1412,7 +1412,7 @@ CommentId AddAiDecompilationComment (
     u64         start_line,
     u64         end_line
 ) {
-    if (!conn || !function_id || !comment || start_line >= end_line) {
+    if (!conn || !function_id || !comment || start_line > end_line) {
         LOG_ERROR ("Invalid arguments");
         return 0;
     }

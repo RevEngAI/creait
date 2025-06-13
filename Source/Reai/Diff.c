@@ -67,7 +67,7 @@ void DiffLineDeinit (DiffLine* dl) {
     dl->type = 0;
 }
 
-u64 getDiffLineNumber(const DiffLine* line) {
+u64 getDiffOldLineNumber(const DiffLine* line) {
     switch (line->type) {
         case DIFF_TYPE_SAM:
         case DIFF_TYPE_REM:
@@ -77,20 +77,27 @@ u64 getDiffLineNumber(const DiffLine* line) {
         case DIFF_TYPE_MOD:
             return line->mov.old_line;
         default:
-            return 0;
+            LOG_FATAL("Invalid diff line type: %c", line->type);
     }
 }
 
-int DiffLineNumberCompare(const void* a, const void* b) {
-    const DiffLine* line_a = (const DiffLine*)a;
-    const DiffLine* line_b = (const DiffLine*)b;
-    
-    u64 line_a_num = getDiffLineNumber(line_a);
-    u64 line_b_num = getDiffLineNumber(line_b);
-    
-    if (line_a_num < line_b_num) return -1;
-    if (line_a_num > line_b_num) return 1;
-    return 0;
+u64 getDiffNewLineNumber(const DiffLine* line) {
+    switch (line->type) {
+        case DIFF_TYPE_SAM:
+        case DIFF_TYPE_REM:
+        case DIFF_TYPE_ADD:
+            return line->sam.line; // All use the same union field
+        case DIFF_TYPE_MOV:
+        case DIFF_TYPE_MOD:
+            return line->mov.new_line;
+        default:
+            LOG_FATAL("Invalid diff line type: %c", line->type);
+    }
+}
+
+int DiffLineNumberCompare(const DiffLine* a, const DiffLine* b) {    
+    if (getDiffNewLineNumber(a) <= getDiffNewLineNumber(b)) return -1;
+    else return 1;
 }
 
 u32 StrLevenshteinDistance (Str* s1, Str* s2) {
@@ -190,9 +197,18 @@ DiffLines GetDiff (Str* og, Str* nw) {
 
     // Phase 1: Find exact matches in the same positions
     size_t min_length = og_lines.length < nw_lines.length ? og_lines.length : nw_lines.length;
-    for (size_t i = 0; i < min_length; i++) {        
-        if (StrCmp(VecPtrAt(&og_lines, i), VecPtrAt(&nw_lines, i)) == 0) {
-            DiffLine same = DiffLineInitSam(i, VecPtrAt(&og_lines, i));
+    
+    for (size_t i = 0; i < min_length; i++) {
+        Str* og_line = VecPtrAt(&og_lines, i);
+        Str* nw_line = VecPtrAt(&nw_lines, i);
+        
+        // Skip empty lines in Phase 1 - they're not meaningful for exact matching
+        if (og_line->length == 0 || nw_line->length == 0) {
+            continue;
+        }
+        
+        if (StrCmp(og_line, nw_line) == 0) {
+            DiffLine same = DiffLineInitSam(i, og_line);
             VecPushBack(&diff, same);
             VecAt(&og_matched, i) = true;
             VecAt(&nw_matched, i) = true;
@@ -201,11 +217,21 @@ DiffLines GetDiff (Str* og, Str* nw) {
 
     // Phase 2: Find moves and modifications in a single pass
     VecForeachPtrIdx(&og_lines, og_line, og_idx, {
-        if (VecAt(&og_matched, og_idx)) continue;
+        if (VecAt(&og_matched, og_idx)) {
+            continue;
+        }
+        
+        // Skip empty lines in Phase 2 - they're not meaningful for moves/modifications
+        if (og_line->length == 0) {
+            continue;
+        }
         
         bool found_match = false;
         VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
             if (VecAt(&nw_matched, nw_idx)) continue;
+            
+            // Skip empty lines when looking for matches
+            if (nw_line->length == 0) continue;
             
             // First check for exact match (move)
             if (StrCmp(og_line, nw_line) == 0) {
@@ -223,10 +249,14 @@ DiffLines GetDiff (Str* og, Str* nw) {
             VecForeachPtrIdx(&nw_lines, nw_line, nw_idx, {
                 if (VecAt(&nw_matched, nw_idx)) continue;
                 
+                // Skip empty lines when looking for fuzzy matches
+                if (nw_line->length == 0) continue;
+                
                 // Calculate max distance based on string lengths
-                // Use 20% of the average length, with minimum of 2 and maximum of 10
+                // Use 25% of the average length, with minimum of 3 and maximum of 15
+                // Be more lenient to catch indentation changes
                 u64 avg_length = (og_line->length + nw_line->length) / 2;
-                u32 max_distance = MAX2(2, MIN2(10, avg_length / 5));
+                u32 max_distance = MAX2(3, MIN2(15, avg_length / 4));
                 
                 if (StrAreSimilar(og_line, nw_line, max_distance)) {
                     DiffLine mod = DiffLineInitMod(og_idx, og_line, nw_idx, nw_line);

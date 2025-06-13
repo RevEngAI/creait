@@ -38,10 +38,15 @@ bool ReadFileToStr(const char* filename, Str* str) {
     return true;
 }
 
-// Function to print a line with proper formatting
-void PrintLine(const char* prefix, const char* color, u64 line_num, const Str* content) {
-    printf("%s%s%3llu: %.*s%s\n", color, prefix, line_num + 1, 
-           (int)content->length, content->data, RESET);
+// Function to print a line with proper formatting and type info
+void PrintLine(const char* prefix, const char* color, u64 line_num, const Str* content, const char* type_info) {
+    if (type_info && strlen(type_info) > 0) {
+        printf("%s%s%3llu: %.*s%s %s[%s]%s\n", color, prefix, line_num + 1, 
+               (int)content->length, content->data, RESET, BLUE, type_info, RESET);
+    } else {
+        printf("%s%s%3llu: %.*s%s\n", color, prefix, line_num + 1, 
+               (int)content->length, content->data, RESET);
+    }
 }
 
 // Function to print diff results with colors
@@ -57,31 +62,34 @@ void PrintDiff(const char* file1, const char* file2, const DiffLines* diff) {
     VecForeachPtr(diff, line, {
         switch (line->type) {
             case DIFF_TYPE_SAM: {
-                PrintLine(" ", "", line->sam.line, &line->sam.content);
+                PrintLine(" ", "", line->sam.line, &line->sam.content, "");
                 break;
             }
             
             case DIFF_TYPE_ADD: {
-                PrintLine("+", GREEN, line->add.line, &line->add.content);
+                PrintLine("+", GREEN, line->add.line, &line->add.content, "ADDED");
                 break;
             }
             
             case DIFF_TYPE_REM: {
-                PrintLine("-", RED, line->rem.line, &line->rem.content);
+                PrintLine("-", RED, line->rem.line, &line->rem.content, "REMOVED");
                 break;
             }
             
             case DIFF_TYPE_MOD: {
-                PrintLine("-", RED, line->mod.old_line, &line->mod.old_content);
-                PrintLine("+", GREEN, line->mod.new_line, &line->mod.new_content);
+                char mod_info[64];
+                snprintf(mod_info, sizeof(mod_info), "MODIFIED: was line %llu", line->mod.old_line + 1);
+                PrintLine("-", RED, line->mod.old_line, &line->mod.old_content, "MODIFIED: old");
+                PrintLine("+", GREEN, line->mod.new_line, &line->mod.new_content, mod_info);
                 break;
             }
             
             case DIFF_TYPE_MOV: {
-                // Show moved lines with yellow color
-                printf("%s~ Line %llu moved to %llu: %.*s%s\n", 
-                       YELLOW, line->mov.old_line + 1, line->mov.new_line + 1,
-                       (int)line->mov.new_content.length, line->mov.new_content.data, RESET);
+                // Show moved lines with yellow color and clear info
+                printf("%s~ %3llu: %.*s%s %s[MOVED: from line %llu]%s\n", 
+                       YELLOW, line->mov.new_line + 1,
+                       (int)line->mov.new_content.length, line->mov.new_content.data, RESET,
+                       BLUE, line->mov.old_line + 1, RESET);
                 break;
             }
             
