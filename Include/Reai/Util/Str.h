@@ -395,10 +395,10 @@ extern "C" {
 ///
 #define StrClear(str) VecClear (str)
 
-#define StrFirst(str)     VecFirst (str)
-#define StrLast(str)      VecLast (str)
-#define StrBegin(str)     VecBegin (str)
-#define StrEnd(str)       VecEnd (str)
+#define StrFirst(str)          VecFirst (str)
+#define StrLast(str)           VecLast (str)
+#define StrBegin(str)          VecBegin (str)
+#define StrEnd(str)            VecEnd (str)
 #define StrCharAt(str, idx)    VecAt (str, idx)
 #define StrCharPtrAt(str, idx) VecPtrAt (str, idx)
 

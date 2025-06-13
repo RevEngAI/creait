@@ -80,7 +80,7 @@ extern "C" {
     REAI_API bool DiffLineInitClone (DiffLine* dst, DiffLine* src);
     REAI_API void DiffLineDeinit (DiffLine* dl);
 
-    REAI_API u32 StrLevenshteinDistance (Str* s1, Str* s2);
+    REAI_API u32  StrLevenshteinDistance (Str* s1, Str* s2);
     REAI_API bool StrAreSimilar (Str* s1, Str* s2, u32 max_distance);
 
     REAI_API DiffLines GetDiff (Str* og, Str* nw);
