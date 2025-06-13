@@ -1178,7 +1178,7 @@ Comments GetDecompilationComments (Connection* conn, FunctionId function_id) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter  j        = StrIterInitFromStr (&gj);
@@ -1236,13 +1236,13 @@ CommentId AddDecompilationComment (
     StrPrintf (&url, "%s/v2/functions/%llu/decompilation/comments", conn->host.data, function_id);
 
     Str sj = StrInit();
-    StrPrintf (
-        &sj,
-        "{\"content\":\"%s\", \"context\"{\"start_line\":%llu, \"end_line\":%llu}}",
-        comment->data,
-        start_line,
-        end_line
-    );
+    JW_OBJ (sj, {
+        JW_STR_KV (sj, "content", *comment);
+        JW_OBJ_KV (sj, "context", {
+            JW_INT_KV (sj, "start_line", start_line);
+            JW_INT_KV (sj, "end_line", end_line);
+        });
+    });
 
     Str gj = StrInit();
 
@@ -1294,7 +1294,7 @@ bool UpdateDecompilationComment (
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "DELETE")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "PATCH")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -1364,7 +1364,7 @@ Comments GetAiDecompilationComments (Connection* conn, FunctionId function_id) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter  j        = StrIterInitFromStr (&gj);
@@ -1427,13 +1427,13 @@ CommentId AddAiDecompilationComment (
     );
 
     Str sj = StrInit();
-    StrPrintf (
-        &sj,
-        "{\"content\":\"%s\", \"context\"{\"start_line\":%llu, \"end_line\":%llu}}",
-        comment->data,
-        start_line,
-        end_line
-    );
+    JW_OBJ (sj, {
+        JW_STR_KV (sj, "content", *comment);
+        JW_OBJ_KV (sj, "context", {
+            JW_INT_KV (sj, "start_line", start_line);
+            JW_INT_KV (sj, "end_line", end_line);
+        });
+    });
 
     Str gj = StrInit();
 
@@ -1485,7 +1485,7 @@ bool UpdateAiDecompilationComment (
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "DELETE")) {
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "PATCH")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -1550,7 +1550,7 @@ REAI_API Comments GetComments (Connection* conn) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter  j        = StrIterInitFromStr (&gj);
