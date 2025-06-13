@@ -121,7 +121,7 @@ extern "C" {
 /// RETURN : +ve or -ve depending on above or below in lexical ordering
 /// RETURN : 0 if both are equal
 ///
-#define StrCmp(str, ostr) memcmp ((str)->data, (ostr)->data, MIN2 ((str)->length, (ostr)->length))
+#define StrCmp(str, ostr) strncmp ((str)->data, (ostr)->data, (ostr)->length)
 
 ///
 /// Compare string with another const char*
@@ -395,12 +395,12 @@ extern "C" {
 ///
 #define StrClear(str) VecClear (str)
 
-#define StrFirst(str)     VecFirst (str)
-#define StrLast(str)      VecLast (str)
-#define StrBegin(str)     VecBegin (str)
-#define StrEnd(str)       VecEnd (str)
-#define StrCharAt(str)    VecAt (str, idx)
-#define StrCharPtrAt(str) VecPtrAt (str, idx)
+#define StrFirst(str)          VecFirst (str)
+#define StrLast(str)           VecLast (str)
+#define StrBegin(str)          VecBegin (str)
+#define StrEnd(str)            VecEnd (str)
+#define StrCharAt(str, idx)    VecAt (str, idx)
+#define StrCharPtrAt(str, idx) VecPtrAt (str, idx)
 
 /// Push an array of chars with given length to the back of this string.
 ///

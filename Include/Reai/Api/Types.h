@@ -13,6 +13,7 @@
 #include <Reai/Api/Types/AnnSymbol.h>
 #include <Reai/Api/Types/BinaryInfo.h>
 #include <Reai/Api/Types/CollectionInfo.h>
+#include <Reai/Api/Types/Comment.h>
 #include <Reai/Api/Types/Common.h>
 #include <Reai/Api/Types/Error.h>
 #include <Reai/Api/Types/FunctionInfo.h>

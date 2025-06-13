@@ -1167,6 +1167,431 @@ Str UploadFile (Connection* conn, Str file_path) {
     }
 }
 
+Comments GetDecompilationComments (Connection* conn, FunctionId function_id) {
+    if (!conn || !function_id) {
+        LOG_ERROR ("Invalid argument");
+        return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+    }
+
+    Str url = StrInit();
+    StrPrintf (&url, "%s/v2/functions/%llu/decompilation/comments", conn->host.data, function_id);
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+        StrDeinit (&url);
+
+        StrIter  j        = StrIterInitFromStr (&gj);
+        bool     status   = false;
+        Comments comments = VecInitWithDeepCopy (NULL, CommentDeinit);
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_ARR_KV (j, "data", {
+                    Comment c;
+                    c.content       = StrInit();
+                    c.created_at    = StrInit();
+                    c.updated_at    = StrInit();
+                    c.resource_type = StrInit();
+                    JR_OBJ (j, {
+                        JR_STR_KV (j, "content", c.content);
+                        JR_INT_KV (j, "id", c.id);
+                        JR_INT_KV (j, "user_id", c.user_id);
+                        JR_STR_KV (j, "resource_type", c.resource_type);
+                        JR_INT_KV (j, "resource_id", c.resource_id);
+                        JR_OBJ_KV (j, "context", {
+                            JR_INT_KV (j, "start_line", c.context.start_line);
+                            JR_INT_KV (j, "end_line", c.context.end_line);
+                        });
+                        JR_STR_KV (j, "created_at", c.created_at);
+                        JR_STR_KV (j, "updated_at", c.updated_at);
+                    });
+                    VecPushBack (&comments, c);
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return comments;
+    }
+
+    return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+}
+
+CommentId AddDecompilationComment (
+    Connection* conn,
+    FunctionId  function_id,
+    Str*        comment,
+    u64         start_line,
+    u64         end_line
+) {
+    if (!conn || !function_id || !comment || start_line > end_line) {
+        LOG_ERROR ("Invalid arguments");
+        return 0;
+    }
+
+
+    Str url = StrInit();
+    StrPrintf (&url, "%s/v2/functions/%llu/decompilation/comments", conn->host.data, function_id);
+
+    Str sj = StrInit();
+    JW_OBJ (sj, {
+        JW_STR_KV (sj, "content", *comment);
+        JW_OBJ_KV (sj, "context", {
+            JW_INT_KV (sj, "start_line", start_line);
+            JW_INT_KV (sj, "end_line", end_line);
+        });
+    });
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter   j      = StrIterInitFromStr (&gj);
+        bool      status = false;
+        CommentId id     = 0;
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", { JR_INT_KV (j, "id", id); });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return id;
+    }
+
+    return false;
+}
+
+bool UpdateDecompilationComment (
+    Connection* conn,
+    FunctionId  function_id,
+    CommentId   comment_id,
+    Str*        comment
+) {
+    if (!conn || !function_id || !comment_id || !comment) {
+        LOG_ERROR ("Invalid arguments");
+        return false;
+    }
+
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/decompilation/comments/%llu",
+        conn->host.data,
+        function_id,
+        comment_id
+    );
+
+    Str sj = StrInit();
+    StrPrintf (&sj, "{\"content\":\"%s\"}", comment->data);
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "PATCH")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter j      = StrIterInitFromStr (&gj);
+        bool    status = false;
+        JR_OBJ (j, { JR_BOOL_KV (j, "status", status); });
+
+        StrDeinit (&gj);
+
+        return status;
+    }
+
+    return false;
+}
+
+bool DeleteDecompilationComment (Connection* conn, FunctionId function_id, CommentId comment_id) {
+    if (!conn || !function_id || !comment_id) {
+        LOG_ERROR ("Invalid arguments");
+        return false;
+    }
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/decompilation/comments/%llu",
+        conn->host.data,
+        function_id,
+        comment_id
+    );
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "DELETE")) {
+        StrDeinit (&url);
+
+        StrIter j      = StrIterInitFromStr (&gj);
+        bool    status = false;
+        bool    data   = false;
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_BOOL_KV (j, "data", data);
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return data;
+    }
+
+    return false;
+}
+
+Comments GetAiDecompilationComments (Connection* conn, FunctionId function_id) {
+    if (!conn || !function_id) {
+        LOG_ERROR ("Invalid argument");
+        return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+    }
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/ai-decompilation/comments",
+        conn->host.data,
+        function_id
+    );
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+        StrDeinit (&url);
+
+        StrIter  j        = StrIterInitFromStr (&gj);
+        bool     status   = false;
+        Comments comments = VecInitWithDeepCopy (NULL, CommentDeinit);
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_ARR_KV (j, "data", {
+                    Comment c;
+                    c.content       = StrInit();
+                    c.created_at    = StrInit();
+                    c.updated_at    = StrInit();
+                    c.resource_type = StrInit();
+                    JR_OBJ (j, {
+                        JR_STR_KV (j, "content", c.content);
+                        JR_INT_KV (j, "id", c.id);
+                        JR_INT_KV (j, "user_id", c.user_id);
+                        JR_STR_KV (j, "resource_type", c.resource_type);
+                        JR_INT_KV (j, "resource_id", c.resource_id);
+                        JR_OBJ_KV (j, "context", {
+                            JR_INT_KV (j, "start_line", c.context.start_line);
+                            JR_INT_KV (j, "end_line", c.context.end_line);
+                        });
+                        JR_STR_KV (j, "created_at", c.created_at);
+                        JR_STR_KV (j, "updated_at", c.updated_at);
+                    });
+                    VecPushBack (&comments, c);
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return comments;
+    }
+
+    return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+}
+
+CommentId AddAiDecompilationComment (
+    Connection* conn,
+    FunctionId  function_id,
+    Str*        comment,
+    u64         start_line,
+    u64         end_line
+) {
+    if (!conn || !function_id || !comment || start_line > end_line) {
+        LOG_ERROR ("Invalid arguments");
+        return 0;
+    }
+
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/ai-decompilation/comments",
+        conn->host.data,
+        function_id
+    );
+
+    Str sj = StrInit();
+    JW_OBJ (sj, {
+        JW_STR_KV (sj, "content", *comment);
+        JW_OBJ_KV (sj, "context", {
+            JW_INT_KV (sj, "start_line", start_line);
+            JW_INT_KV (sj, "end_line", end_line);
+        });
+    });
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter   j      = StrIterInitFromStr (&gj);
+        bool      status = false;
+        CommentId id     = 0;
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", { JR_INT_KV (j, "id", id); });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return id;
+    }
+
+    return false;
+}
+
+bool UpdateAiDecompilationComment (
+    Connection* conn,
+    FunctionId  function_id,
+    CommentId   comment_id,
+    Str*        comment
+) {
+    if (!conn || !function_id || !comment_id || !comment) {
+        LOG_ERROR ("Invalid arguments");
+        return false;
+    }
+
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/ai-decompilation/comments/%llu",
+        conn->host.data,
+        function_id,
+        comment_id
+    );
+
+    Str sj = StrInit();
+    StrPrintf (&sj, "{\"content\":\"%s\"}", comment->data);
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "PATCH")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter j      = StrIterInitFromStr (&gj);
+        bool    status = false;
+        JR_OBJ (j, { JR_BOOL_KV (j, "status", status); });
+
+        StrDeinit (&gj);
+
+        return status;
+    }
+
+    return false;
+}
+
+bool DeleteAiDecompilationComment (Connection* conn, FunctionId function_id, CommentId comment_id) {
+    if (!conn || !function_id || !comment_id) {
+        LOG_ERROR ("Invalid arguments");
+        return false;
+    }
+
+    Str url = StrInit();
+    StrPrintf (
+        &url,
+        "%s/v2/functions/%llu/ai-decompilation/comments/%llu",
+        conn->host.data,
+        function_id,
+        comment_id
+    );
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "DELETE")) {
+        StrDeinit (&url);
+
+        StrIter j      = StrIterInitFromStr (&gj);
+        bool    status = false;
+        bool    data   = false;
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_BOOL_KV (j, "data", data);
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return data;
+    }
+
+    return false;
+}
+
+REAI_API Comments GetComments (Connection* conn) {
+    if (!conn) {
+        LOG_ERROR ("Invalid argument");
+        return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+    }
+
+    Str url = StrInit();
+    StrPrintf (&url, "%s/v2/users/me/comments", conn->host.data);
+
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+        StrDeinit (&url);
+
+        StrIter  j        = StrIterInitFromStr (&gj);
+        bool     status   = false;
+        Comments comments = VecInitWithDeepCopy (NULL, CommentDeinit);
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_ARR_KV (j, "data", {
+                    Comment c;
+                    c.content       = StrInit();
+                    c.created_at    = StrInit();
+                    c.updated_at    = StrInit();
+                    c.resource_type = StrInit();
+                    JR_OBJ (j, {
+                        JR_STR_KV (j, "content", c.content);
+                        JR_INT_KV (j, "id", c.id);
+                        JR_INT_KV (j, "user_id", c.user_id);
+                        JR_STR_KV (j, "resource_type", c.resource_type);
+                        JR_INT_KV (j, "resource_id", c.resource_id);
+                        JR_OBJ_KV (j, "context", {
+                            JR_INT_KV (j, "start_line", c.context.start_line);
+                            JR_INT_KV (j, "end_line", c.context.end_line);
+                        });
+                        JR_STR_KV (j, "created_at", c.created_at);
+                        JR_STR_KV (j, "updated_at", c.updated_at);
+                    });
+                    VecPushBack (&comments, c);
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+
+        return comments;
+    }
+
+
+    return (Comments)VecInitWithDeepCopy (NULL, CommentDeinit);
+}
+
 Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_first) {
     if (!url || !key) {
         LOG_ERROR ("Invalid arguments.");
