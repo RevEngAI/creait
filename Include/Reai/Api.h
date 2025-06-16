@@ -43,6 +43,7 @@ typedef enum OrderBy {
 } OrderBy;
 
 typedef struct Connection {
+    Str user_agent;
     Str host;
     Str api_key;
 } Connection;
@@ -459,6 +460,7 @@ extern "C" {
     /// On failure - false, with log messages printed to log file or stderr.
     ///
     REAI_API bool MakeRequest (
+        Str*        user_agent,
         Str*        api_key,
         Str*        request_url,
         Str*        request_json,
@@ -484,6 +486,7 @@ extern "C" {
     /// On failure - false, with log messages printed to log file or stderr.
     ///
     REAI_API bool MakeUploadRequest (
+        Str*        user_agent,
         Str*        api_key,
         Str*        request_url,
         Str*        request_json,

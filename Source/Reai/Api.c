@@ -18,7 +18,7 @@ bool Authenticate (Connection* conn) {
     Str url = StrInit();
     StrPrintf (&url, "%s/v1/authenticate", conn->host.data);
 
-    bool res = MakeRequest (&conn->api_key, &url, NULL, NULL, "GET");
+    bool res = MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, NULL, "GET");
 
     StrDeinit (&url);
 
@@ -105,7 +105,7 @@ BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request) {
 
     Str gj = StrInit(); // get json
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -138,7 +138,7 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId bina
     Str gj  = StrInit();
 
     StrPrintf (&url, "%s/v1/analyse/functions/%llu", conn->host.data, binary_id);
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -225,7 +225,7 @@ AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* reques
             break;
     }
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -301,7 +301,7 @@ BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request) {
     UrlAddQueryStr (&url, "model_name", request->model_name.data, &is_first);
     VecForeach (&request->tags, tag, { UrlAddQueryStr (&url, "tags", tag.data, &is_first); });
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -402,7 +402,7 @@ CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* req
 
 #undef ADD_FILTER
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -473,7 +473,7 @@ bool BatchRenameFunctions (Connection* conn, FunctionInfos functions) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -514,7 +514,7 @@ bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -574,7 +574,7 @@ AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request)
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, &sj, &gj, "POST")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
         StrDeinit (&url);
         StrDeinit (&sj);
 
@@ -639,7 +639,7 @@ Status GetAnalysisStatus (Connection* conn, BinaryId binary_id) {
 
     StrPrintf (&url, "%s/v1/analyse/status/%llu", conn->host.data, binary_id);
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -676,7 +676,7 @@ ModelInfos GetAiModelInfos (Connection* conn) {
 
     StrPrintf (&url, "%s/v1/models", conn->host.data);
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -723,7 +723,7 @@ bool BeginAiDecompilation (Connection* conn, FunctionId function_id) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "POST")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "POST")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -755,7 +755,7 @@ Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id) {
 
     StrPrintf (&url, "%s/v2/functions/%llu/ai-decompilation/status", conn->host.data, function_id);
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -826,7 +826,7 @@ AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bo
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1016,7 +1016,7 @@ SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest*
         UrlAddQueryStr (&url, "debug_types", "EXTERNAL", &is_first);
     }
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1076,7 +1076,7 @@ AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id) {
 
     StrPrintf (&url, "%s/v2/analyses/lookup/%llu", conn->host.data, binary_id);
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1109,7 +1109,7 @@ Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id) {
 
     Str gj = StrInit();
 
-    if (MakeRequest (&conn->api_key, &url, NULL, &gj, "GET")) {
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1147,7 +1147,15 @@ Str UploadFile (Connection* conn, Str file_path) {
 
     Str gj = StrInit();
 
-    if (MakeUploadRequest (&conn->api_key, &url, NULL, &gj, "POST", &file_path)) {
+    if (MakeUploadRequest (
+            &conn->user_agent,
+            &conn->api_key,
+            &url,
+            NULL,
+            &gj,
+            "POST",
+            &file_path
+        )) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
@@ -1244,12 +1252,18 @@ static size CURLResponseWriteCallback (void* ptr, size sz, size nmemb, Str* raw_
 }
 
 bool MakeRequest (
+    Str*        user_agent,
     Str*        api_key,
     Str*        request_url,
     Str*        request_json,
     Str*        response_json,
     const char* request_method
 ) {
+    if (!user_agent || !user_agent->length) {
+        LOG_ERROR ("Invalid user agent");
+        return false;
+    }
+
     if (!api_key || !api_key->length) {
         LOG_ERROR ("Invalid API key");
         return false;
@@ -1294,6 +1308,12 @@ bool MakeRequest (
         LOG_INFO ("request->JSON: '%s'", request_json->data);
     }
 
+    Str hdr_ua = StrInit();
+    StrPrintf (&hdr_ua, "User-Agent: %s", user_agent->data);
+    headers = curl_slist_append (headers, hdr_ua.data);
+    LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+    StrDeinit (&hdr_ua);
+
     curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
     curl_easy_setopt (curl, CURLOPT_CUSTOMREQUEST, request_method);
     curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
@@ -1327,6 +1347,7 @@ bool MakeRequest (
 }
 
 bool MakeUploadRequest (
+    Str*        user_agent,
     Str*        api_key,
     Str*        request_url,
     Str*        request_json,
@@ -1334,6 +1355,11 @@ bool MakeUploadRequest (
     const char* request_method,
     Str*        file_path
 ) {
+    if (!user_agent || !user_agent->length) {
+        LOG_ERROR ("Invalid user agent");
+        return false;
+    }
+
     if (!api_key || !api_key->length) {
         LOG_ERROR ("Invalid API key");
         return false;
@@ -1408,6 +1434,12 @@ bool MakeUploadRequest (
         curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
         LOG_INFO ("request->JSON: '%s'", request_json->data);
     }
+
+    Str hdr_ua = StrInit();
+    StrPrintf (&hdr_ua, "User-Agent: %s", user_agent->data);
+    headers = curl_slist_append (headers, hdr_ua.data);
+    LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+    StrDeinit (&hdr_ua);
 
     curl_easy_setopt (curl, CURLOPT_MIMEPOST, mime);
     curl_easy_setopt (curl, CURLOPT_HTTPHEADER, headers);
