@@ -987,10 +987,11 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
 
         StrIter j = StrIterInitFromStr (&gj);
 
-        bool status = false;
-        ControlFlowGraph cfg = {0};
-        cfg.blocks = VecInitWithDeepCopy_T (&cfg.blocks, NULL, BlockDeinit);
-        cfg.local_variables = VecInitWithDeepCopy_T (&cfg.local_variables, NULL, LocalVariableDeinit);
+        bool             status = false;
+        ControlFlowGraph cfg    = {0};
+        cfg.blocks              = VecInitWithDeepCopy_T (&cfg.blocks, NULL, BlockDeinit);
+        cfg.local_variables =
+            VecInitWithDeepCopy_T (&cfg.local_variables, NULL, LocalVariableDeinit);
         cfg.overview_comment = StrInit();
 
         JR_OBJ (j, {
@@ -998,11 +999,12 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
             if (status) {
                 JR_OBJ_KV (j, "data", {
                     JR_ARR_KV (j, "blocks", {
-                        Block block = {0};
+                        Block block     = {0};
                         block.asm_lines = VecInitWithDeepCopy_T (&block.asm_lines, NULL, StrDeinit);
-                        block.destinations = VecInitWithDeepCopy_T (&block.destinations, NULL, DestinationDeinit);
+                        block.destinations =
+                            VecInitWithDeepCopy_T (&block.destinations, NULL, DestinationDeinit);
                         block.comment = StrInit();
-                        
+
                         JR_OBJ (j, {
                             JR_ARR_KV (j, "asm", {
                                 Str asm_line = StrInit();
@@ -1014,11 +1016,15 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
                             JR_INT_KV (j, "max_addr", block.max_addr);
                             JR_ARR_KV (j, "destinations", {
                                 Destination dest = {0};
-                                dest.flowtype = StrInit();
-                                dest.vaddr = StrInit();
-                                
+                                dest.flowtype    = StrInit();
+                                dest.vaddr       = StrInit();
+
                                 JR_OBJ (j, {
-                                    JR_INT_KV (j, "destination_block_id", dest.destination_block_id);
+                                    JR_INT_KV (
+                                        j,
+                                        "destination_block_id",
+                                        dest.destination_block_id
+                                    );
                                     JR_STR_KV (j, "flowtype", dest.flowtype);
                                     JR_STR_KV (j, "vaddr", dest.vaddr);
                                 });
@@ -1028,14 +1034,14 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
                         });
                         VecPushBack (&cfg.blocks, block);
                     });
-                    
+
                     JR_ARR_KV (j, "local_variables", {
                         LocalVariable var = {0};
-                        var.address = StrInit();
-                        var.d_type = StrInit();
-                        var.loc = StrInit();
-                        var.name = StrInit();
-                        
+                        var.address       = StrInit();
+                        var.d_type        = StrInit();
+                        var.loc           = StrInit();
+                        var.name          = StrInit();
+
                         JR_OBJ (j, {
                             JR_STR_KV (j, "address", var.address);
                             JR_STR_KV (j, "d_type", var.d_type);
@@ -1045,7 +1051,7 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
                         });
                         VecPushBack (&cfg.local_variables, var);
                     });
-                    
+
                     JR_STR_KV (j, "overview_comment", cfg.overview_comment);
                 });
             }

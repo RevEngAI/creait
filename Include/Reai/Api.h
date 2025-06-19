@@ -342,7 +342,8 @@ extern "C" {
     /// SUCCESS : ControlFlowGraph structure populated with CFG data
     /// FAILURE : Empty ControlFlowGraph structure
     ///
-    REAI_API ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId function_id);
+    REAI_API ControlFlowGraph
+        GetFunctionControlFlowGraph (Connection* conn, FunctionId function_id);
 
     /// Finds similar functions based on vector space analysis.
     ///

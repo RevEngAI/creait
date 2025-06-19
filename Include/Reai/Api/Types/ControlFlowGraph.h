@@ -22,12 +22,12 @@ typedef struct Destination {
 typedef Vec (Destination) Destinations;
 
 typedef struct Block {
-    Strs         asm_lines;         /**< Assembly instructions in this block */
-    u64          id;                /**< Block ID */
-    u64          min_addr;          /**< Minimum address of block */
-    u64          max_addr;          /**< Maximum address of block */
-    Destinations destinations;      /**< Destination blocks and flow types */
-    Str          comment;           /**< Comment for this block */
+    Strs         asm_lines;    /**< Assembly instructions in this block */
+    u64          id;           /**< Block ID */
+    u64          min_addr;     /**< Minimum address of block */
+    u64          max_addr;     /**< Maximum address of block */
+    Destinations destinations; /**< Destination blocks and flow types */
+    Str          comment;      /**< Comment for this block */
 } Block;
 
 typedef Vec (Block) Blocks;
@@ -132,4 +132,4 @@ extern "C" {
 }
 #endif
 
-#endif // REAI_CONTROL_FLOW_GRAPH_H 
+#endif // REAI_CONTROL_FLOW_GRAPH_H

@@ -110,4 +110,4 @@ bool ControlFlowGraphInitClone (ControlFlowGraph* dst, ControlFlowGraph* src) {
     StrInitCopy (&dst->overview_comment, &src->overview_comment);
 
     return true;
-} 
+}
