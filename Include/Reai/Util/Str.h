@@ -156,7 +156,7 @@ extern "C" {
 /// SUCCESS : Returns `str` the string itself on success.
 /// FAILURE : Returns `NULL` otherwise.
 ///
-#define StrInsertCharAt(str, chr, idx) VecInsert ((str), (chr), (str))
+#define StrInsertCharAt(str, chr, idx) VecInsert ((str), (chr), (idx))
 
 ///
 /// Insert a string of given length into given Str at given index.

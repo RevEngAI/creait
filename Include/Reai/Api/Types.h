@@ -14,6 +14,7 @@
 #include <Reai/Api/Types/BinaryInfo.h>
 #include <Reai/Api/Types/CollectionInfo.h>
 #include <Reai/Api/Types/Common.h>
+#include <Reai/Api/Types/ControlFlowGraph.h>
 #include <Reai/Api/Types/Error.h>
 #include <Reai/Api/Types/FunctionInfo.h>
 #include <Reai/Api/Types/ModelInfo.h>

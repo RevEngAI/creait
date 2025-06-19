@@ -330,6 +330,20 @@ extern "C" {
     REAI_API AiDecompilation
         GetAiDecompilation (Connection* conn, FunctionId function_id, bool get_ai_summary);
 
+    ///
+    /// Retrieves the Control Flow Graph (CFG) with disassembly for a given function.
+    ///
+    /// This function fetches the control flow graph of a function including its basic blocks,
+    /// assembly instructions, local variables, and flow control information.
+    ///
+    /// conn[in]       : A valid connection object with host and API key set.
+    /// function_id[in]: The function ID for which to retrieve the CFG.
+    ///
+    /// SUCCESS : ControlFlowGraph structure populated with CFG data
+    /// FAILURE : Empty ControlFlowGraph structure
+    ///
+    REAI_API ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId function_id);
+
     /// Finds similar functions based on vector space analysis.
     ///
     /// This function queries the server to find functions with similar characteristics
