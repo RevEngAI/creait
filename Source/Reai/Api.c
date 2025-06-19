@@ -966,6 +966,104 @@ AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bo
     }
 }
 
+ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId function_id) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return (ControlFlowGraph) {0};
+    }
+
+    if (!function_id) {
+        LOG_ERROR ("Invalid function id.");
+        return (ControlFlowGraph) {0};
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+
+    StrPrintf (&url, "%s/v2/functions/%llu/blocks", conn->host.data, function_id);
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
+        StrDeinit (&url);
+
+        StrIter j = StrIterInitFromStr (&gj);
+
+        bool             status = false;
+        ControlFlowGraph cfg    = {0};
+        cfg.blocks              = VecInitWithDeepCopy_T (&cfg.blocks, NULL, BlockDeinit);
+        cfg.local_variables =
+            VecInitWithDeepCopy_T (&cfg.local_variables, NULL, LocalVariableDeinit);
+        cfg.overview_comment = StrInit();
+
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", {
+                    JR_ARR_KV (j, "blocks", {
+                        Block block     = {0};
+                        block.asm_lines = VecInitWithDeepCopy_T (&block.asm_lines, NULL, StrDeinit);
+                        block.destinations =
+                            VecInitWithDeepCopy_T (&block.destinations, NULL, DestinationDeinit);
+                        block.comment = StrInit();
+
+                        JR_OBJ (j, {
+                            JR_ARR_KV (j, "asm", {
+                                Str asm_line = StrInit();
+                                JR_STR (j, asm_line);
+                                VecPushBack (&block.asm_lines, asm_line);
+                            });
+                            JR_INT_KV (j, "id", block.id);
+                            JR_INT_KV (j, "min_addr", block.min_addr);
+                            JR_INT_KV (j, "max_addr", block.max_addr);
+                            JR_ARR_KV (j, "destinations", {
+                                Destination dest = {0};
+                                dest.flowtype    = StrInit();
+                                dest.vaddr       = StrInit();
+
+                                JR_OBJ (j, {
+                                    JR_INT_KV (
+                                        j,
+                                        "destination_block_id",
+                                        dest.destination_block_id
+                                    );
+                                    JR_STR_KV (j, "flowtype", dest.flowtype);
+                                    JR_STR_KV (j, "vaddr", dest.vaddr);
+                                });
+                                VecPushBack (&block.destinations, dest);
+                            });
+                            JR_STR_KV (j, "comment", block.comment);
+                        });
+                        VecPushBack (&cfg.blocks, block);
+                    });
+
+                    JR_ARR_KV (j, "local_variables", {
+                        LocalVariable var = {0};
+                        var.address       = StrInit();
+                        var.d_type        = StrInit();
+                        var.loc           = StrInit();
+                        var.name          = StrInit();
+
+                        JR_OBJ (j, {
+                            JR_STR_KV (j, "address", var.address);
+                            JR_STR_KV (j, "d_type", var.d_type);
+                            JR_INT_KV (j, "size", var.size);
+                            JR_STR_KV (j, "loc", var.loc);
+                            JR_STR_KV (j, "name", var.name);
+                        });
+                        VecPushBack (&cfg.local_variables, var);
+                    });
+
+                    JR_STR_KV (j, "overview_comment", cfg.overview_comment);
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+        return cfg;
+    } else {
+        return (ControlFlowGraph) {0};
+    }
+}
+
 SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
