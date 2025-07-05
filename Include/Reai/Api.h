@@ -153,8 +153,8 @@ extern "C" {
     ///
     /// conn[in] : Connection information
     ///
-    /// SUCCESS : true
-    /// FAILURE : false, error messages are logged.
+    /// SUCCESS: true
+    /// FAILURE: false, error messages are logged.
     ///
     REAI_API bool Authenticate (Connection* conn);
 
@@ -168,8 +168,8 @@ extern "C" {
     /// conn[in]    : A valid connection object with host and API key set.
     /// request[in] : The request object to serialize and send to the server.
     ///
-    /// SUCCESS : A non-zero binary ID corresponding to newly created analysis.
-    /// FAILURE : 0, error messages logged.
+    /// SUCCESS: A non-zero binary ID corresponding to newly created analysis.
+    /// FAILURE: 0, error messages logged.
     ///
     REAI_API BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request);
 
@@ -180,13 +180,13 @@ extern "C" {
     /// a response containing basic function information. The response is parsed into a `BasicFunctionInfoResponse`
     /// structure, which includes the success flag and a list of functions associated with the binary ID.
     ///
-    /// conn[in]      : A valid connection object with host and API key set for making the request.
-    /// binary_id[in] : The binary ID used to identify the binary for which function information is to be fetched.
+    /// conn[in]        : A valid connection object with host and API key set for making the request.
+    /// analysis_id[in] : The analysis ID used to identify the analysis for which function information is to be fetched.
     ///
-    /// SUCCESS : FunctionInfos vector filled with function symbol information retrieved from analysis.
-    /// FAILURE : Empty FunctionInfos vector.
+    /// SUCCESS: FunctionInfos vector filled with function symbol information retrieved from analysis.
+    /// FAILURE: Empty FunctionInfos vector.
     ///
-    REAI_API FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id);
+    REAI_API FunctionInfos GetFunctionsList (Connection* conn, AnalysisId analysis_id);
 
     ///
     /// Sends a request to retrieve recent analysis data based on the provided parameters.
@@ -197,8 +197,8 @@ extern "C" {
     /// conn[in]    : A valid connection object with host and API key set.
     /// request[in] : The request object that contains the filters and parameters for retrieving recent analysis data.
     ///
-    /// SUCCESS :  A populated `AnalysisInfos` struct on success.
-    /// FAILURE :  An empty struct (all fields set to 0) on failure.
+    /// SUCCESS:  A populated `AnalysisInfos` struct on success.
+    /// FAILURE:  An empty struct (all fields set to 0) on failure.
     ///
     REAI_API AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request);
 
@@ -208,8 +208,8 @@ extern "C" {
     /// conn[in]    : Connection information.
     /// request[in] : Request info.
     ///
-    /// SUCCESS : BinaryInfos struct filled with valid data on success.
-    /// FAILURE : Empty struct otherwise.
+    /// SUCCESS: BinaryInfos struct filled with valid data on success.
+    /// FAILURE: Empty struct otherwise.
     ///
     REAI_API BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request);
 
@@ -219,8 +219,8 @@ extern "C" {
     /// conn[in]    : Connection info.
     /// request[in] : Request info.
     ///
-    /// SUCCESS : CollectionInfos struct filled with valid data on success.
-    /// FAILURE : Empty struct otherwise.
+    /// SUCCESS: CollectionInfos struct filled with valid data on success.
+    /// FAILURE: Empty struct otherwise.
     ///
     REAI_API CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* request);
 
@@ -230,8 +230,8 @@ extern "C" {
     /// conn[in]      : Connection
     /// functions[in] : Functions to be renamed. Only `id` and `symbol.name` field will be used.
     ///
-    /// SUCCESS : true
-    /// FAILURE : false
+    /// SUCCESS: true
+    /// FAILURE: false
     ///
     REAI_API bool BatchRenameFunctions (Connection* conn, FunctionInfos functions);
 
@@ -242,8 +242,8 @@ extern "C" {
     /// fn_id[in]    : Functions to be renamed. Only `id` and `symbol.name` field will be used.
     /// new_name[in] : Name of function after rename
     ///
-    /// SUCCESS : true
-    /// FAILURE : false
+    /// SUCCESS: true
+    /// FAILURE: false
     ///
     REAI_API bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name);
 
@@ -267,9 +267,8 @@ extern "C" {
     /// conn[in]       : Valid connection object with host and API key configured
     /// binary_id[in]  : Unique identifier for the binary being analyzed
     ///
-    /// RETURNS:
-    ///   - Status code indicating current analysis state (STATUS_SUCCESS, STATUS_PENDING, etc.)
-    ///   - STATUS_INVALID if connection parameters are invalid or request fails
+    /// SUCCESS: Status code indicating current analysis state (STATUS_SUCCESS, STATUS_PENDING, etc.)
+    /// FAILURE: STATUS_INVALID
     ///
     REAI_API Status GetAnalysisStatus (Connection* conn, BinaryId binary_id);
 
@@ -280,9 +279,8 @@ extern "C" {
     ///
     /// conn[in] : Valid connection object with host and API key configured
     ///
-    /// RETURNS:
-    ///   - Vector of ModelInfo structures containing model IDs and names
-    ///   - Empty vector if connection fails or no models available
+    /// SUCCESS: ModelInfos vector filled with model information
+    /// FAILURE: Empty ModelInfos vector
     ///
     REAI_API ModelInfos GetAiModelInfos (Connection* conn);
 
@@ -294,9 +292,8 @@ extern "C" {
     /// conn[in]        : Valid connection object
     /// function_id[in] : ID of the function to decompile
     ///
-    /// RETURNS:
-    ///   - true if decompilation job started successfully
-    ///   - false if invalid parameters or connection failure
+    /// SUCCESS: true
+    /// FAILURE: false
     ///
     REAI_API bool BeginAiDecompilation (Connection* conn, FunctionId function_id);
 
@@ -308,9 +305,8 @@ extern "C" {
     /// conn[in]        : Valid connection object
     /// function_id[in] : ID of the function being decompiled
     ///
-    /// RETURNS:
-    ///   - Status code (STATUS_PENDING, STATUS_SUCCESS, etc.)
-    ///   - STATUS_INVALID if invalid parameters or connection failure
+    /// SUCCESS: Status code (STATUS_PENDING, STATUS_SUCCESS, etc.)
+    /// FAILURE: STATUS_INVALID
     ///
     REAI_API Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id);
 
@@ -323,9 +319,8 @@ extern "C" {
     /// function_id[in]   : ID of the decompiled function
     /// get_ai_summary[in]: Whether to include AI-generated summary
     ///
-    /// RETURNS:
-    ///   - AiDecompilation structure containing decompilation results
-    ///   - Empty structure if job failed or results unavailable
+    /// SUCCESS: AiDecompilation structure containing decompilation results
+    /// FAILURE: Empty AiDecompilation structure
     ///
     REAI_API AiDecompilation
         GetAiDecompilation (Connection* conn, FunctionId function_id, bool get_ai_summary);
@@ -339,8 +334,8 @@ extern "C" {
     /// conn[in]       : A valid connection object with host and API key set.
     /// function_id[in]: The function ID for which to retrieve the CFG.
     ///
-    /// SUCCESS : ControlFlowGraph structure populated with CFG data
-    /// FAILURE : Empty ControlFlowGraph structure
+    /// SUCCESS: ControlFlowGraph structure populated with CFG data
+    /// FAILURE: Empty ControlFlowGraph structure
     ///
     REAI_API ControlFlowGraph
         GetFunctionControlFlowGraph (Connection* conn, FunctionId function_id);
@@ -353,9 +348,8 @@ extern "C" {
     /// conn[in]    : Valid connection object
     /// request[in] : Parameters controlling search criteria and filters
     ///
-    /// RETURNS:
-    ///   - Vector of SimilarFunction structures containing match details
-    ///   - Empty vector if no matches found or connection failure
+    /// SUCCESS: Vector of SimilarFunction structures containing match details
+    /// FAILURE: Empty vector
     ///
     REAI_API SimilarFunctions
         GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest* request);
@@ -368,10 +362,97 @@ extern "C" {
     /// conn[in]      : Valid connection object
     /// binary_id[in] : ID of the binary file to look up
     ///
-    /// SUCCESS : Non-zero analysis ID if found
-    /// FAILURE : 0 if invalid input or no matching analysis found.
+    /// SUCCESS: Non-zero analysis ID if found
+    /// FAILURE: 0 if invalid input or no matching analysis found.
     ///
     REAI_API AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id);
+
+    ///
+    /// Start generating function type for a specific function.
+    ///
+    /// conn[in]         : Valid connection object
+    /// analysis_id[in]  : ID of the analysis to generate function type for
+    /// function_ids[in] : IDs of the functions to generate function type for
+    ///
+    /// SUCCESS: true
+    /// FAILURE: false
+    ///
+    REAI_API bool BeginFunctionTypeGeneration (
+        Connection* conn,
+        AnalysisId  analysis_id,
+        FunctionIds function_ids
+    );
+
+    ///
+    /// Start generating function type for all functions in an analysis.
+    ///
+    /// conn[in]        : Valid connection object
+    /// analysis_id[in] : ID of the analysis to generate function type for
+    ///
+    /// SUCCESS: true
+    /// FAILURE: false
+    ///
+    REAI_API bool
+        BeginFunctionTypeGenerationForAllFunctions (Connection* conn, AnalysisId analysis_id);
+
+    ///
+    /// Check if function type generation is completed for a specific function.
+    ///
+    /// conn[in]        : Valid connection object
+    /// function_id[in] : ID of the function to check
+    ///
+    /// SUCCESS: true
+    /// FAILURE: false
+    ///
+    REAI_API bool IsFunctionTypeGenerationCompleted (
+        Connection* conn,
+        AnalysisId  analysis_id,
+        FunctionId  function_id
+    );
+
+    ///
+    /// Check if function type generation is completed for all functions in an analysis.
+    ///
+    /// conn[in]        : Valid connection object
+    /// analysis_id[in] : ID of the analysis to check
+    ///
+    /// SUCCESS: true
+    /// FAILURE: false
+    ///
+    REAI_API bool
+        IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, AnalysisId analysis_id);
+
+    ///
+    /// Retrieves function type information for a specific function.
+    ///
+    /// This function queries the server for detailed data type information
+    /// including function signatures, dependencies, and variable information.
+    ///
+    /// conn[in]        : Valid connection object
+    /// function_id[in] : ID of the function to query
+    ///
+    /// SUCCESS: FunctionType object
+    /// FAILURE: Empty FunctionType object
+    ///
+    REAI_API FunctionType GetFunctionType (Connection* conn, FunctionId function_id);
+
+    ///
+    /// Set function type for a specific function.
+    ///
+    /// conn[in]        : Valid connection object
+    /// analysis_id[in] : ID of the analysis to set function type for
+    /// function_id[in] : ID of the function to set
+    /// function_type[in] : Function type to set
+    ///
+    /// SUCCESS: true
+    /// FAILURE: false
+    ///
+    REAI_API bool SetFunctionType (
+        Connection*  conn,
+        AnalysisId   analysis_id,
+        FunctionId   function_id,
+        FunctionType function_type
+    );
 
     /// Retrieves log data for a specific analysis job.
     ///
@@ -381,8 +462,8 @@ extern "C" {
     /// conn[in]        : Valid connection object
     /// analysis_id[in] : ID of the analysis job to query
     ///
-    /// SUCCESS : String containing log text
-    /// FAILURE : Empty string.
+    /// SUCCESS: String containing log text
+    /// FAILURE: Empty string.
     ///
     REAI_API Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id);
 
@@ -396,8 +477,8 @@ extern "C" {
     /// conn[in]      : Connection information including host and API key.
     /// file_path[in] : File path of to-be-uploaded file
     ///
-    /// SUCCESS : Str object containing SHA-256 Hash of uploaded file.
-    /// FAILURE : Empty Str object.
+    /// SUCCESS: Str object containing SHA-256 Hash of uploaded file.
+    /// FAILURE: Empty Str object.
     ///
     REAI_API Str UploadFile (Connection* conn, Str file_path);
 
@@ -412,8 +493,8 @@ extern "C" {
     ///                of whether this is first query param. If not provided
     ///                it'll be treated as first query param.
     ///
-    /// SUCCESS : Updated `url` string on success.
-    /// FAILURE : `NULL` otherwise.
+    /// SUCCESS: Updated `url` string on success.
+    /// FAILURE: `NULL` otherwise.
     ///
     REAI_API Str* UrlAddQueryStr (Str* url, const char* key, const char* value, bool* is_first);
 
@@ -427,8 +508,8 @@ extern "C" {
     ///                of whether this is first query param. If not provided
     ///                it'll be treated as first query param.
     ///
-    /// SUCCESS : Updated `url` string on success.
-    /// FAILURE : `NULL` otherwise.
+    /// SUCCESS: Updated `url` string on success.
+    /// FAILURE: `NULL` otherwise.
     ///
     REAI_API Str* UrlAddQueryInt (Str* url, const char* key, i64 value, bool* is_first);
 
@@ -442,8 +523,8 @@ extern "C" {
     ///                of whether this is first query param. If not provided
     ///                it'll be treated as first query param.
     ///
-    /// SUCCESS : Updated `url` string on success.
-    /// FAILURE : `NULL` otherwise.
+    /// SUCCESS: Updated `url` string on success.
+    /// FAILURE: `NULL` otherwise.
     ///
     REAI_API Str* UrlAddQueryFloat (Str* url, const char* key, f64 value, bool* is_first);
 
@@ -453,9 +534,8 @@ extern "C" {
     /// key[in]   : Name of query parameter
     /// value[in] : Value of query parameter.
     ///
-    /// RETURNS:
-    ///     - Updated `url` string on success.
-    ///     - `NULL` otherwise.
+    /// SUCCESS: Updated `url` string on success.
+    /// FAILURE: `NULL` otherwise.
     ///
     REAI_API Str* UrlAddQueryBool (Str* url, const char* key, bool value, bool* is_first);
 
@@ -470,9 +550,8 @@ extern "C" {
     /// response_json[out] : String object to store the response data in JSON format. Can be NULL if response is not required.
     /// request_method[in] : The HTTP method to use for the request (e.g., "POST", "GET").
     ///
-    /// RETURNS:
-    /// On success - true
-    /// On failure - false, with log messages printed to log file or stderr.
+    /// SUCCESS: true
+    /// FAILURE: false
     ///
     REAI_API bool MakeRequest (
         Str*        user_agent,
@@ -496,9 +575,8 @@ extern "C" {
     /// request_method[in] : The HTTP method to use for the request (e.g., "POST", "GET").
     /// file_path[in]      : File to be uploaded.
     ///
-    /// RETURNS:
-    /// On success - true
-    /// On failure - false, with log messages printed to log file or stderr.
+    /// SUCCESS: true
+    /// FAILURE: false
     ///
     REAI_API bool MakeUploadRequest (
         Str*        user_agent,

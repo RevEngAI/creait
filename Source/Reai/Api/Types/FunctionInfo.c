@@ -29,6 +29,7 @@ bool FunctionInfoInitClone (FunctionInfo* dst, FunctionInfo* src) {
     dst->id   = src->id;
     dst->size = src->size;
     SymbolInfoInitClone (&dst->symbol, &src->symbol);
+    dst->debug = src->debug;
 
     return true;
 }

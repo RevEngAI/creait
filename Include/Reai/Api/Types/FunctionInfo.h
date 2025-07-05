@@ -20,6 +20,7 @@ typedef struct FunctionInfo {
     FunctionId id;
     u64        size;
     SymbolInfo symbol;
+    bool       debug;
 } FunctionInfo;
 
 typedef Vec (FunctionInfo) FunctionInfos;

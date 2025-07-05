@@ -124,20 +124,28 @@ BinaryId CreateNewAnalysis (Connection* conn, NewAnalysisRequest* request) {
 
         return binary_id;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+        StrDeinit (&gj);
         return 0;
     }
 }
 
-FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId binary_id) {
+FunctionInfos GetFunctionsList (Connection* conn, AnalysisId analysis_id) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
+        return (FunctionInfos) {0};
+    }
+
+    if (!analysis_id) {
+        LOG_ERROR ("Invalid analysis id.");
         return (FunctionInfos) {0};
     }
 
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v1/analyse/functions/%llu", conn->host.data, binary_id);
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions/list", conn->host.data, analysis_id);
     if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
@@ -148,16 +156,19 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId bina
         JR_OBJ (j, {
             JR_BOOL_KV (j, "success", success);
             if (success) {
-                JR_ARR_KV (j, "functions", {
-                    FunctionInfo function   = {0};
-                    function.symbol.is_addr = true;
-                    JR_OBJ (j, {
-                        JR_INT_KV (j, "function_id", function.id);
-                        JR_STR_KV (j, "function_name", function.symbol.name);
-                        JR_INT_KV (j, "function_size", function.size);
-                        JR_INT_KV (j, "function_vaddr", function.symbol.value.addr);
+                JR_OBJ_KV (j, "data", {
+                    JR_ARR_KV (j, "functions", {
+                        FunctionInfo function   = {0};
+                        function.symbol.is_addr = true;
+                        JR_OBJ (j, {
+                            JR_INT_KV (j, "function_id", function.id);
+                            JR_STR_KV (j, "function_name", function.symbol.name);
+                            JR_INT_KV (j, "function_size", function.size);
+                            JR_INT_KV (j, "function_vaddr", function.symbol.value.addr);
+                            JR_BOOL_KV (j, "debug", function.debug);
+                        });
+                        VecPushBack (&functions, function);
                     });
-                    VecPushBack (&functions, function);
                 });
             }
         });
@@ -166,11 +177,11 @@ FunctionInfos GetBasicFunctionInfoUsingBinaryId (Connection* conn, BinaryId bina
 
         return functions;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (FunctionInfos) {0};
     }
 }
-
-// TODO: GetBasicFunctionInfoUsingAnalysisId
 
 AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* request) {
     if (!conn->api_key.length || !conn->host.length) {
@@ -272,6 +283,8 @@ AnalysisInfos GetRecentAnalysis (Connection* conn, RecentAnalysisRequest* reques
 
         return infos;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (AnalysisInfos) {0};
     }
 }
@@ -340,6 +353,8 @@ BinaryInfos SearchBinary (Connection* conn, SearchBinaryRequest* request) {
 
         return infos;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (BinaryInfos) {0};
     }
 }
@@ -447,6 +462,8 @@ CollectionInfos SearchCollection (Connection* conn, SearchCollectionRequest* req
 
         return infos;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (CollectionInfos) {0};
     }
 }
@@ -486,6 +503,9 @@ bool BatchRenameFunctions (Connection* conn, FunctionInfos functions) {
 
         return status;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+        StrDeinit (&gj);
         return false;
     }
 }
@@ -527,6 +547,9 @@ bool RenameFunction (Connection* conn, FunctionId fn_id, Str new_name) {
 
         return status;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+        StrDeinit (&gj);
         return false;
     }
 }
@@ -624,6 +647,9 @@ AnnSymbols GetBatchAnnSymbols (Connection* conn, BatchAnnSymbolRequest* request)
 
         return syms;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+        StrDeinit (&gj);
         return (AnnSymbols) {0};
     }
 }
@@ -660,10 +686,11 @@ Status GetAnalysisStatus (Connection* conn, BinaryId binary_id) {
         StrDeinit (&status);
         return analysis_status;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return STATUS_INVALID;
     }
 }
-
 
 ModelInfos GetAiModelInfos (Connection* conn) {
     if (!conn->api_key.length || !conn->host.length) {
@@ -702,6 +729,8 @@ ModelInfos GetAiModelInfos (Connection* conn) {
 
         return models;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (ModelInfos) {0};
     }
 }
@@ -735,6 +764,8 @@ bool BeginAiDecompilation (Connection* conn, FunctionId function_id) {
 
         return status;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return false;
     }
 }
@@ -775,6 +806,8 @@ Status GetAiDecompilationStatus (Connection* conn, FunctionId function_id) {
         StrDeinit (&status_str);
         return decomp_status;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return STATUS_INVALID;
     }
 }
@@ -962,6 +995,8 @@ AiDecompilation GetAiDecompilation (Connection* conn, FunctionId function_id, bo
         StrDeinit (&gj);
         return decomp;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (AiDecompilation) {0};
     }
 }
@@ -1060,6 +1095,8 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
         StrDeinit (&gj);
         return cfg;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (ControlFlowGraph) {0};
     }
 }
@@ -1154,8 +1191,404 @@ SimilarFunctions GetSimilarFunctions (Connection* conn, SimilarFunctionsRequest*
         StrDeinit (&gj);
         return functions;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (SimilarFunctions) {0};
     }
+}
+
+bool BeginFunctionTypeGeneration (
+    Connection* conn,
+    AnalysisId  analysis_id,
+    FunctionIds function_ids
+) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return false;
+    }
+
+    if (!analysis_id) {
+        LOG_ERROR ("Invalid analysis id.");
+        return false;
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+    Str sj  = StrInit();
+
+    JW_OBJ (sj, {
+        JW_ARR_KV (sj, "function_ids", function_ids, function_id, { JW_INT (sj, function_id); });
+    });
+
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions/data_types", conn->host.data, analysis_id);
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&gj);
+        StrDeinit (&sj);
+        return true;
+    }
+
+    StrDeinit (&url);
+    StrDeinit (&gj);
+    StrDeinit (&sj);
+    return false;
+}
+
+bool BeginFunctionTypeGenerationForAllFunctions (Connection* conn, AnalysisId analysis_id) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return false;
+    }
+
+    if (!analysis_id) {
+        LOG_ERROR ("Invalid analysis id.");
+        return false;
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+    Str sj  = StrInit();
+
+    FunctionInfos functions = GetFunctionsList (conn, analysis_id);
+    JW_OBJ (sj, {
+        JW_ARR_KV (sj, "function_ids", functions, function, { JW_INT (sj, function.id); });
+    });
+    VecDeinit (&functions);
+
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions/data_types", conn->host.data, analysis_id);
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&gj);
+        StrDeinit (&sj);
+        return true;
+    }
+
+    StrDeinit (&url);
+    StrDeinit (&gj);
+    StrDeinit (&sj);
+    return false;
+}
+
+///
+/// Helper function to parse data type from JSON.
+///
+/// json[in] : JSON iterator
+///
+/// SUCCESS : DataType object
+/// FAILURE : NULL
+///
+DataType* JrDataType (StrIter* json) {
+    DataType* dt = NEW (DataType);
+    *dt          = DataTypeInit();
+    StrIter j    = *json;
+    JR_OBJ (j, {
+        JR_STR_KV (j, "last_change", dt->last_change);
+        JR_INT_KV (j, "offset", dt->offset);
+        JR_INT_KV (j, "size", dt->size);
+        JR_STR_KV (j, "name", dt->name);
+        JR_STR_KV (j, "type", dt->type);
+        JR_STR_KV (j, "artifact_type", dt->artifact_type);
+        JR_OBJ_KV (j, "members", {
+            DataType* dtm = JrDataType (&j);
+            VecPushBack (&dt->members, dtm);
+        });
+    });
+    *json = j;
+    return dt;
+}
+
+bool IsFunctionTypeGenerationCompleted (
+    Connection* conn,
+    AnalysisId  analysis_id,
+    FunctionId  function_id
+) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return false;
+    }
+
+    if (!function_id) {
+        LOG_ERROR ("Invalid function id.");
+        return false;
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions", conn->host.data, analysis_id);
+
+    Str sj = StrInit();
+    StrPrintf (&sj, "{\"function_ids\":[%llu]}", function_id);
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter j = StrIterInitFromStr (&gj);
+
+        JR_OBJ (j, {
+            bool status = false;
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", {
+                    JR_OBJ_KV (j, "data_types_list", {
+                        JR_ARR_KV (j, "items", {
+                            FunctionId fn_id     = 0;
+                            bool       completed = false;
+
+                            JR_OBJ (j, {
+                                JR_INT_KV (j, "function_id", fn_id);
+                                JR_BOOL_KV (j, "completed", completed);
+                            });
+
+                            if ((fn_id == function_id) && completed) {
+                                StrDeinit (&gj);
+                                return true;
+                            }
+                        });
+                    });
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+        return false;
+    }
+
+    StrDeinit (&url);
+    StrDeinit (&gj);
+    StrDeinit (&sj);
+    return false;
+}
+
+bool IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, AnalysisId analysis_id) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return false;
+    }
+
+    if (!analysis_id) {
+        LOG_ERROR ("Invalid analysis id.");
+        return false;
+    }
+
+    FunctionInfos functions = GetFunctionsList (conn, analysis_id);
+    VecForeach (&functions, function, {
+        if (!IsFunctionTypeGenerationCompleted (conn, analysis_id, function.id)) {
+            VecDeinit (&functions);
+            return false;
+        }
+    });
+    VecDeinit (&functions);
+
+    Str sj = StrInit();
+    JW_OBJ (sj, {
+        JW_ARR_KV (sj, "function_ids", functions, function, { JW_INT (sj, function.id); });
+    });
+
+    Str url = StrInit();
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions/data_types", conn->host.data, analysis_id);
+    Str gj = StrInit();
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "POST")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+
+        StrIter j      = StrIterInitFromStr (&gj);
+        bool    status = false;
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", {
+                    JR_OBJ_KV (j, "data_types_list", {
+                        JR_ARR_KV (j, "items", {
+                            JR_OBJ (j, {
+                                bool completed = false;
+                                JR_BOOL_KV (j, "completed", completed);
+                                if (!completed) {
+                                    StrDeinit (&gj);
+                                    return false;
+                                }
+                            });
+                        });
+                    });
+                });
+            }
+        });
+
+        StrDeinit (&gj);
+        return status;
+    }
+
+    StrDeinit (&url);
+    StrDeinit (&gj);
+    StrDeinit (&sj);
+    return false;
+}
+
+FunctionType GetFunctionType (Connection* conn, FunctionId function_id) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return (FunctionType) {0};
+    }
+
+    if (!function_id) {
+        LOG_ERROR ("Invalid function id.");
+        return (FunctionType) {0};
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+
+    StrPrintf (&url, "%s/v2/functions/%llu/data_types", conn->host.data, function_id);
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
+        StrDeinit (&url);
+
+        StrIter j = StrIterInitFromStr (&gj);
+
+        bool         status = false;
+        FunctionType ft     = FunctionTypeInit();
+
+        JR_OBJ (j, {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
+                JR_OBJ_KV (j, "data", {
+                    bool completed = false;
+                    JR_BOOL_KV (j, "completed", completed);
+                    if (completed) {
+                        JR_OBJ_KV (j, "data_types", {
+                            JR_OBJ_KV (j, "func_types", {
+                                JR_INT_KV (j, "size", ft.size);
+                                JR_OBJ_KV (j, "header", {
+                                    JR_STR_KV (j, "last_change", ft.last_change);
+                                    JR_STR_KV (j, "name", ft.name);
+                                    JR_INT_KV (j, "addr", ft.addr);
+                                    JR_STR_KV (j, "return_type", ft.return_type);
+                                    JR_OBJ_KV (j, "args", {
+                                        DataType* dt = JrDataType (&j);
+                                        VecPushBack (&ft.args, dt);
+                                    });
+                                });
+                                JR_OBJ_KV (j, "stack_vars", {
+                                    DataType* dt = JrDataType (&j);
+                                    VecPushBack (&ft.stack_vars, dt);
+                                });
+                            });
+                            JR_OBJ_KV (j, "func_deps", {
+                                DataType* dt = JrDataType (&j);
+                                VecPushBack (&ft.deps, dt);
+                            });
+                        });
+                    } else {
+                        LOG_INFO ("Function type is not completed");
+                    }
+                });
+            } else {
+                LOG_INFO ("Status is false");
+            }
+        });
+
+        StrDeinit (&gj);
+        return ft;
+    } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
+        return (FunctionType) {0};
+    }
+}
+
+Str* JwDataType (Str* sjson, DataType* dt) {
+    if (!dt || !sjson) {
+        LOG_FATAL ("Invalid data type or string json.");
+    }
+
+    Str sj = *sjson;
+    JW_OBJ (sj, {
+        JW_STR_KV (sj, "type", dt->type);
+        JW_STR_KV (sj, "name", dt->name);
+        JW_INT_KV (sj, "size", dt->size);
+        JW_STR_KV (sj, "last_change", dt->last_change);
+        JW_STR_KV (sj, "artifact_type", dt->artifact_type);
+        JW_ARR_KV (sj, "members", dt->members, member, {
+            *sjson = sj;
+            JwDataType (sjson, member);
+        });
+    });
+    *sjson = sj;
+
+    return sjson;
+}
+
+bool SetFunctionType (
+    Connection*  conn,
+    AnalysisId   analysis_id,
+    FunctionId   function_id,
+    FunctionType function_type
+) {
+    if (!conn->api_key.length || !conn->host.length) {
+        LOG_ERROR ("Missing API key or host to connect to.");
+        return false;
+    }
+
+    if (!function_id) {
+        LOG_ERROR ("Invalid function id.");
+        return false;
+    }
+
+    Str url = StrInit();
+    Str gj  = StrInit();
+    Str sj  = StrInit();
+
+    StrPrintf (
+        &url,
+        "%s/v2/analyses/%llu/functions/%llu/data_types",
+        conn->host.data,
+        analysis_id,
+        function_id
+    );
+
+    JW_OBJ (sj, {
+        JW_INT_KV (sj, "data_types_version", 0);
+        JW_OBJ_KV (sj, "data_types", {
+            JW_OBJ_KV (sj, "func_types", {
+                JW_STR_KV (sj, "last_change", function_type.last_change);
+                JW_INT_KV (sj, "addr", function_type.addr);
+                JW_INT_KV (sj, "size", function_type.size);
+                JW_OBJ_KV (sj, "header", {
+                    JW_STR_KV (sj, "last_change", function_type.last_change);
+                    JW_STR_KV (sj, "name", function_type.name);
+                    JW_INT_KV (sj, "addr", function_type.addr);
+                    JW_STR_KV (sj, "type", function_type.return_type);
+                    JW_ARR_KV (sj, "args", function_type.args, arg, { JwDataType (&sj, arg); });
+                });
+                JW_ARR_KV (sj, "stack_vars", function_type.stack_vars, var, {
+                    JwDataType (&sj, var);
+                });
+                JW_STR_KV (sj, "name", function_type.name);
+                JW_STR_KV (sj, "type", function_type.return_type);
+                JW_ZSTR_KV (sj, "artifact_type", "Function");
+            });
+        });
+        JW_OBJ_KV (sj, "func_deps", {
+            JW_ARR_KV (sj, "items", function_type.deps, dep, { JwDataType (&sj, dep); });
+        });
+    });
+
+    if (MakeRequest (&conn->user_agent, &conn->api_key, &url, &sj, &gj, "PUT")) {
+        StrDeinit (&url);
+        StrDeinit (&sj);
+        StrDeinit (&gj);
+        return true;
+    }
+
+    StrDeinit (&url);
+    StrDeinit (&sj);
+    StrDeinit (&gj);
+
+    return false;
 }
 
 AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id) {
@@ -1187,6 +1620,8 @@ AnalysisId AnalysisIdFromBinaryId (Connection* conn, BinaryId binary_id) {
 
         return id;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return 0;
     }
 }
@@ -1225,6 +1660,8 @@ Str GetAnalysisLogs (Connection* conn, AnalysisId analysis_id) {
 
         return logs;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (Str) {0};
     }
 }
@@ -1269,6 +1706,8 @@ Str UploadFile (Connection* conn, Str file_path) {
 
         return sha256;
     } else {
+        StrDeinit (&url);
+        StrDeinit (&gj);
         return (Str) {0};
     }
 }
