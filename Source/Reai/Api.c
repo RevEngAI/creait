@@ -151,11 +151,11 @@ FunctionInfos GetFunctionsList (Connection* conn, AnalysisId analysis_id) {
 
         StrIter j = StrIterInitFromStr (&gj);
 
-        bool          success   = false;
+        bool          status    = false;
         FunctionInfos functions = VecInitWithDeepCopy (NULL, FunctionInfoDeinit);
         JR_OBJ (j, {
-            JR_BOOL_KV (j, "success", success);
-            if (success) {
+            JR_BOOL_KV (j, "status", status);
+            if (status) {
                 JR_OBJ_KV (j, "data", {
                     JR_ARR_KV (j, "functions", {
                         FunctionInfo function   = {0};
