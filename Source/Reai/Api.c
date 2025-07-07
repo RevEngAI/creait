@@ -1291,7 +1291,9 @@ DataType* JrDataType (StrIter* json) {
         JR_STR_KV (j, "type", dt->type);
         JR_STR_KV (j, "artifact_type", dt->artifact_type);
         JR_OBJ_KV (j, "members", {
-            DataType* dtm = JrDataType (&j);
+            *json         = j;
+            DataType* dtm = JrDataType (json);
+            j             = *json;
             VecPushBack (&dt->members, dtm);
         });
     });
@@ -1317,7 +1319,7 @@ bool IsFunctionTypeGenerationCompleted (
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/analyses/%llu/functions", conn->host.data, analysis_id);
+    StrPrintf (&url, "%s/v2/analyses/%llu/functions/data_types", conn->host.data, analysis_id);
 
     Str sj = StrInit();
     StrPrintf (&sj, "{\"function_ids\":[%llu]}", function_id);
@@ -1345,6 +1347,10 @@ bool IsFunctionTypeGenerationCompleted (
 
                             if ((fn_id == function_id) && completed) {
                                 StrDeinit (&gj);
+                                LOG_INFO (
+                                    "Function type generation complete for function with ID = %llu",
+                                    function_id
+                                );
                                 return true;
                             }
                         });
@@ -1352,6 +1358,8 @@ bool IsFunctionTypeGenerationCompleted (
                 });
             }
         });
+
+        LOG_INFO ("Function type generation incomplete for function with ID = %llu", function_id);
 
         StrDeinit (&gj);
         return false;
@@ -1374,19 +1382,12 @@ bool IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, Analysi
         return false;
     }
 
+    Str           sj        = StrInit();
     FunctionInfos functions = GetFunctionsList (conn, analysis_id);
-    VecForeach (&functions, function, {
-        if (!IsFunctionTypeGenerationCompleted (conn, analysis_id, function.id)) {
-            VecDeinit (&functions);
-            return false;
-        }
-    });
-    VecDeinit (&functions);
-
-    Str sj = StrInit();
     JW_OBJ (sj, {
         JW_ARR_KV (sj, "function_ids", functions, function, { JW_INT (sj, function.id); });
     });
+    VecDeinit (&functions);
 
     Str url = StrInit();
     StrPrintf (&url, "%s/v2/analyses/%llu/functions/data_types", conn->host.data, analysis_id);
@@ -1404,20 +1405,24 @@ bool IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, Analysi
                 JR_OBJ_KV (j, "data", {
                     JR_OBJ_KV (j, "data_types_list", {
                         JR_ARR_KV (j, "items", {
-                            JR_OBJ (j, {
-                                bool completed = false;
-                                JR_BOOL_KV (j, "completed", completed);
-                                if (!completed) {
-                                    StrDeinit (&gj);
-                                    return false;
-                                }
-                            });
+                            bool completed = false;
+                            JR_OBJ (j, { JR_BOOL_KV (j, "completed", completed); });
+                            if (!completed) {
+                                LOG_INFO (
+                                    "Function type generation still incomplete for all "
+                                    "functions., Completed = %s",
+                                    completed ? "true" : "false"
+                                );
+                                StrDeinit (&gj);
+                                return false;
+                            }
                         });
                     });
                 });
             }
         });
 
+        LOG_INFO ("Function type generation completed for all functions!");
         StrDeinit (&gj);
         return status;
     }
@@ -1428,7 +1433,7 @@ bool IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, Analysi
     return false;
 }
 
-FunctionType GetFunctionType (Connection* conn, FunctionId function_id) {
+FunctionType GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId function_id) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
         return (FunctionType) {0};
@@ -1442,31 +1447,41 @@ FunctionType GetFunctionType (Connection* conn, FunctionId function_id) {
     Str url = StrInit();
     Str gj  = StrInit();
 
-    StrPrintf (&url, "%s/v2/functions/%llu/data_types", conn->host.data, function_id);
+    StrPrintf (
+        &url,
+        "%s/v2/analyses/%llu/functions/%llu/data_types",
+        conn->host.data,
+        analysis_id,
+        function_id
+    );
 
     if (MakeRequest (&conn->user_agent, &conn->api_key, &url, NULL, &gj, "GET")) {
         StrDeinit (&url);
 
         StrIter j = StrIterInitFromStr (&gj);
 
-        bool         status = false;
-        FunctionType ft     = FunctionTypeInit();
+        bool         status    = false;
+        bool         completed = false;
+        FunctionType ft        = FunctionTypeInit();
 
         JR_OBJ (j, {
             JR_BOOL_KV (j, "status", status);
             if (status) {
                 JR_OBJ_KV (j, "data", {
-                    bool completed = false;
                     JR_BOOL_KV (j, "completed", completed);
+                    JI_STR_KV (j, "status");
                     if (completed) {
                         JR_OBJ_KV (j, "data_types", {
                             JR_OBJ_KV (j, "func_types", {
+                                JI_STR_KV (j, "last_change");
+                                JI_STR_KV (j, "name");
+                                JI_INT_KV (j, "addr");
                                 JR_INT_KV (j, "size", ft.size);
                                 JR_OBJ_KV (j, "header", {
                                     JR_STR_KV (j, "last_change", ft.last_change);
                                     JR_STR_KV (j, "name", ft.name);
                                     JR_INT_KV (j, "addr", ft.addr);
-                                    JR_STR_KV (j, "return_type", ft.return_type);
+                                    JR_STR_KV (j, "type", ft.return_type);
                                     JR_OBJ_KV (j, "args", {
                                         DataType* dt = JrDataType (&j);
                                         VecPushBack (&ft.args, dt);
@@ -1477,18 +1492,22 @@ FunctionType GetFunctionType (Connection* conn, FunctionId function_id) {
                                     VecPushBack (&ft.stack_vars, dt);
                                 });
                             });
-                            JR_OBJ_KV (j, "func_deps", {
+                            JR_ARR_KV (j, "func_deps", {
                                 DataType* dt = JrDataType (&j);
                                 VecPushBack (&ft.deps, dt);
                             });
                         });
                     } else {
-                        LOG_INFO ("Function type is not completed");
+                        LOG_INFO ("Function type generation is not completed");
                     }
+                    JI_INT_KV (j, "data_types_version");
                 });
             } else {
                 LOG_INFO ("Status is false");
             }
+            JI_STR_KV (j, "message");
+            JI_OBJ_KV (j, "errors");
+            JI_OBJ_KV (j, "meta");
         });
 
         StrDeinit (&gj);

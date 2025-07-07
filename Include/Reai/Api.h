@@ -434,7 +434,8 @@ extern "C" {
     /// SUCCESS: FunctionType object
     /// FAILURE: Empty FunctionType object
     ///
-    REAI_API FunctionType GetFunctionType (Connection* conn, FunctionId function_id);
+    REAI_API FunctionType
+        GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId function_id);
 
     ///
     /// Set function type for a specific function.
