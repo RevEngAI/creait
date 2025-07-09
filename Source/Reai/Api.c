@@ -1433,15 +1433,15 @@ bool IsFunctionTypeGenerationCompletedForAllFunctions (Connection* conn, Analysi
     return false;
 }
 
-FunctionType GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId function_id) {
+Function GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId function_id) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
-        return (FunctionType) {0};
+        return (Function) {0};
     }
 
     if (!function_id) {
         LOG_ERROR ("Invalid function id.");
-        return (FunctionType) {0};
+        return (Function) {0};
     }
 
     Str url = StrInit();
@@ -1462,7 +1462,7 @@ FunctionType GetFunctionType (Connection* conn, AnalysisId analysis_id, Function
 
         bool         status    = false;
         bool         completed = false;
-        FunctionType ft        = FunctionTypeInit();
+        Function ft        = FunctionTypeInit();
 
         JR_OBJ (j, {
             JR_BOOL_KV (j, "status", status);
@@ -1515,7 +1515,7 @@ FunctionType GetFunctionType (Connection* conn, AnalysisId analysis_id, Function
     } else {
         StrDeinit (&url);
         StrDeinit (&gj);
-        return (FunctionType) {0};
+        return (Function) {0};
     }
 }
 
@@ -1545,7 +1545,7 @@ bool SetFunctionType (
     Connection*  conn,
     AnalysisId   analysis_id,
     FunctionId   function_id,
-    FunctionType function_type
+    Function function_type
 ) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");

@@ -434,7 +434,7 @@ extern "C" {
     /// SUCCESS: FunctionType object
     /// FAILURE: Empty FunctionType object
     ///
-    REAI_API FunctionType
+    REAI_API Function
         GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId function_id);
 
     ///
@@ -452,7 +452,7 @@ extern "C" {
         Connection*  conn,
         AnalysisId   analysis_id,
         FunctionId   function_id,
-        FunctionType function_type
+        Function function_type
     );
 
     /// Retrieves log data for a specific analysis job.

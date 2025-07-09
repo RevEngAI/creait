@@ -32,6 +32,9 @@ typedef struct Block {
 
 typedef Vec (Block) Blocks;
 
+// XXX: conflicts with definition in DataType.h
+// Both are mergeable! Defining a separate one creates confusion
+// and type-redundancy
 typedef struct LocalVariable {
     Str address;
     Str d_type;
