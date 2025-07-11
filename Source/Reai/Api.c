@@ -9,6 +9,8 @@
 #include <Reai/Log.h>
 #include <Reai/Util/Json.h>
 
+#include "Reai/Util/Vec.h"
+
 bool Authenticate (Connection* conn) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");
@@ -1026,7 +1028,7 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
         ControlFlowGraph cfg    = {0};
         cfg.blocks              = VecInitWithDeepCopy_T (&cfg.blocks, NULL, BlockDeinit);
         cfg.local_variables =
-            VecInitWithDeepCopy_T (&cfg.local_variables, NULL, LocalVariableDeinit);
+            VecInitWithDeepCopy_T (&cfg.local_variables, NULL, CfgLocalVariableDeinit);
         cfg.overview_comment = StrInit();
 
         JR_OBJ (j, {
@@ -1071,11 +1073,11 @@ ControlFlowGraph GetFunctionControlFlowGraph (Connection* conn, FunctionId funct
                     });
 
                     JR_ARR_KV (j, "local_variables", {
-                        LocalVariable var = {0};
-                        var.address       = StrInit();
-                        var.d_type        = StrInit();
-                        var.loc           = StrInit();
-                        var.name          = StrInit();
+                        CfgLocalVariable var = {0};
+                        var.address          = StrInit();
+                        var.d_type           = StrInit();
+                        var.loc              = StrInit();
+                        var.name             = StrInit();
 
                         JR_OBJ (j, {
                             JR_STR_KV (j, "address", var.address);
@@ -1460,8 +1462,8 @@ Function GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId f
 
         StrIter j = StrIterInitFromStr (&gj);
 
-        bool         status    = false;
-        bool         completed = false;
+        bool     status    = false;
+        bool     completed = false;
         Function ft        = FunctionTypeInit();
 
         JR_OBJ (j, {
@@ -1483,18 +1485,126 @@ Function GetFunctionType (Connection* conn, AnalysisId analysis_id, FunctionId f
                                     JR_INT_KV (j, "addr", ft.addr);
                                     JR_STR_KV (j, "type", ft.return_type);
                                     JR_OBJ_KV (j, "args", {
-                                        DataType* dt = JrDataType (&j);
-                                        VecPushBack (&ft.args, dt);
+                                        FunctionArgument fa = FunctionArgumentInit();
+                                        JR_OBJ (j, {
+                                            JI_STR_KV (j, "last_change");
+                                            JR_STR_KV (j, "name", fa.name);
+                                            JR_STR_KV (j, "type", fa.type);
+                                            JR_INT_KV (j, "offset", fa.offset);
+                                            JR_INT_KV (j, "size", fa.size);
+                                        });
+                                        VecPushBack (&ft.args, fa);
                                     });
                                 });
                                 JR_OBJ_KV (j, "stack_vars", {
-                                    DataType* dt = JrDataType (&j);
-                                    VecPushBack (&ft.stack_vars, dt);
+                                    LocalVariable sv = LocalVariableInit();
+                                    JR_OBJ (j, {
+                                        JI_STR_KV (j, "last_change");
+                                        JR_STR_KV (j, "name", sv.name);
+                                        JR_STR_KV (j, "type", sv.type);
+                                        JR_INT_KV (j, "offset", sv.offset);
+                                        JR_INT_KV (j, "size", sv.size);
+                                    });
+                                    VecPushBack (&ft.stack_vars, sv);
                                 });
                             });
                             JR_ARR_KV (j, "func_deps", {
-                                DataType* dt = JrDataType (&j);
-                                VecPushBack (&ft.deps, dt);
+                                static const u32 tGlobalVariable = 1;
+                                static const u32 tStruct         = 2;
+                                static const u32 tEnum           = 3;
+                                static const u32 tTypedef        = 4;
+                                u32              t               = 0;
+
+                                // common across all types
+                                union {
+                                    u32 addr;
+                                    u32 offset;
+                                } p                = {0};
+                                u64           size = 0;
+                                Str           type = StrInit();
+                                Str           name = StrInit();
+                                StructMembers sm   = VecInitWithDeepCopy (NULL, StructMemberDeinit);
+
+                                // only for enum
+                                i64 value = -1;
+
+                                Str atype = StrInit();
+                                JR_OBJ (j, {
+                                    JI_STR_KV (j, "last_change");
+                                    JR_STR_KV (j, "name", name);
+                                    JR_INT_KV (j, "size", size);
+                                    JR_INT_KV (j, "addr", p.addr);
+                                    JR_INT_KV (j, "offset", p.offset);
+                                    JR_STR_KV (j, "type", type);
+
+                                    JR_OBJ_KV (j, "members", {
+                                        // TODO: How to detect enum or struct herer?
+                                        // Can detect based on what fields are present but don't have an enum example atm
+                                        StructMember m = StructMemberInit();
+                                        JR_OBJ (j, {
+                                            JI_STR_KV (j, "last_change");
+                                            JR_STR_KV (j, "name", m.name);
+                                            JR_STR_KV (j, "type", m.type);
+                                            JR_INT_KV (j, "offset", m.offset);
+                                            JR_INT_KV (j, "size", m.size);
+                                        });
+                                        VecPushBack (&sm, &m);
+                                    });
+
+                                    JR_STR_KV (j, "artifact_type", atype);
+                                    if (!t && atype.length) {
+                                        Str* at = &atype;
+                                        if (!StrCmpZstr (at, "Struct")) {
+                                            t = tStruct;
+                                        } else if (!StrCmpZstr (at, "GlobalVariable")) {
+                                            t = tGlobalVariable;
+                                        } else if (!StrCmpZstr (at, "Enum")) {
+                                            t = tEnum;
+                                        } else if (!StrCmpZstr (at, "Typedef")) {
+                                            t = tTypedef;
+                                        }
+                                    }
+                                });
+
+                                switch (t) {
+                                    case tGlobalVariable : {
+                                        GlobalVariable gv = GlobalVariableInit();
+                                        gv.addr           = p.addr;
+                                        gv.size           = size;
+                                        gv.name           = name;
+                                        gv.type           = type;
+                                        VecPushBack (&ft.deps.global_vars, gv);
+                                        break;
+                                    }
+                                    case tStruct : {
+                                        Struct s  = StructInit();
+                                        s.offset  = p.offset;
+                                        s.type    = type;
+                                        s.name    = name;
+                                        s.size    = size;
+                                        s.members = sm;
+                                        break;
+                                    }
+                                    case tEnum : {
+                                        // TODO:
+                                        break;
+                                    }
+                                    case tTypedef : {
+                                        // TODO:
+                                        break;
+                                    }
+                                    default : {
+                                        StrDeinit (&name);
+                                        StrDeinit (&type);
+                                        LOG_ERROR (
+                                            "Unsupported type %s provided in function types "
+                                            "response : %s",
+                                            atype.data
+                                        );
+                                    }
+                                }
+
+                                StrDeinit (&atype);
                             });
                         });
                     } else {
@@ -1542,10 +1652,10 @@ Str* JwDataType (Str* sjson, DataType* dt) {
 }
 
 bool SetFunctionType (
-    Connection*  conn,
-    AnalysisId   analysis_id,
-    FunctionId   function_id,
-    Function function_type
+    Connection* conn,
+    AnalysisId  analysis_id,
+    FunctionId  function_id,
+    Function    function_type
 ) {
     if (!conn->api_key.length || !conn->host.length) {
         LOG_ERROR ("Missing API key or host to connect to.");

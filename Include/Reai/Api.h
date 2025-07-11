@@ -449,10 +449,10 @@ extern "C" {
     /// FAILURE: false
     ///
     REAI_API bool SetFunctionType (
-        Connection*  conn,
-        AnalysisId   analysis_id,
-        FunctionId   function_id,
-        Function function_type
+        Connection* conn,
+        AnalysisId  analysis_id,
+        FunctionId  function_id,
+        Function    function_type
     );
 
     /// Retrieves log data for a specific analysis job.

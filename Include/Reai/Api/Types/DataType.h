@@ -45,12 +45,10 @@ typedef Vec (StructMember) StructMembers;
 typedef Vec (FunctionArgument) FunctionArguments;
 
 typedef struct Struct {
-    Str           last_change;
     u64           offset;
     u64           size;
     Str           name;
     Str           type;
-    Str           artifact_type;
     StructMembers members;
 } Struct;
 
@@ -79,7 +77,6 @@ typedef struct GlobalVariable {
 typedef Vec (GlobalVariable) GlobalVariables;
 
 typedef struct Function {
-    Str               last_change;
     u64               addr;
     u64               size;
     Str               name;
