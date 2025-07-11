@@ -1349,6 +1349,9 @@ static size CURLResponseWriteCallback (void* ptr, size sz, size nmemb, Str* raw_
     return received_size;
 }
 
+
+static bool ua_already_printed = false;
+
 bool MakeRequest (
     Str*        user_agent,
     Str*        api_key,
@@ -1377,8 +1380,6 @@ bool MakeRequest (
         return false;
     }
 
-    LOG_INFO ("REQUEST.URL : %s", request_url->data);
-
     CURL* curl = curl_easy_init();
     if (!curl) {
         LOG_ERROR ("Failed to create a CURL handle. Cannot make requests.");
@@ -1403,13 +1404,18 @@ bool MakeRequest (
     if (request_json && request_json->length) {
         headers = curl_slist_append (headers, "Content-Type: application/json");
         curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-        LOG_INFO ("request->JSON: '%s'", request_json->data);
+        LOG_INFO ("REQUEST.JSON: '%s'", request_json->data);
     }
 
     Str hdr_ua = StrInit();
     StrPrintf (&hdr_ua, "User-Agent: %s", user_agent->data);
     headers = curl_slist_append (headers, hdr_ua.data);
-    LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+    
+    if (!ua_already_printed) {
+        LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+        ua_already_printed = true;
+    }
+
     StrDeinit (&hdr_ua);
 
     curl_easy_setopt (curl, CURLOPT_URL, request_url->data);
@@ -1482,8 +1488,6 @@ bool MakeUploadRequest (
         return false;
     }
 
-    LOG_INFO ("REQUEST.URL : %s", request_url->data);
-
     CURL* curl = curl_easy_init();
     if (!curl) {
         LOG_ERROR ("Failed to create a CURL handle. Cannot make requests.");
@@ -1530,13 +1534,18 @@ bool MakeUploadRequest (
     if (request_json && request_json->length) {
         headers = curl_slist_append (headers, "Content-Type: application/json");
         curl_easy_setopt (curl, CURLOPT_POSTFIELDS, request_json->data);
-        LOG_INFO ("request->JSON: '%s'", request_json->data);
+        LOG_INFO ("REQUEST.JSON: '%s'", request_json->data);
     }
 
     Str hdr_ua = StrInit();
     StrPrintf (&hdr_ua, "User-Agent: %s", user_agent->data);
     headers = curl_slist_append (headers, hdr_ua.data);
-    LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+    
+    if (!ua_already_printed) {
+        LOG_INFO ("USER_AGENT = %s", hdr_ua.data);
+        ua_already_printed = true;
+    }
+
     StrDeinit (&hdr_ua);
 
     curl_easy_setopt (curl, CURLOPT_MIMEPOST, mime);
