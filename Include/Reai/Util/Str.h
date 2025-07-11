@@ -56,6 +56,31 @@ extern "C" {
                 .alignment   = 1})
 #endif
 
+#ifdef __cplusplus
+#    define StrOwnZstr(zstr)                                                                       \
+        (zstr ? (Str {                                                                             \
+                    .length    = strlen (zstr),                                                    \
+                    .capacity  = strlen (zstr),                                                    \
+                    .data      = zstr,                                                             \
+                    .alignment = 1                                                                 \
+                }) :                                                                               \
+                (Str)VecInit())
+#else
+/// Initialize a Str object using a zero-terminated string and take ownership of the string.
+///
+/// zstr[in] : Zero-terminated string to be initialized.
+///
+/// SUCCESS : `str`
+/// FAILURE : Empty Str object
+///
+#    define StrOwnZstr(zstr)                                                                       \
+        (zstr ? ((Str) {.length    = strlen (zstr),                                                \
+                        .capacity  = strlen (zstr),                                                \
+                        .data      = zstr,                                                         \
+                        .alignment = 1}) :                                                         \
+                (Str)VecInit())
+#endif
+
 ///
 /// Initialize a Str object using a zero-terminated string
 ///

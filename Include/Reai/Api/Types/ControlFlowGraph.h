@@ -32,20 +32,23 @@ typedef struct Block {
 
 typedef Vec (Block) Blocks;
 
-typedef struct LocalVariable {
+// XXX: conflicts with definition in DataType.h
+// Both are mergeable! Defining a separate one creates confusion
+// and type-redundancy
+typedef struct CfgLocalVariable {
     Str address;
     Str d_type;
     u64 size;
     Str loc;
     Str name;
-} LocalVariable;
+} CfgLocalVariable;
 
-typedef Vec (LocalVariable) LocalVariables;
+typedef Vec (CfgLocalVariable) CfgLocalVariables;
 
 typedef struct ControlFlowGraph {
-    Blocks         blocks;
-    LocalVariables local_variables;
-    Str            overview_comment;
+    Blocks            blocks;
+    CfgLocalVariables local_variables;
+    Str               overview_comment;
 } ControlFlowGraph;
 
 #ifdef __cplusplus
@@ -96,7 +99,7 @@ extern "C" {
     ///
     /// var[in,out] : Object to be destroyed.
     ///
-    REAI_API void LocalVariableDeinit (LocalVariable* var);
+    REAI_API void CfgLocalVariableDeinit (CfgLocalVariable* var);
 
     ///
     /// Clone a LocalVariable object from `src` to `dst`
@@ -107,7 +110,7 @@ extern "C" {
     /// SUCCESS : True
     /// FAILURE : Does not return
     ///
-    REAI_API bool LocalVariableInitClone (LocalVariable* dst, LocalVariable* src);
+    REAI_API bool CfgLocalVariableInitClone (CfgLocalVariable* dst, CfgLocalVariable* src);
 
     ///
     /// Deinit cloned ControlFlowGraph object. Provided pointer is not freed.

@@ -61,7 +61,7 @@ bool BlockInitClone (Block* dst, Block* src) {
     return true;
 }
 
-void LocalVariableDeinit (LocalVariable* var) {
+void CfgLocalVariableDeinit (CfgLocalVariable* var) {
     if (!var) {
         LOG_FATAL ("Invalid object provided. Cannot deinit. Aborting...");
     }
@@ -71,10 +71,10 @@ void LocalVariableDeinit (LocalVariable* var) {
     StrDeinit (&var->loc);
     StrDeinit (&var->name);
 
-    memset (var, 0, sizeof (LocalVariable));
+    memset (var, 0, sizeof (CfgLocalVariable));
 }
 
-bool LocalVariableInitClone (LocalVariable* dst, LocalVariable* src) {
+bool CfgLocalVariableInitClone (CfgLocalVariable* dst, CfgLocalVariable* src) {
     if (!dst || !src) {
         LOG_FATAL ("Invalid objects provided. Cannot init clone. Aborting...");
     }

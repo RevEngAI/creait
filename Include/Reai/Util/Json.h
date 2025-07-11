@@ -234,14 +234,15 @@ extern "C" {
     ///
     /// Skip the current JSON value at reading position.
     ///
-    /// si[in] : Current position in string iterator to skip value from
+    /// si[in]             : Current position in string iterator to skip value from
+    /// enable_logging[in] : Whether to log skipped field names
     ///
     /// SUCCESS : Returns updated `StrIter` after value is skipped
     /// FAILURE : Returns same `StrIter` on error (e.g. invalid type)
     ///
     /// TAGS: JSON, Parsing, Utility
     ///
-    REAI_API StrIter JSkipValue (StrIter si);
+    REAI_API StrIter JSkipValue (StrIter si, bool enable_logging);
 
 #ifdef __cplusplus
 }
@@ -493,7 +494,7 @@ extern "C" {
             /* if no advancement in read position */                                               \
             if (si_before_read.pos == si.pos) {                                                    \
                 /* skip the value */                                                               \
-                StrIter read_si = JSkipValue (si);                                                 \
+                StrIter read_si = JSkipValue (si, true);                                           \
                                                                                                    \
                 /* if still no advancement in read position */                                     \
                 if (read_si.pos == si.pos) {                                                       \
@@ -616,7 +617,7 @@ extern "C" {
             /* if no advancement in read position */                                               \
             if (si_before_read.pos == si.pos) {                                                    \
                 /* skip the value */                                                               \
-                StrIter read_si = JSkipValue (si);                                                 \
+                StrIter read_si = JSkipValue (si, true);                                           \
                                                                                                    \
                                                                                                    \
                 /* if still no advancement in read position */                                     \
@@ -672,6 +673,90 @@ extern "C" {
     do {                                                                                           \
         if (!StrCmpZstr (&key, (k))) {                                                             \
             JR_OBJ (si, reader);                                                                   \
+        }                                                                                          \
+    } while (0)
+
+#define JI_OBJ(si)                                                                                 \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_OBJ_KV(si, k)                                                                           \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_ARR(si)                                                                                 \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_ARR_KV(si, k)                                                                           \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_STR(si)                                                                                 \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_STR_KV(si, k)                                                                           \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_FLT(si)                                                                                 \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_FLT_KV(si, k)                                                                           \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_INT(si)                                                                                 \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_INT_KV(si, k)                                                                           \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_ZSTR(si)                                                                                \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_ZSTR_KV(si, k)                                                                          \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
+        }                                                                                          \
+    } while (0)
+
+#define JI_BOOL(si)                                                                                \
+    do {                                                                                           \
+        JSkipValue (si, false);                                                                    \
+    } while (0)
+
+#define JI_BOOL_KV(si, k)                                                                          \
+    do {                                                                                           \
+        if (!StrCmpZstr (&key, (k))) {                                                             \
+            JSkipValue (si, false);                                                                \
         }                                                                                          \
     } while (0)
 

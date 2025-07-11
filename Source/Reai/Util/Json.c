@@ -1,7 +1,7 @@
 #include <Reai/Util/Json.h>
 #include <string.h>
 
-static StrIter JSkipObject (StrIter si) {
+static StrIter JSkipObject (StrIter si, bool enable_logging) {
     if (!StrIterRemainingLength (&si)) {
         return si;
     }
@@ -55,7 +55,7 @@ static StrIter JSkipObject (StrIter si) {
         si = JSkipWhitespace (si);
 
         // skip values within object
-        read_si = JSkipValue (si);
+        read_si = JSkipValue (si, enable_logging);
 
         // if still no advancement in read position
         if (read_si.pos == si.pos) {
@@ -64,7 +64,9 @@ static StrIter JSkipObject (StrIter si) {
             return saved_si;
         }
 
-        LOG_INFO ("User skipped reading of '%s' field in JSON object.", key.data);
+        if (enable_logging) {
+            LOG_INFO ("User skipped reading of '%s' field in JSON object.", key.data);
+        }
 
         StrDeinit (&key);
         si = read_si;
@@ -83,7 +85,7 @@ static StrIter JSkipObject (StrIter si) {
     return si;
 }
 
-static StrIter JSkipArray (StrIter si) {
+static StrIter JSkipArray (StrIter si, bool enable_logging) {
     if (!StrIterRemainingLength (&si)) {
         return si;
     }
@@ -114,7 +116,7 @@ static StrIter JSkipArray (StrIter si) {
         }
 
         // skip values within array
-        read_si = JSkipValue (si);
+        read_si = JSkipValue (si, enable_logging);
 
         // if no advancement in read position
         if (read_si.pos == si.pos) {
@@ -540,7 +542,7 @@ StrIter JReadNull (StrIter si, bool* is_null) {
     }
 }
 
-StrIter JSkipValue (StrIter si) {
+StrIter JSkipValue (StrIter si, bool enable_logging) {
     if (!StrIterRemainingLength (&si)) {
         return si;
     }
@@ -615,7 +617,7 @@ StrIter JSkipValue (StrIter si) {
     // looks like starting of an object
     if (StrIterPeek (&si) == '{') {
         StrIter before_si = si;
-        si                = JSkipObject (si);
+        si                = JSkipObject (si, enable_logging);
 
         if (si.pos == before_si.pos) {
             LOG_ERROR ("Failed to read object. Expected an object. Invalid JSON.");
@@ -628,7 +630,7 @@ StrIter JSkipValue (StrIter si) {
     // looks like starting of an array
     if (StrIterPeek (&si) == '[') {
         StrIter before_si = si;
-        si                = JSkipArray (si);
+        si                = JSkipArray (si, enable_logging);
 
         if (si.pos == before_si.pos) {
             LOG_ERROR ("Failed to read array. Expected an array. Invalid JSON.");
