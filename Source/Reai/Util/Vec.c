@@ -53,7 +53,6 @@ void deinit_vec (GenericVec *vec, size item_size) {
         free (vec->data);
     }
 
-    memset (vec, 0, sizeof (GenericVec));
     vec->data   = NULL;
     vec->length = vec->capacity = 0;
 }

@@ -13,6 +13,9 @@ typedef u64 FunctionId;
 typedef u64 CollectionId;
 typedef u64 ModelId;
 typedef u64 TeamId;
+typedef u64 CommentId;
+typedef u64 UserId;
+typedef u64 ResourceId;
 
 typedef Vec (u64) IdsVec;
 
@@ -22,5 +25,8 @@ typedef IdsVec FunctionIds;
 typedef IdsVec CollectionIds;
 typedef IdsVec ModelIds;
 typedef IdsVec TeamIds;
+typedef IdsVec CommentIds;
+typedef IdsVec UserIds;
+typedef IdsVec ResourceIds;
 
 #endif // REAI_API_TYPES_COMMON_H

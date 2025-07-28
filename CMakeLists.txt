@@ -38,6 +38,9 @@ include_directories("${CMAKE_PREFIX_PATH}/include")
 # Add library source
 add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Source/Reai")
 
+# Add binary tools
+add_subdirectory("${CMAKE_CURRENT_SOURCE_DIR}/Bin")
+
 # Add installation target for include files
 install(DIRECTORY Include/Reai DESTINATION include)
 
